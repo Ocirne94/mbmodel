@@ -7,3 +7,20 @@
 # Latest update:  2021.1.5                                                                        #
 ###################################################################################################
 
+run_params <- list(
+  
+  # Set paths.
+  dir_data_dem =             "./data/dem/",
+  dir_data_surf_type =       "./data/surf_type/",
+  dir_data_radiation =       "./data/radiation/",
+  dir_data_weather =         "./data/weather/",
+  dir_data_mass_balance =    "./data/mass_balance/",
+  
+  
+  
+  first_year =               2017,                         # First modeled year (usually from October of the previous year to September of this year)
+  last_year =                2020                          # Last modeled year (same as previous comment)
+                            
+)
+
+
