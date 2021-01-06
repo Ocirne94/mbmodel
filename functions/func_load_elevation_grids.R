@@ -8,7 +8,7 @@
 #                 available, or interpolated if asked to do so).                                  #
 #                 NOTE: we should never modify the list elements, rather work on copies.          #
 # Latest update:  2021.1.6                                                                        #
-################################################################################################### 
+###################################################################################################
 
 
 # ALGORITHM:
@@ -105,15 +105,13 @@ func_load_elevation_grids <- function(run_params, load_which) {
             grid_interpolated <- grid_earlier + (grid_later - grid_earlier) * (year_cur - grid_year_earlier) / (grid_year_later - grid_year_earlier)
             grids_out[[year_cur_id]] <- grid_interpolated
             
+          # Else: we are outside the range of the DEM years.
           } else {
             grid_year_closest_id <- which.min(abs(year_dist))
             grids_out[[year_cur_id]] <- raster(grid_paths[grid_year_closest_id])
           }
         }
       }
-      
-      grids_out[[year_cur_id]] <- raster(grid_paths[grid_year_closest_id])
-      
     }
   }
   

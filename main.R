@@ -22,13 +22,25 @@
 library(raster)
 
 #### Load function definitions ####
-source("functions/func_set_params.R")
-source("functions/func_load_weather.R")
-source("functions/func_load_elevation_grids.R")
+source("functions/func_load_functions.R")
+
+#### Set run parameters ####
+run_params       <-   func_set_params()
+
+#### Load input data ####
+data_weather     <-   func_load_weather(run_params)
+data_dems        <-   func_load_elevation_grids(run_params, "dem")
+data_dhms        <-   func_load_elevation_grids(run_params, "dhm")
+data_surftype    <-   func_load_surftype_grids(run_params)
+data_radiation   <-   func_load_radiation_grids(run_params)
+data_massbalance <-   func_load_massbalance_measurements(run_params)
 
 
 
-run_params   <-   func_set_params()
-data_weather <-   func_load_weather(run_params)
-data_dems    <-   func_load_elevation_grids(run_params, "dem")
-data_dhms    <-   func_load_elevation_grids(run_params, "dhm")
+# TODO: main loop, with:
+  # loading of parameters for the year
+  # determination of year boundaries for modeling (should cover measurement period and hydrological year)
+  # creation of initial snow cover (load from file, or use result from previous modeling, or estimate from parameters)
+  # model run over the year with initial parameters
+  # if told to optimize: repeat run, minimizing BIAS and RMS
+

@@ -43,7 +43,7 @@ func_set_params <- function() {
     filename_radiation_prefix =    "dir",
     filename_radiation_suffix =    "24.grid",                    # Radiation files are called <prefix><doy><suffix> where <doy> is the day of year, zero-padded to length 3 (e.g. 001).
 
-    filename_massbalance      =    "peg_barkrak.dat",            # File name of the mass balance observations
+    filename_massbalance      =    "peg_barkrak_orig.dat",            # File name of the mass balance observations
     
     
     #### TIME-related parameters ####
