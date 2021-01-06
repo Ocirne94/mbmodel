@@ -4,7 +4,7 @@
 #                 resolution, optimizing model parameters towards the best fit with point         #
 #                 mass balance measurements.                                                      #
 #                 This file contains the main loop and instructions.                              #
-# Latest update:  2021.1.5                                                                        #
+# Latest update:  2021.1.6                                                                        #
 ###################################################################################################
 
 ## GLOBALS
@@ -18,7 +18,17 @@
 # class cur_year_parameters (read from file)
 # raster cur_year_init_snowcover (either read from file, or estimated, or taken from previous year, depending on which year it is within the simulation and on the global options)
 
+#### Include libraries ####
+library(raster)
+
+#### Load function definitions ####
 source("functions/func_set_params.R")
+source("functions/func_load_weather.R")
+source("functions/func_load_elevation_grids.R")
 
 
 
+run_params   <-   func_set_params()
+data_weather <-   func_load_weather(run_params)
+data_dems    <-   func_load_elevation_grids(run_params, "dem")
+data_dhms    <-   func_load_elevation_grids(run_params, "dhm")
