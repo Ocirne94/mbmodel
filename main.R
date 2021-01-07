@@ -35,7 +35,12 @@ data_surftype    <-   func_load_surftype_grids(run_params)
 data_radiation   <-   func_load_radiation_grids(run_params)
 data_massbalance <-   func_load_massbalance_measurements(run_params)
 
-
+#### Main loop ####
+for (year_id in 1:run_params$n_years) {
+  
+  year_cur <- run_params$years[year_id]
+  
+}
 
 # TODO: main loop, with:
   # loading of parameters for the year
@@ -43,4 +48,5 @@ data_massbalance <-   func_load_massbalance_measurements(run_params)
   # creation of initial snow cover (load from file, or use result from previous modeling, or estimate from parameters)
   # model run over the year with initial parameters
   # if told to optimize: repeat run, minimizing BIAS and RMS
+
 
