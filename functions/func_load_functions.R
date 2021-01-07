@@ -10,9 +10,11 @@
 
 # When this file is read by main.R, we are in the main directory (not the functions/ one).
 # So we have to specify the path here.
-source("functions/func_set_params.R")
-source("functions/func_load_weather.R")
-source("functions/func_load_elevation_grids.R")
-source("functions/func_load_surftype_grids.R")
-source("functions/func_load_radiation_grids.R")
-source("functions/func_load_massbalance_measurements.R")
+files.sources = list.files()
+sapply(paste("functions/", list.files("functions/"), sep=""), source)
+# source("functions/func_set_params.R")
+# source("functions/func_load_weather.R")
+# source("functions/func_load_elevation_grids.R")
+# source("functions/func_load_surftype_grids.R")
+# source("functions/func_load_radiation_grids.R")
+# source("functions/func_load_massbalance_measurements.R")

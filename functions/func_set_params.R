@@ -15,12 +15,13 @@ func_set_params <- function() {
     
     #### INPUT-related parameters ####
     # Set paths (don't forget the final / or \).
-    dir_data_weather          =    "./data/weather/",            # The weather series goes here
-    dir_data_dem              =    "./data/dem/",                # Path to the DEM(s) = elevation grid(s) (masked to the glacier surface, nodata outside)
-    dir_data_dhm              =    "./data/dhm/",                # Path to the DHM(s) = elevation grids(s) (rectangular, to compute slopes and curvatures)
-    dir_data_surftype         =    "./data/surftype/",           # Grids of surface type (snow/ice/firn/rock/debris) go here
-    dir_data_radiation        =    "./data/radiation/",          # Grids of potential direct radiation sum go here
-    dir_data_massbalance      =    "./data/massbalance/",        # The mass balance observations go here
+    dir_data_weather          =    "./input/data/weather/",      # The weather series goes here
+    dir_data_dem              =    "./input/data/dem/",          # Path to the DEM(s) = elevation grid(s) (masked to the glacier surface, nodata outside)
+    dir_data_dhm              =    "./input/data/dhm/",          # Path to the DHM(s) = elevation grids(s) (rectangular, to compute slopes and curvatures)
+    dir_data_surftype         =    "./input/data/surftype/",     # Grids of surface type (snow/ice/firn/rock/debris) go here
+    dir_data_radiation        =    "./input/data/radiation/",    # Grids of potential direct radiation sum go here
+    dir_data_massbalance      =    "./input/data/massbalance/",  # The mass balance observations go here
+    dir_annual_params         =    "./input/data/params/",       # The annual model parameter files go here
     
     # Set filenames and input file properties.
     filename_weather          =    "barkrak_barkrak_d.dat",      # File name of the weather series
@@ -43,7 +44,10 @@ func_set_params <- function() {
     filename_radiation_prefix =    "dir",
     filename_radiation_suffix =    "24.grid",                    # Radiation files are called <prefix><doy><suffix> where <doy> is the day of year, zero-padded to length 3 (e.g. 001).
 
-    filename_massbalance      =    "peg_barkrak_orig.dat",            # File name of the mass balance observations
+    filename_massbalance      =    "peg_barkrak_orig.dat",       # File name of the mass balance observations
+    
+    filename_params_prefix    =    "param_",
+    filename_params_suffix    =    ".dat",                       # Annual parameters filename is <prefix><year><suffix>
     
     
     #### TIME-related parameters ####
