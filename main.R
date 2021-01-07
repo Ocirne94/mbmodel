@@ -22,7 +22,7 @@
 library(raster)
 
 #### Load function definitions ####
-source("functions/func_load_functions.R")
+invisible(sapply(paste("functions/", list.files("functions/"), sep=""), source))
 
 #### Set run parameters ####
 run_params       <-   func_set_params()
@@ -40,10 +40,11 @@ for (year_id in 1:run_params$n_years) {
   
   year_cur <- run_params$years[year_id]
   
+  year_cur_params <- func_load_year_params(run_params, year_cur)
+  
 }
 
-# TODO: main loop, with:
-  # loading of parameters for the year
+# TODO: continue main loop, with:
   # determination of year boundaries for modeling (should cover measurement period and hydrological year)
   # creation of initial snow cover (load from file, or use result from previous modeling, or estimate from parameters)
   # model run over the year with initial parameters

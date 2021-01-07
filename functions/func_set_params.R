@@ -21,7 +21,7 @@ func_set_params <- function() {
     dir_data_surftype         =    "./input/data/surftype/",     # Grids of surface type (snow/ice/firn/rock/debris) go here
     dir_data_radiation        =    "./input/data/radiation/",    # Grids of potential direct radiation sum go here
     dir_data_massbalance      =    "./input/data/massbalance/",  # The mass balance observations go here
-    dir_annual_params         =    "./input/data/params/",       # The annual model parameter files go here
+    dir_annual_params         =    "./input/params/",       # The annual model parameter files go here
     
     # Set filenames and input file properties.
     filename_weather          =    "barkrak_barkrak_d.dat",      # File name of the weather series
