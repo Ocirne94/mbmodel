@@ -1,0 +1,17 @@
+* Input parameters for mass balance model
+*
+* Accumulation
+1200     : [%] cprec, precipitation correction - START VALUE, WILL BE OPTIMIZED (if winter data available)
+15       : [% / 100m], precgrad, precipitation gradient
+0.2     : [-] sumprecfact, factor for reducing precipitation correction during summer
+0       : 1: evaluate snow distribution based on winter measurements, 0: do NOT evaluate snowdist based of this year's data
+none    : alternative year for snow distribution (must be preprocessed)
+*
+* Melt:
+-0.65    : [deg C / 100m], tempgrad, air temperature gradient
+1.0     : [mm w.e. C-1 d-1], mf, melt factor
+1.0     : [10^-3 mm w.e. C-1 h-1 (W m-2)-1], rice, radiation factor ice
+0.65    : [10^-3 mm w.e. C-1 h-1 (W m-2)-1], rsnow, radiation factor snow
+*
+* Finalization
+3450,3600,3700,3800     : [m a.s.l.] corrbands, bands among which final mass balance is corrected to agree with in situ measurements
