@@ -11,7 +11,7 @@
 
 func_compute_snowdist_topographic <- function(run_params, dem, dhm) {
   
-  #### Curvature factor ####
+  #### Curvature factor (lower accumulation on convex surfaces, higher on concave) ####
   # In the original IDL implementation, the curvature multiplication factor
   # is (1 - x), with x linearly dependent on the terrain curvature up to a cutoff:
   # curvature values at or exceeding ±threshold produce an x = ±0.5.
@@ -42,12 +42,20 @@ func_compute_snowdist_topographic <- function(run_params, dem, dhm) {
   snowdist_curv_mult <- 1 - (dhm_curvature_cut * run_params$curvature_effect_limit / dhm_curvature_bound)
   
   
+  #### Elevation factor (lower accumulation at very high elevations) ####
+  snowdist_ele_mult <- setValues(dhm, 1)
+  ele_scaling_fac <- (max(dhm[], na.rm=T) - run_params$elevation_effect_threshold) / run_params$elevation_effect_fact
+  dhm_ids_high <- which(dhm[] > run_params$elevation_effect_threshold)
+  
+  snowdist_ele_mult[dhm_ids_high] <- 2 - 2^( (dhm[dhm_ids_high] - run_params$elevation_effect_threshold) / ele_scaling_fac )
+  
+  
   #### Slope factor (avalanches) ####
   # Here we follow Gruber (2007), doi:10.1029/2006WR004868.
+  dhm_slope <- terrain(dhm, "slope", unit = "degrees")
   
   
-  
-  snowdist_topographic <- snowdist_curv_mult * snowdist_slope_mult * snowdist_ele_mult
+  snowdist_topographic <- snowdist_curv_mult * snowdist_ele_mult * snowdist_slope_mult
   snowdist_topographic_norm <- snowdist_topographic / mean(snowdist_topographic[which(!is.na(dem[]))])
   
   return(snowdist_topographic_norm)
