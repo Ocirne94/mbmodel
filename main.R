@@ -20,6 +20,7 @@
 
 #### Include libraries ####
 library(raster)
+library(spatialEco) # curvature()
 
 #### Load function definitions ####
 invisible(sapply(paste("functions/", list.files("functions/"), sep=""), source))

@@ -21,7 +21,7 @@ func_set_params <- function() {
     dir_data_surftype         =    "./input/data/surftype/",     # Grids of surface type (snow/ice/firn/rock/debris) go here
     dir_data_radiation        =    "./input/data/radiation/",    # Grids of potential direct radiation sum go here
     dir_data_massbalance      =    "./input/data/massbalance/",  # The mass balance observations go here
-    dir_annual_params         =    "./input/params/",       # The annual model parameter files go here
+    dir_annual_params         =    "./input/params/",            # The annual model parameter files go here
     
     # Set filenames and input file properties.
     filename_weather          =    "barkrak_barkrak_d.dat",      # File name of the weather series
@@ -50,6 +50,11 @@ func_set_params <- function() {
     filename_params_suffix    =    ".dat",                       # Annual parameters filename is <prefix><year><suffix>
     
     
+    #### TOPOGRAPHICAL SNOW DISTRIBUTION-related parameters ####
+    curvature_dhm_smooth      =    1.0,                          # [cells]: amount of gaussian smoothing applied before computing curvature (which is very sensitive to DEM noise, unlike slope). Can be non-integer. 1.0 is good for a normal 20 m DEM.
+    curvature_cutoff_fact     =    1.2,                          # [-]: multiplier for the curvature cutoff threshold at which the snow distribution is not further changed. The threshold is given by the smaller of the two curvature extremes (positive and negative) divided by this factor. Only values >= 1 make sense.
+    curvature_effect_limit    =    0.5,                          # [-]: maximum effect of curvature, i.e. the curvature multiplier will be within [1 ± curvature_effect_limit]. Only values between 0 and 1 make sense.
+    
     #### TIME-related parameters ####
     first_year                =    2017,                         # First modeled year (usually from October of the previous year to September of this year)
     last_year                 =    2020                          # Last modeled year (same as previous comment)
@@ -61,6 +66,8 @@ func_set_params <- function() {
   run_params$years <- run_params$first_year:run_params$last_year
   run_params$n_years <- length(run_params$years)
   
+  run_params$curvature_dhm_smooth <- max(1e-9,run_params$curvature_dhm_smooth) # The gaussain smoothing fails if sigma = 0 (but 1e-9 still corresponds to no smoothing!)
+  run_params$dhm_smooth_windowsize <- max(5, 2 * run_params$curvature_dhm_smooth + 1)
   
   return(run_params)
 
