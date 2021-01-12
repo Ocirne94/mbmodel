@@ -58,6 +58,8 @@ func_set_params <- function() {
     elevation_effect_threshold =   3700,                         # [m]: elevation above which snow accumulation decreases (wind effect)
     elevation_effect_fact      =    1.0,                         # [-]: strength of snow accumulation decrease at very high altitude. Only values between 0 and 1 make sense. At 0 accumulation does not decrease, at 1 accumulation decreases to 0 at the highest point in the DHM.
     
+    elevation_equal_threshold  =   1e-3,                         # [m]: threshold for considering two elevation values equal when we look for problematic flat patches
+    
     #### TIME-related parameters ####
     first_year                 =   2017,                         # First modeled year (usually from October of the previous year to September of this year)
     last_year                  =   2020                          # Last modeled year (same as previous comment)

@@ -5,7 +5,7 @@
 #                 mass balance measurements.                                                      #
 #                 This file contains the computation of a grid of relative (normalized)           #
 #                 snow distribution from elevation, slope and curvature.                          #
-# Latest update:  2021.1.7                                                                        #
+# Latest update:  2021.1.10                                                                       #
 ###################################################################################################
 
 
@@ -53,8 +53,10 @@ func_compute_snowdist_topographic <- function(run_params, dem, dhm) {
   #### Slope factor (avalanches) ####
   # Here we follow Gruber (2007), doi:10.1029/2006WR004868.
   dhm_slope <- terrain(dhm, "slope", unit = "degrees")
+  dhm_aspect <- terrain(dhm, "aspect", unit = "degrees")
   
   
+  #### Final distribution ####
   snowdist_topographic <- snowdist_curv_mult * snowdist_ele_mult * snowdist_slope_mult
   snowdist_topographic_norm <- snowdist_topographic / mean(snowdist_topographic[which(!is.na(dem[]))])
   
