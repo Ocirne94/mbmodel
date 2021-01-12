@@ -9,7 +9,6 @@
 #                 an integer vector of indices showing which raster index should be used for each #
 #                 year.                                                                           #
 #                 NOTE: we should never modify the list elements, rather work on copies.          #
-# Latest update:  2021.1.12                                                                       #
 ###################################################################################################
 
 
@@ -55,7 +54,10 @@ func_load_elevation_grids <- function(run_params, load_which) {
   
   # Do we have a single DEM/DHM? If so just use it every year.
   if (length(grid_years) == 1) {
+    
     grids_out$elevation[[1]] <- raster(grid_paths[1])
+    crs(grids_out$elevation[[1]]) <- run_params$grids_crs
+    
     for (year_cur_id in 1:run_params$n_years) {
       grids_out$grid_year_id[year_cur_id] <- 1
     }
@@ -68,6 +70,7 @@ func_load_elevation_grids <- function(run_params, load_which) {
       # Load grids.
       for (grid_id in 1:length(grid_paths)) {
         grids_out$elevation[[grid_id]] <- raster(grid_paths[grid_id])
+        crs(grids_out$elevation[[grid_id]]) <- run_params$grids_crs
       }
 
       # For each modeled year find the closest grid year and use its grid.
@@ -85,6 +88,7 @@ func_load_elevation_grids <- function(run_params, load_which) {
       # Load base grids (their indices correspond to grid_years).
       for (grid_id in 1:length(grid_paths)) {
         grids_out$elevation[[grid_id]] <- raster(grid_paths[grid_id])
+        crs(grids_out$elevation[[grid_id]]) <- run_params$grids_crs
       }
       # For each modeled year look for a DEM exactly from that year,
       # if found use it,
@@ -118,6 +122,7 @@ func_load_elevation_grids <- function(run_params, load_which) {
             grid_earlier <- raster(grid_paths[grid_year_earlier_id])
             grid_later <- raster(grid_paths[grid_year_later_id])
             grid_interpolated <- grid_earlier + (grid_later - grid_earlier) * (year_cur - grid_year_earlier) / (grid_year_later - grid_year_earlier)
+            crs(grids_interpolated) <- run_params$grids_crs
             grids_out$elevation[[length(grids_out$elevation) + 1]] <- grid_interpolated
             grids_out$grid_year_id[year_cur_id] <- length(grids_out$elevation)
             
@@ -130,6 +135,8 @@ func_load_elevation_grids <- function(run_params, load_which) {
       }
     }
   }
+  
+  grids_out$n_grids <- length(grids_out$elevation)
   
   return(grids_out)
   

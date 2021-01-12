@@ -4,7 +4,6 @@
 #                 resolution, optimizing model parameters towards the best fit with point         #
 #                 mass balance measurements.                                                      #
 #                 This file contains the function to load the weather series.                     #
-# Latest update:  2021.1.6                                                                        #
 ################################################################################################### 
 
 func_load_weather <- function(run_params) {

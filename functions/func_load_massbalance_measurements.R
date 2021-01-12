@@ -8,7 +8,6 @@
 #                   id start_date end_date x y z dh_cm density                                    #
 #                 start_date = NA is interpreted as <end of previous ablation season>, useful     #
 #                 for probe/snowpit measurements.                                                 #
-# Latest update:  2021.1.6                                                                        #
 ################################################################################################### 
 
 func_load_massbalance_measurements <- function(run_params) {

@@ -5,7 +5,6 @@
 #                 mass balance measurements.                                                      #
 #                 This file contains a function to find flat patches in an elevation grid.        #
 #                 These are defined as contiguous pixels with exactly the same elevation.         #
-# Latest update:  2021.1.10                                                                       #
 ###################################################################################################
 
 func_find_flat_patches <- function(elevation, run_params) {

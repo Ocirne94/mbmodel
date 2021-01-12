@@ -5,7 +5,6 @@
 #                 mass balance measurements.                                                      #
 #                 This file contains the annual parameter loading from file.                      #
 #                 For the moment it works with the same file formatting as the IDL model.         #
-# Latest update:  2021.1.7                                                                        #
 ###################################################################################################
 
 func_load_year_params <- function(run_params, year_cur) {

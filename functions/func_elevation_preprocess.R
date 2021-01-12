@@ -8,10 +8,9 @@
 #                 Specifically, there should not be any sinks when considering connectivity       #
 #                 with the 4 closest neighbors (rook's case), and there should be no adjacent     #
 #                 cells with the same elevation.                                                  #
-# Latest update:  2021.1.10                                                                       #
 ###################################################################################################
 
-func_preprocess_elevation <- function(elevation, run_params) {
+func_elevation_preprocess <- function(run_params, elevation) {
   
   cat("Pre-processing elevation...\n")
   

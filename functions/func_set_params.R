@@ -4,7 +4,6 @@
 #                 resolution, optimizing model parameters towards the best fit with point         #
 #                 mass balance measurements.                                                      #
 #                 This file contains the fixed parameter definitions for the model run.           #
-# Latest update:  2021.1.12                                                                       #
 ###################################################################################################
 
 func_set_params <- function() {
@@ -26,6 +25,8 @@ func_set_params <- function() {
     # Set filenames and input file properties.
     filename_weather           =   "barkrak_barkrak_d.dat",      # File name of the weather series
     file_weather_nskip         =   4,                            # Number of lines to skip in the weather file
+    
+    grids_crs                  =   CRS(SRS_string="EPSG:32642"), # Reference system of the grids, used in slope/aspect computations. Overrides any CRS info reported from the grid files.
     
     filename_dem_prefix        =   "dem_barkrak_",
     filename_dem_suffix        =   ".tif",                       # DEM name is <prefix><year><suffix>
@@ -56,9 +57,13 @@ func_set_params <- function() {
     curvature_effect_limit     =   0.5,                          # [-]: maximum effect of curvature, i.e. the curvature multiplier will be within [1 ± curvature_effect_limit]. Only values between 0 and 1 make sense.
     
     elevation_effect_threshold =   3700,                         # [m]: elevation above which snow accumulation decreases (wind effect)
-    elevation_effect_fact      =    1.0,                         # [-]: strength of snow accumulation decrease at very high altitude. Only values between 0 and 1 make sense. At 0 accumulation does not decrease, at 1 accumulation decreases to 0 at the highest point in the DHM.
+    elevation_effect_fact      =   1.0,                          # [-]: strength of snow accumulation decrease at very high altitude. Only values between 0 and 1 make sense. At 0 accumulation does not decrease, at 1 accumulation decreases to 0 at the highest point in the DHM.
     
     elevation_equal_threshold  =   1e-3,                         # [m]: threshold for considering two elevation values equal when we look for problematic flat patches
+    deposition_slope_lim       =   40,                           # [°]: at or above this slope value snow will not be deposited during an avalanche. A lower value makes avalanches travel farther. Called beta_lim in Gruber (2007).
+    deposition_mass_lim        =   4000,                         # [kg m-2]: maximum deposition during an avalanche. A lower value makes avalanches travel farther. Called D_lim in Gruber (2007).
+    movable_slope_lim_lower    =   30,                           # [°]: above this slope value, there is a linearly increasing movable fraction in the initial mass distribution, for avalanches. A lower value makes avalanches start also on more gentle slopes.
+    movable_slope_lim_upper    =   60,                           # [°]: above this slope value, all input snow is movable in the avalanche routine.
     
     #### TIME-related parameters ####
     first_year                 =   2012,                         # First modeled year (usually from October of the previous year to September of this year)

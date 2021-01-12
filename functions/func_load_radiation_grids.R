@@ -7,7 +7,6 @@
 #                 radiation sum.                                                                  #
 #                 As output we get a list with one raster per day of year (366 elements,          #
 #                 last two equal)                                                                 #
-# Latest update:  2021.1.6                                                                        #
 ###################################################################################################
 
 
@@ -27,6 +26,7 @@ func_load_radiation_grids <- function(run_params) {
     
     cat("\rLoading radiation files...", doy, "/", 365)
     grids_out[[doy]] <- readAll(raster(grid_paths[doy]))
+    crs(grids_out[[doy]]) <- run_params$grids_crs
     
   }
   cat("\n")

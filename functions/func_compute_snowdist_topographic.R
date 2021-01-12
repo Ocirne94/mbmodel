@@ -5,7 +5,6 @@
 #                 mass balance measurements.                                                      #
 #                 This file contains the computation of a grid of relative (normalized)           #
 #                 snow distribution from elevation, slope and curvature.                          #
-# Latest update:  2021.1.10                                                                       #
 ###################################################################################################
 
 
