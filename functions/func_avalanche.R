@@ -11,7 +11,7 @@
 #                 NOTE-2: the 4 directions from a cell are indexed as 1 = up, 2 = left,           #
 #                 3 = right, 4 = bottom. We use lists of rasters for the processing,              #
 #                 list[[1]] is the raster related to the up direction.                            #                                                                     #
-# Latest update:  2021.1.11                                                                       #
+# Latest update:  2021.1.12                                                                       #
 ################################################################################################### 
 
 

@@ -4,10 +4,12 @@
 #                 resolution, optimizing model parameters towards the best fit with point         #
 #                 mass balance measurements.                                                      #
 #                 This file contains the loading routine for the DEM(s) and DHM(s). As output     #
-#                 we get a list with one raster per year (selected from the closest input         #
-#                 available, or interpolated if asked to do so).                                  #
+#                 we get a list of lists, with the loaded rasters, (if required) the              #
+#                 interpolated rasters (within the same list, appended after the base ones), and  #
+#                 an integer vector of indices showing which raster index should be used for each #
+#                 year.                                                                           #
 #                 NOTE: we should never modify the list elements, rather work on copies.          #
-# Latest update:  2021.1.6                                                                        #
+# Latest update:  2021.1.12                                                                       #
 ###################################################################################################
 
 
@@ -24,7 +26,8 @@
 func_load_elevation_grids <- function(run_params, load_which) {
   
   # Here we will put the output.
-  grids_out <- list()
+  grids_out <- list(elevation = list(),
+                    grid_year_id = rep(NA, run_params$n_years))
   
   
   # Work on DEMs or DHMs?
@@ -52,44 +55,56 @@ func_load_elevation_grids <- function(run_params, load_which) {
   
   # Do we have a single DEM/DHM? If so just use it every year.
   if (length(grid_years) == 1) {
+    grids_out$elevation[[1]] <- raster(grid_paths[1])
     for (year_cur_id in 1:run_params$n_years) {
-      grids_out[[year_cur_id]] <- raster(grid_paths[1])
+      grids_out$grid_year_id[year_cur_id] <- 1
     }
     
     # We have more than a single DEM/DHM!
   } else {
     
     if (grid_interpolate == FALSE) {
-      # For each modeled year find the closest DEM year and use its DEM.
+      
+      # Load grids.
+      for (grid_id in 1:length(grid_paths)) {
+        grids_out$elevation[[grid_id]] <- raster(grid_paths[grid_id])
+      }
+
+      # For each modeled year find the closest grid year and use its grid.
       for (year_cur_id in 1:run_params$n_years) {
         
         year_cur <- run_params$years[year_cur_id]
         grid_year_closest_id <- which.min(abs(grid_years - year_cur))
-        grids_out[[year_cur_id]] <- raster(grid_paths[grid_year_closest_id])
+        grids_out$grid_year_id[year_cur_id] <- grid_year_closest_id
         
       }
       
       # Here the case grid_interpolate == TRUE
     } else {
+      
+      # Load base grids (their indices correspond to grid_years).
+      for (grid_id in 1:length(grid_paths)) {
+        grids_out$elevation[[grid_id]] <- raster(grid_paths[grid_id])
+      }
       # For each modeled year look for a DEM exactly from that year,
       # if found use it,
       # if not look for the two closest enclosing years,
-      #     if both found do linear interpolation,
+      #     if both found do linear interpolation and append resulting grid to grids_out$elevation,
       #     if only one found (i.e. modeling a year before the earliest DEM or after the last one) just use it.
       for (year_cur_id in 1:run_params$n_years) {
         
         year_cur <- run_params$years[year_cur_id]
-        grid_id_cur <- which(grid_years == year_cur)
+        grid_id_cur <- which(grid_years == year_cur) # Has a value only if we find a grid exactly from the current year.
         
         # Found DEM for the current year!
         if (length(grid_id_cur) != 0) { # This should be only 0 or 1, i.e. two DEMs for a single year are not allowed.
           
-          grids_out[[year_cur_id]] <- raster(grid_paths[grid_id_cur])
+          grids_out$grid_year_id[year_cur_id] <- grid_id_cur
           
         # No DEM for the current year, we have to interpolate if we can.  
         } else {
           
-          year_dist <- grid_years - year_cur
+          year_dist <- grid_years - year_cur # Integer vector with distance in years from the year of each base input grid to the current year.
           
           # Check if we have two enclosing years, or if instead we are outside the range of the DEM years.
           if (max(year_dist) * min(year_dist) < 0) {
@@ -103,12 +118,13 @@ func_load_elevation_grids <- function(run_params, load_which) {
             grid_earlier <- raster(grid_paths[grid_year_earlier_id])
             grid_later <- raster(grid_paths[grid_year_later_id])
             grid_interpolated <- grid_earlier + (grid_later - grid_earlier) * (year_cur - grid_year_earlier) / (grid_year_later - grid_year_earlier)
-            grids_out[[year_cur_id]] <- grid_interpolated
+            grids_out$elevation[[length(grids_out$elevation) + 1]] <- grid_interpolated
+            grids_out$grid_year_id[year_cur_id] <- length(grids_out$elevation)
             
-          # Else: we are outside the range of the DEM years.
+          # Else: we are outside the range of the DEM years. Just take the closest grid (i.e. the earliest or the most recent).
           } else {
             grid_year_closest_id <- which.min(abs(year_dist))
-            grids_out[[year_cur_id]] <- raster(grid_paths[grid_year_closest_id])
+            grids_out$grid_year_id[year_cur_id] <- grid_year_closest_id
           }
         }
       }

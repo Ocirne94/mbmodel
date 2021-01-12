@@ -4,7 +4,7 @@
 #                 resolution, optimizing model parameters towards the best fit with point         #
 #                 mass balance measurements.                                                      #
 #                 This file contains the fixed parameter definitions for the model run.           #
-# Latest update:  2021.1.6                                                                        #
+# Latest update:  2021.1.12                                                                       #
 ###################################################################################################
 
 func_set_params <- function() {
@@ -61,7 +61,7 @@ func_set_params <- function() {
     elevation_equal_threshold  =   1e-3,                         # [m]: threshold for considering two elevation values equal when we look for problematic flat patches
     
     #### TIME-related parameters ####
-    first_year                 =   2017,                         # First modeled year (usually from October of the previous year to September of this year)
+    first_year                 =   2012,                         # First modeled year (usually from October of the previous year to September of this year)
     last_year                  =   2020                          # Last modeled year (same as previous comment)
     
   )
