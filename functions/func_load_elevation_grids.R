@@ -55,7 +55,7 @@ func_load_elevation_grids <- function(run_params, load_which) {
   # Do we have a single DEM/DHM? If so just use it every year.
   if (length(grid_years) == 1) {
     
-    grids_out$elevation[[1]] <- raster(grid_paths[1])
+    grids_out$elevation[[1]] <- readAll(raster(grid_paths[1]))
     crs(grids_out$elevation[[1]]) <- run_params$grids_crs
     
     for (year_cur_id in 1:run_params$n_years) {
@@ -69,7 +69,7 @@ func_load_elevation_grids <- function(run_params, load_which) {
       
       # Load grids.
       for (grid_id in 1:length(grid_paths)) {
-        grids_out$elevation[[grid_id]] <- raster(grid_paths[grid_id])
+        grids_out$elevation[[grid_id]] <- readAll(raster(grid_paths[grid_id]))
         crs(grids_out$elevation[[grid_id]]) <- run_params$grids_crs
       }
 
@@ -87,7 +87,7 @@ func_load_elevation_grids <- function(run_params, load_which) {
       
       # Load base grids (their indices correspond to grid_years).
       for (grid_id in 1:length(grid_paths)) {
-        grids_out$elevation[[grid_id]] <- raster(grid_paths[grid_id])
+        grids_out$elevation[[grid_id]] <- readAll(raster(grid_paths[grid_id]))
         crs(grids_out$elevation[[grid_id]]) <- run_params$grids_crs
       }
       # For each modeled year look for a DEM exactly from that year,

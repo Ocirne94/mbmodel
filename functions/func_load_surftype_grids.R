@@ -28,7 +28,7 @@ func_load_surftype_grids <- function(run_params) {
     
     year_cur <- run_params$years[year_cur_id]
     grid_year_closest_id <- which.min(abs(grid_years - year_cur))
-    grids_out[[year_cur_id]] <- raster(grid_paths[grid_year_closest_id])
+    grids_out[[year_cur_id]] <- readAll(raster(grid_paths[grid_year_closest_id]))
     crs(grids_out[[year_cur_id]]) <- run_params$grids_crs
     
   }

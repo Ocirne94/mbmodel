@@ -24,9 +24,7 @@ func_avalanche <- function(avalanche_grids, mass_initial) {
   mass_fixed <- mass_initial - mass_movable  # Mass which stays in place no matter what.
   
   # The snow transport loop is implemented in C++ for performance (about 5000 times faster than pure R).
-  # The legacy R implementation is in file "func_snow_transport_gruber_legacy.R.old",
-  # to use it (you better don't do that) you should replace the lines below with all
-  # the lines from that file, and be prepared to wait a long time before the loop is complete.
+  # The legacy R implementation is in file "func_avalanche_gruber_legacy.R.old" (not updated after move to list() structures).
   deposition <- setValues(deposition, transport_deposit_mass(avalanche_grids$elevation_sorted_ids,
                                                              run_params$grid_ncol,
                                                              getValues(deposition),

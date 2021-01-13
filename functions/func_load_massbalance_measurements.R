@@ -4,17 +4,28 @@
 #                 resolution, optimizing model parameters towards the best fit with point         #
 #                 mass balance measurements.                                                      #
 #                 This file contains the loading routine for the point mass balance measurements. #
+#                 load_what controls whether we load annual mass balance or winter mass balance.  #
 #                 As output we get a data.frame:                                                  #
 #                   id start_date end_date x y z dh_cm density                                    #
 #                 start_date = NA is interpreted as <end of previous ablation season>, useful     #
 #                 for probe/snowpit measurements.                                                 #
 ################################################################################################### 
 
-func_load_massbalance_measurements <- function(run_params) {
+func_load_massbalance_measurements <- function(run_params, load_what) {
   
-  massbalance_path <- paste(run_params$dir_data_massbalance,
-                            run_params$filename_massbalance,
-                            sep = "")
+  if (load_what == "annual") {
+    
+    massbalance_path <- paste(run_params$dir_data_massbalance,
+                              run_params$filename_massbalance_annual,
+                              sep = "")
+    
+  } else if (load_what == "winter") {
+    
+    massbalance_path <- paste(run_params$dir_data_massbalance,
+                              run_params$filename_massbalance_winter,
+                              sep = "")
+  }
+
   
   data_massbalance <- read.table(massbalance_path, header = FALSE)
   
