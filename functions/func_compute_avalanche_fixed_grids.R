@@ -104,7 +104,7 @@ func_compute_avalanche_fixed_grids <- function(run_params, data_dhms) {
     # for which flow width is least negative).
     avalanche$residual_sink_cell_ids[[grid_id]] <- which(getValues(avalanche$draining_coeff_sum[[grid_id]]) == 0)
     residual_sinks_n <- length(avalanche$residual_sink_cell_ids[[grid_id]])
-    cat("Residual sinks detected:", residual_sinks_n)
+    cat("Residual sinks detected:", residual_sinks_n, "\n")
     
     if (residual_sinks_n) {
       for (residual_sink_id in 1:residual_sinks_n) {
@@ -134,6 +134,8 @@ func_compute_avalanche_fixed_grids <- function(run_params, data_dhms) {
       }
     }
     
+    cat("Residual sinks fixed.")
+    
     # Compute normalized draining fractions for the 4 directions (Eq. 9 in Gruber, 2007).
     for (dir_id in 1:4) {
       avalanche$draining_fraction[[grid_id]][[dir_id]] <- avalanche$draining_coeff[[grid_id]][[dir_id]] / avalanche$draining_coeff_sum[[grid_id]]
@@ -150,8 +152,6 @@ func_compute_avalanche_fixed_grids <- function(run_params, data_dhms) {
     elevation_sorted_ids_raw <- sort(getValues(avalanche$elevation_proc[[grid_id]]), decreasing = TRUE, index.return = TRUE)[[2]]
     elevation_ids_border <- unique(c(cellFromRow(avalanche$elevation_proc[[grid_id]], c(1, run_params$grid_nrow)), cellFromCol(avalanche$elevation_proc[[grid_id]], c(1, run_params$grid_ncol))))
     avalanche$elevation_sorted_ids[[grid_id]] <- setdiff(elevation_sorted_ids_raw, elevation_ids_border)
-    
-    
     
   }
 

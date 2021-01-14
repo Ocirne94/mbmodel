@@ -138,6 +138,17 @@ func_load_elevation_grids <- function(run_params, load_which) {
   
   grids_out$n_grids <- length(grids_out$elevation)
   
+  # If we have loaded the masked DEM, we also
+  # pre-compute the valid glaciated cells.
+  if (load_which == "dem") {
+    
+    grids_out$glacier_cell_ids <- list()
+    
+    for (grid_id in 1:grids_out$n_grids) {
+      grids_out$glacier_cell_ids[[grid_id]] <- which(!is.na(getValues(grids_out$elevation[[grid_id]])))
+    }
+  }
+  
   return(grids_out)
   
 }

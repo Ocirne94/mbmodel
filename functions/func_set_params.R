@@ -64,11 +64,24 @@ func_set_params <- function() {
     elevation_effect_threshold   =   3700,                         # [m]: elevation above which snow accumulation decreases (wind effect)
     elevation_effect_fact        =   1.0,                          # [-]: strength of snow accumulation decrease at very high altitude. Only values between 0 and 1 make sense. At 0 accumulation does not decrease, at 1 accumulation decreases to 0 at the highest point in the DHM.
     
+    
+    #### AVALANCHE model parameters ####
     elevation_equal_threshold    =   1e-3,                         # [m]: threshold for considering two elevation values equal when we look for problematic flat patches
     deposition_slope_lim         =   40,                           # [°]: at or above this slope value snow will not be deposited during an avalanche. A lower value makes avalanches travel farther. Called beta_lim in Gruber (2007).
     deposition_mass_lim          =   4000,                         # [kg m-2]: maximum deposition during an avalanche. A lower value makes avalanches travel farther. Called D_lim in Gruber (2007).
     movable_slope_lim_lower      =   30,                           # [°]: above this slope value, there is a linearly increasing movable fraction in the initial mass distribution, for avalanches. A lower value makes avalanches start also on more gentle slopes.
     movable_slope_lim_upper      =   60,                           # [°]: above this slope value, all input snow is movable in the avalanche routine.
+    
+    
+    #### WINTER SNOW PROBES interpolation parameters ####
+    snow_probes_idw_exp          =   0.75,                         # [-]: exponent for the IDW interpolation of winter snow measurements
+    
+    
+    #### INITIAL SNOW COVER parameters ####
+    initial_snowline_elevation   =   3700,                         # [m]: initial snow line elevation, at the beginning of each simulated year. In the future it will be customizable for each year, and it will be possible to use as initial snow cover the result of the previous year (so that this elevation is only used for the first modeled year).
+    initial_snow_gradient        =   200,                          # [mm w.e. (100 m)-1]: increase of the initial snow amount for every 100 m elevation above the snow line
+    
+    
     
     #### TIME-related parameters ####
     first_year                   =   2017,                         # First modeled year (usually from October of the previous year to September of this year)
@@ -81,7 +94,7 @@ func_set_params <- function() {
   run_params$years <- run_params$first_year:run_params$last_year
   run_params$n_years <- length(run_params$years)
   
-  run_params$curvature_dhm_smooth <- max(1e-9,run_params$curvature_dhm_smooth) # The gaussain smoothing fails if sigma   = 0 (but 1e-9 still corresponds to no smoothing!)
+  run_params$curvature_dhm_smooth <- max(1e-9,run_params$curvature_dhm_smooth) # The gaussian smoothing fails if sigma   = 0 (but 1e-9 still corresponds to no smoothing!)
   run_params$dhm_smooth_windowsize <- max(5, 2 * run_params$curvature_dhm_smooth + 1)
   
   return(run_params)

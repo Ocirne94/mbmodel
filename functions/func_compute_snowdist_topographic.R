@@ -4,61 +4,66 @@
 #                 resolution, optimizing model parameters towards the best fit with point         #
 #                 mass balance measurements.                                                      #
 #                 This file contains the computation of a grid of relative (normalized)           #
-#                 snow distribution from elevation, slope and curvature.                          #
+#                 snow distribution from elevation, and curvature, used to distribute             #
+#                 the snow cover at the beginning of the modelling and after snowfall.            #
+#                 The effect of avalanches is NOT included here since it is not constant          #
+#                 but depends on the snow amounts.                                                #
 ###################################################################################################
 
 
-func_compute_snowdist_topographic <- function(run_params, dem, dhm) {
+func_compute_snowdist_topographic <- function(run_params, data_dhms, data_dems) {
   
-  #### Curvature factor (lower accumulation on convex surfaces, higher on concave) ####
-  # In the original IDL implementation, the curvature multiplication factor
-  # is (1 - x), with x linearly dependent on the terrain curvature up to a cutoff:
-  # curvature values at or exceeding ±threshold produce an x = ±0.5.
-  # threshold is currently the smaller of the two curvature extremes (abs(max) and abs(min))
-  # reduced by a tunable factor (default 1.2), so that both 1.5 and 0.5 are reached (even with some margin!)
-  # in the curvature multiplication factor (arbitrary!).
-  # IMPORTANT: terrain curvature in IDL is computed manually by taking cells at distance 3, 5 and 6
-  # from the focal cell. This is a bit arbitrary (taken from some old ArcGIS documentation)
-  # and produces a smoothed-out curvature.
+  snowdist_topographic <- list()
   
-  # We use a smoothed DEM to compute curvature because it is very sensitive to DEM noise.
-  # The window size used for the smoothing is automatically computed from the smoothing amount.
-  # Then for the snow distribution we use the same approach as the IDL version.
-  dhm_smooth <- raster.gaussian.smooth(dhm,
-                                       run_params$curvature_dhm_smooth,
-                                       run_params$dhm_smooth_windowsize,
-                                       type = "sum")
-  dhm_curvature <- curvature(dhm_smooth, "total")
+  for (grid_id in 1:data_dhms$n_grids) {
   
-  # Compute curvature cutoff.
-  dhm_curvature_bound <- min(abs(max(dhm_curvature[], na.rm=T)), abs(min(dhm_curvature[], na.rm=T))) / run_params$curvature_cutoff_fact
+    #### Curvature factor (lower accumulation on convex surfaces, higher on concave) ####
+    # In the original IDL implementation, the curvature multiplication factor
+    # is (1 - x), with x linearly dependent on the terrain curvature up to a cutoff:
+    # curvature values at or exceeding ±threshold produce an x = ±0.5.
+    # threshold is currently the smaller of the two curvature extremes (abs(max) and abs(min))
+    # reduced by a tunable factor (default 1.2), so that both 1.5 and 0.5 are reached (even with some margin!)
+    # in the curvature multiplication factor (arbitrary!).
+    # IMPORTANT: terrain curvature in IDL is computed manually by taking cells at distance 3, 5 and 6
+    # from the focal cell. This is a bit arbitrary (taken from some old ArcGIS documentation)
+    # and produces a smoothed-out curvature.
+    
+    # We use a smoothed DEM to compute curvature because it is very sensitive to DEM noise.
+    # The window size used for the smoothing is automatically computed from the smoothing amount.
+    # Then for the snow distribution we use the same approach as the IDL version.
+    dhm_smooth <- raster.gaussian.smooth(data_dhms$elevation[[grid_id]],
+                                         run_params$curvature_dhm_smooth,
+                                         run_params$dhm_smooth_windowsize,
+                                         type = "sum")
+    dhm_curvature <- curvature(dhm_smooth, "total")
+    
+    # Compute curvature cutoff.
+    dhm_curvature_bound <- min(abs(max(getValues(dhm_curvature), na.rm=T)), abs(min(getValues(dhm_curvature), na.rm=T))) / run_params$curvature_cutoff_fact
+    
+    # Apply corrected cutoff to curvature.
+    dhm_curvature_cut <- setValues(dhm_curvature,
+                                   pmin(dhm_curvature_bound, pmax(-dhm_curvature_bound, getValues(dhm_curvature))))
+    
+    # Compute final curvature factor for snow distribution.
+    snowdist_curv_mult <- 1 - (dhm_curvature_cut * run_params$curvature_effect_limit / dhm_curvature_bound)
+    
+    
+    #### Elevation factor (lower accumulation at very high elevations) ####
+    snowdist_ele_mult <- setValues(data_dhms$elevation[[grid_id]], 1)
+    ele_scaling_fac <- (max(getValues(data_dhms$elevation[[grid_id]]), na.rm=T) - run_params$elevation_effect_threshold) / run_params$elevation_effect_fact
+    dhm_ids_high <- which(getValues(data_dhms$elevation[[grid_id]]) > run_params$elevation_effect_threshold)
+    
+    snowdist_ele_mult[dhm_ids_high] <- 2 - 2^( (data_dhms$elevation[[grid_id]][dhm_ids_high] - run_params$elevation_effect_threshold) / ele_scaling_fac )
+    
+    
+    #### Final distribution ####
+    snowdist_topographic_cur_raw <- snowdist_curv_mult * snowdist_ele_mult
+    
+    snowdist_topographic[[grid_id]] <- snowdist_topographic_cur_raw / mean(snowdist_topographic_cur_raw[data_dems$glacier_cell_ids[[grid_id]]])
+    
+    
+  }
   
-  # Apply corrected cutoff to curvature.
-  dhm_curvature_cut <- setValues(dhm_curvature,
-                                 pmin(dhm_curvature_bound, pmax(-dhm_curvature_bound, dhm_curvature[])))
-  
-  # Compute final curvature factor for snow distribution.
-  snowdist_curv_mult <- 1 - (dhm_curvature_cut * run_params$curvature_effect_limit / dhm_curvature_bound)
-  
-  
-  #### Elevation factor (lower accumulation at very high elevations) ####
-  snowdist_ele_mult <- setValues(dhm, 1)
-  ele_scaling_fac <- (max(dhm[], na.rm=T) - run_params$elevation_effect_threshold) / run_params$elevation_effect_fact
-  dhm_ids_high <- which(dhm[] > run_params$elevation_effect_threshold)
-  
-  snowdist_ele_mult[dhm_ids_high] <- 2 - 2^( (dhm[dhm_ids_high] - run_params$elevation_effect_threshold) / ele_scaling_fac )
-  
-  
-  #### Slope factor (avalanches) ####
-  # Here we follow Gruber (2007), doi:10.1029/2006WR004868.
-  dhm_slope <- terrain(dhm, "slope", unit = "degrees")
-  dhm_aspect <- terrain(dhm, "aspect", unit = "degrees")
-  
-  
-  #### Final distribution ####
-  snowdist_topographic <- snowdist_curv_mult * snowdist_ele_mult * snowdist_slope_mult
-  snowdist_topographic_norm <- snowdist_topographic / mean(snowdist_topographic[which(!is.na(dem[]))])
-  
-  return(snowdist_topographic_norm)
+  return(snowdist_topographic)
   
 }
