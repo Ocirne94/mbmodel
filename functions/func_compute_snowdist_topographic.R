@@ -61,6 +61,7 @@ func_compute_snowdist_topographic <- function(run_params, data_dhms, data_dems) 
     
     snowdist_topographic[[grid_id]] <- snowdist_topographic_cur_raw / mean(snowdist_topographic_cur_raw[data_dems$glacier_cell_ids[[grid_id]]])
     
+    snowdist_topographic[[grid_id]][is.na(getValues(snowdist_topographic[[grid_id]]))] <- 1
     
   }
   

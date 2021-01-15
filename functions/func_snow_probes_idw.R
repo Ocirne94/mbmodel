@@ -10,7 +10,7 @@
 
 
 # snow_probes is an annual subset of data_massbalance_winter.
-func_snow_probes_idw <- function(run_params, snow_probes) {
+func_snow_probes_idw <- function(run_params, snow_probes, data_dhms) {
   
   snow_probes_spdf <- SpatialPointsDataFrame(coords = snow_probes[,c(4,5)],
                                              data = data.frame(swe = snow_probes$dh_cm * snow_probes$density / 100),
@@ -18,7 +18,7 @@ func_snow_probes_idw <- function(run_params, snow_probes) {
     
 
   # Use prescribed distance exponent.
-  gs <- gstat(formula=swe~1, data=snow_probes, set=list(idp=run_params$snow_probes_idw_exp))
+  gs <- gstat(formula=swe~1, data=snow_probes_spdf, set=list(idp=run_params$snow_probes_idw_exp))
   snowdist_idw <- interpolate(data_dhms$elevation[[1]], gs)
   
   # Smooth as in the original IDL implementation.

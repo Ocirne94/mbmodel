@@ -13,10 +13,6 @@ func_set_params <- function() {
     # name_glacier                =    "barkrak",                    # Glacier name, currently unused
     
     #### INPUT-related parameters ####
-    boot_file_write              =   FALSE,                        # Save .RData file with the input data, for faster reload.
-    boot_file_read               =   TRUE,                         # Load .RData file with the input data, instead of loading input files.
-    boot_file_name               =   "boot_file.RData",            # Name of the .RData file.
-    
     # Set paths (don't forget the final / or \).
     dir_data_weather             =   "./input/data/weather/",      # The weather series goes here
     dir_data_dem                 =   "./input/data/dem/",          # Path to the DEM(s)   = elevation grid(s) (masked to the glacier surface, nodata outside)
@@ -80,8 +76,7 @@ func_set_params <- function() {
     #### INITIAL SNOW COVER parameters ####
     initial_snowline_elevation   =   3700,                         # [m]: initial snow line elevation, at the beginning of each simulated year. In the future it will be customizable for each year, and it will be possible to use as initial snow cover the result of the previous year (so that this elevation is only used for the first modeled year).
     initial_snow_gradient        =   200,                          # [mm w.e. (100 m)-1]: increase of the initial snow amount for every 100 m elevation above the snow line
-    
-    
+    initial_snow_dist_red_fac    =   0.6,                          # [-]: reduction factor to decrease the importance of the topographical and avalanche distribution of snow, for the computed initial snow cover (of each year).
     
     #### TIME-related parameters ####
     first_year                   =   2017,                         # First modeled year (usually from October of the previous year to September of this year)

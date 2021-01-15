@@ -8,13 +8,6 @@
 ###################################################################################################
 
 func_compute_avalanche_fixed_grids <- function(run_params, data_dhms) {
-
-  # Assign global grid parameters to run_params.
-  # We do it here because it is the first function
-  # called after the grids are loaded.
-  run_params$grid_nrow <<- nrow(data_dhms$elevation[[1]])
-  run_params$grid_ncol <<- ncol(data_dhms$elevation[[1]])
-  run_params$grid_cell_size <<- xres(data_dhms$elevation[[1]])
   
   conv_deg2rad <- pi / 180
 
