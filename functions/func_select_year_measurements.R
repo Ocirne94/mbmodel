@@ -5,13 +5,13 @@
 #                 mass balance measurements.                                                      #
 #                 This file contains the selection of the indices of the mass balance points      #
 #                 which will be considered for the given year.                                    #
-#                 These are all the points whose date of measurement end is between 1 Jan and     #
-#                 30 Sep of the year.                                                             #
+#                 These are all the points whose period of measurement ENDS between 1 Jan and     #
+#                 31 Dec of the year.                                                             #
 ################################################################################################### 
 
 func_select_year_measurements <- function(data_massbal, year) {
   
-  ids_year <- which((as.integer(format(data_massbal$end_date, "%Y")) == year) & (as.integer(format(data_massbal$end_date, "%m")) < 10))
+  ids_year <- which(as.integer(format(data_massbal$end_date, "%Y")) == year)
 
   return(ids_year)
   

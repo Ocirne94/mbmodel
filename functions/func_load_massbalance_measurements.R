@@ -32,8 +32,8 @@ func_load_massbalance_measurements <- function(run_params, load_what) {
   names(data_massbalance) <- c("id", "start_date", "end_date", "x", "y", "z", "dh_cm", "density")
   
   # Convert timestamps to time objects.
-  data_massbalance$start_date <- as.POSIXct(data_massbalance$start_date, format = "%d.%m.%Y", tz = "UTC")
-  data_massbalance$end_date <- as.POSIXct(data_massbalance$end_date, format = "%d.%m.%Y", tz = "UTC")
+  data_massbalance$start_date <- as.POSIXct(data_massbalance$start_date, format = "%d.%m.%Y")
+  data_massbalance$end_date <- as.POSIXct(data_massbalance$end_date, format = "%d.%m.%Y")
   
   return(data_massbalance)
   

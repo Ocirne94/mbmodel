@@ -22,9 +22,11 @@ NumericVector transport_deposit_mass(IntegerVector elevation_sorted_ids,
                                      NumericVector draining_fraction3,
                                      NumericVector draining_fraction4
                                     ) {
-    
-    elevation_sorted_ids = elevation_sorted_ids - 1; // C++ indexing starts from 0, R indexing starts from 1!
-    unsigned int n_cells = elevation_sorted_ids.size();
+    // C++ indexing starts from 0, R indexing starts from 1!
+    // We don't modify elevation_sorted_ids because Rcpp passes by reference,
+    // so elevation_sorted_ids would get changed in R too!
+    IntegerVector elevation_sorted_ids_cpp = elevation_sorted_ids - 1;
+    unsigned int n_cells = elevation_sorted_ids_cpp.size();
     
     // Iterate over the cells from the highest to the lowest,
     // moving mass downstream according to the geometries and thresholds.
@@ -33,7 +35,7 @@ NumericVector transport_deposit_mass(IntegerVector elevation_sorted_ids,
         // Make loop interruptible.
         if (cell_cur_id_id % 1000u == 0u) Rcpp::checkUserInterrupt();
     
-        unsigned int cell_cur_id = elevation_sorted_ids[cell_cur_id_id];
+        unsigned int cell_cur_id = elevation_sorted_ids_cpp[cell_cur_id_id];
         
         // 1 = top, 2 = left, 3 = right, 4 = bottom.
         // We are iterating only on the non-border cells,

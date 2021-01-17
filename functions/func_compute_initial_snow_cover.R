@@ -31,9 +31,10 @@ func_compute_initial_snow_cover <- function(run_params,
   # snowdist_topographic grid is normalized, so it has
   # values close to 1; deposition of 1 leads to a realistic
   # avalanche deposit for Barkrak glacier).
+  # print(cksum(grids_avalanche_cur))
   dist_post_avalanche <- func_avalanche(grids_avalanche_cur, dist_initial, 1 / run_params$deposition_mass_lim)
   
-  writeRaster(dist_post_avalanche, "dist_post_avalanche.tif", overwrite = T)
+  # writeRaster(dist_post_avalanche, "dist_post_avalanche.tif", overwrite = T)
   
   # Reduce importance of topographic/avalanche distribution variability.
   dist_red <- 1 + run_params$initial_snow_dist_red_fac * (dist_post_avalanche - 1)
@@ -42,7 +43,7 @@ func_compute_initial_snow_cover <- function(run_params,
   # reaching the glacier from ice-free slopes! Plus the grids used so far were already normalized.
   # dist_red <- dist_red / mean(dist_red[data_dems$glacier_cell_ids[[grid_id]]])
   
-  writeRaster(dist_red, "dist_red.tif", overwrite = T)
+  # writeRaster(dist_red, "dist_red.tif", overwrite = T)
   
   dist_cur <- dist_red
   
@@ -70,12 +71,12 @@ func_compute_initial_snow_cover <- function(run_params,
                         pmax(0,
                              getValues(data_dems$elevation[[grid_id]] - run_params$initial_snowline_elevation) * run_params$initial_snow_gradient / 100))
 
-  writeRaster(dist_snl, "dist_snl.tif", overwrite = T)
+  # writeRaster(dist_snl, "dist_snl.tif", overwrite = T)
   
   # Compute final distribution.
   dist_final <- dist_snl * dist_cur
   
-  writeRaster(dist_final, "dist_final.tif", overwrite = T)
+  # writeRaster(dist_final, "dist_final.tif", overwrite = T)
   
   return(dist_final)
   
