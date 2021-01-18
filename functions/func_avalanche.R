@@ -18,11 +18,13 @@
   # avalanche_grids <- sapply(grids_avalanche, `[[`, grid_id)  # To select all the appropriate grids.
   # mass_final <- func_avalanche(avalanche_grids, mass_initial, mult)
 # The deposition_max_multiplier can be used to enable consistent modelling on different input grids
-# (e.g., the normalized snow distribution grid, which has cell values close to 1; an actual snow cover grid,
-# with cell values of maybe 1000 (kg m-2); and a seasonal sum (if we choose to have a single avalanche over
-# a whole year), with cell values of maybe 5000 (kg m-2)).
-# This addresses the discussion of Section 4.4 in Gruber (2007).
-func_avalanche <- function(avalanche_grids, mass_initial, deposition_max_multiplier = 1.0) {
+  # (e.g., the normalized snow distribution grid, which has cell values close to 1; an actual snow cover grid,
+  # with cell values of maybe 1000 (kg m-2); and a seasonal sum (if we choose to have a single avalanche over
+  # a whole year), with cell values of maybe 5000 (kg m-2)).
+  # This addresses the discussion of Section 4.4 in Gruber (2007).
+# The preserve_edges switch makes the function put back the mass_initial value
+  # at the edges, so that the output of func_avalanche has no NAs.
+func_avalanche <- function(avalanche_grids, mass_initial, deposition_max_multiplier = 1.0, preserve_edges = TRUE) {
   
   deposition <- setValues(avalanche_grids$elevation_proc, 0.0)
   mass_movable <- mass_initial * avalanche_grids$movable_frac
@@ -47,6 +49,10 @@ func_avalanche <- function(avalanche_grids, mass_initial, deposition_max_multipl
   
   
   mass_final <- mass_fixed + deposition
+  
+  if (preserve_edges) {
+    mass_final <- cover(mass_final, mass_initial)
+  }
 
   return(mass_final)
   

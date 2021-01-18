@@ -30,12 +30,19 @@ func_compute_snowdist_topographic <- function(run_params, data_dhms, data_dems) 
     
     # We use a smoothed DEM to compute curvature because it is very sensitive to DEM noise.
     # The window size used for the smoothing is automatically computed from the smoothing amount.
-    # Then for the snow distribution we use the same approach as the IDL version.
     dhm_smooth <- raster.gaussian.smooth(data_dhms$elevation[[grid_id]],
                                          run_params$curvature_dhm_smooth,
                                          run_params$dhm_smooth_windowsize,
                                          type = "sum")
+    dhm_na_border <- which(is.na(getValues(dhm_smooth)))
+    dhm_valid     <- setdiff(1:run_params$grid_ncells, dhm_na_border)
+    dhm_smooth <- cover(dhm_smooth, data_dhms$elevation[[grid_id]]) # Fill NA edges of smoothed raster with original values.
     dhm_curvature <- curvature(dhm_smooth, "total")
+    # Rescale curvature along the raster edges,
+    # where we've just had to use the unsmoothed raster:
+    # we don't want to have extreme curvature values here
+    # since it is outside our region of interest.
+    dhm_curvature[dhm_na_border] <- (dhm_curvature[dhm_na_border] / max(dhm_curvature[dhm_na_border])) * min(abs(range(dhm_curvature[dhm_valid])))
     
     # Compute curvature cutoff.
     dhm_curvature_bound <- min(abs(max(getValues(dhm_curvature), na.rm=T)), abs(min(getValues(dhm_curvature), na.rm=T))) / run_params$curvature_cutoff_fact
@@ -59,10 +66,20 @@ func_compute_snowdist_topographic <- function(run_params, data_dhms, data_dems) 
     #### Final distribution ####
     snowdist_topographic_cur_raw <- snowdist_curv_mult * snowdist_ele_mult
     
+    # The four corners get weird values because
+    # slope is not well defined there: just take
+    # the next value along the diagonals (towards the center).
+    snowdist_topographic_cur_raw[1] <- snowdist_topographic_cur_raw[run_params$grid_ncol + 2]
+    snowdist_topographic_cur_raw[run_params$grid_ncol] <- snowdist_topographic_cur_raw[2 * run_params$grid_ncol - 1]
+    snowdist_topographic_cur_raw[run_params$grid_ncells - run_params$grid_ncol + 1] <- snowdist_topographic_cur_raw[run_params$grid_ncells - 2 * run_params$grid_ncol + 2]
+    snowdist_topographic_cur_raw[run_params$grid_ncells] <- snowdist_topographic_cur_raw[run_params$grid_ncells - run_params$grid_ncol - 1]
+    
+    # Normalize over the glacier: we assume
+    # that curvature and elevation redistribution
+    # have no net effect on the total snow amount
+    # over the glacier.
     snowdist_topographic[[grid_id]] <- snowdist_topographic_cur_raw / mean(snowdist_topographic_cur_raw[data_dems$glacier_cell_ids[[grid_id]]])
-    
-    snowdist_topographic[[grid_id]][is.na(getValues(snowdist_topographic[[grid_id]]))] <- 1
-    
+  
   }
   
   return(snowdist_topographic)

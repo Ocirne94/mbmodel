@@ -24,7 +24,10 @@ func_set_params <- function() {
     
     # Set filenames and input file properties.
     filename_weather             =   "barkrak_barkrak_d.dat",      # File name of the weather series
-    file_weather_nskip           =   4,                            # Number of lines to skip in the weather file
+    file_weather_nskip           =   4,                            # [-]: number of lines to skip in the weather file
+    weather_aws_elevation        =   3463,                         # [m a.s.l.]: AWS elevation
+    weather_snowfall_temp        =   1.5,                          # [°C]: at this temperature precipitation is half rain, half snow. One degree above it is all rain, one degree below it is all snow (snow fraction is linearly interpolated).
+    weather_max_precip_ele       =   3700,                         # [m a.s.l.]: above this altitude, precipitation does not increase any more but becomes constant (cutoff).
     
     grids_crs                    =   CRS(SRS_string  ="EPSG:32642"), # Reference system of the grids, used in slope/aspect computations. Overrides any CRS info reported from the grid files.
     
@@ -67,6 +70,7 @@ func_set_params <- function() {
     deposition_mass_lim          =   4000,                         # [kg m-2]: maximum deposition during an avalanche. A lower value makes avalanches travel farther. Called D_lim in Gruber (2007).
     movable_slope_lim_lower      =   30,                           # [°]: above this slope value, there is a linearly increasing movable fraction in the initial mass distribution, for avalanches. A lower value makes avalanches start also on more gentle slopes.
     movable_slope_lim_upper      =   60,                           # [°]: above this slope value, all input snow is movable in the avalanche routine.
+    deposition_max_ratio_init    =   12,                           # [-]: ONLY for the initial snow distribution grid, how much accumulation can locally result from an avalanche relative to the mean snow distribution before the avalanche? This controls how far avalanches travel, it should be set to a value low enough that avalanches don't bring snow below the marked snow line elevation, and high enough that avalanche deposits look plausible. An exploratory value of 10 can make sense.
     
     
     #### WINTER SNOW PROBES interpolation parameters ####
@@ -76,7 +80,12 @@ func_set_params <- function() {
     #### INITIAL SNOW COVER parameters ####
     initial_snowline_elevation   =   3700,                         # [m]: initial snow line elevation, at the beginning of each simulated year. In the future it will be customizable for each year, and it will be possible to use as initial snow cover the result of the previous year (so that this elevation is only used for the first modeled year).
     initial_snow_gradient        =   200,                          # [mm w.e. (100 m)-1]: increase of the initial snow amount for every 100 m elevation above the snow line
-    initial_snow_dist_red_fac    =   0.6,                          # [-]: reduction factor to decrease the importance of the topographical and avalanche distribution of snow, for the computed initial snow cover (of each year).
+    initial_snow_dist_red_fac    =   0.5,                          # [-]: reduction factor to decrease the importance of the snow distribution variability (all components except winter snow probes), for the computed initial snow cover (of each year). 0 means uniform snow distribution, 1 means no reduction.
+    
+    
+    #### MELT MODEL fixed parameters ####
+    debris_red_fac               =   0.6,                          # [-]: reduction factor of melt over debris-covered ice.
+    
     
     #### TIME-related parameters ####
     first_year                   =   2017,                         # First modeled year (usually from October of the previous year to September of this year)

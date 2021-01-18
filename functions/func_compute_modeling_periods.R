@@ -17,8 +17,8 @@
 # (among the winter ones) and ends at the end of the period with the latest end (among the winter ones).
 func_compute_modeling_periods <- function(run_params, massbal_annual, massbal_winter, year_cur) {
   
-  hydro_start <- as.POSIXct(paste(year_cur-1, 10, 1), format="%Y %m %d")
-  hydro_end   <- as.POSIXct(paste(year_cur, 9, 30), format = "%Y %m %d")
+  hydro_start <- as.POSIXct(paste(year_cur-1, 10, 1), format="%Y %m %d", tz = "UTC")
+  hydro_end   <- as.POSIXct(paste(year_cur, 9, 30), format = "%Y %m %d", tz = "UTC")
   
   # na.rm because we support NA as start date, meaning
   # "end of previous ablation season" i.e. mass balance minimum.
