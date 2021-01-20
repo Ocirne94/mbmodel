@@ -12,8 +12,7 @@
   # Combine with the snow line elevation and snowgrad
   # Compute avalanche on the resulting grid (with appropriate multiplier for max deposition)
   # Reduce effect of the post-avalanche grid (custom reduction parameter, in IDL it is 0.5)
-  # Compute probes_idw, normalize the probes idw output
-  # Multiply the two grids (post-avalanche grid and probes idw) and normalize over the glacier surface
+  # Multiply the grid with the probes idw if available
   # Return result
 
 func_compute_initial_snow_cover <- function(run_params,
@@ -21,6 +20,7 @@ func_compute_initial_snow_cover <- function(run_params,
                                             data_dems,
                                             grids_snowdist_topographic,
                                             grids_avalanche,
+                                            grid_probes_norm,
                                             grid_id,
                                             data_massbal_winter) {
   
@@ -58,12 +58,9 @@ func_compute_initial_snow_cover <- function(run_params,
   
   # If we have any winter stakes for the year,
   # use them to correct the final distribution.
-  if(length(data_massbal_winter[,1]) > 0) {
+  if((length(data_massbal_winter[,1]) > 0) & (!is.null(grid_probes_norm))) {
     
-    dist_probes_idw <- func_snow_probes_idw(run_params, data_massbal_winter, data_dhms)
-    dist_probes_idw_norm <- dist_probes_idw / mean(dist_probes_idw[data_dems$glacier_cell_ids[[grid_id]]])
-    
-    dist_cur <- dist_cur * dist_probes_idw_norm
+    dist_cur <- dist_cur * grid_probes_norm
     
     # writeRaster(dist_cur, "5-dist-topo-snl-aval-red-probes.tif", overwrite = T)
     

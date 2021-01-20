@@ -87,14 +87,6 @@ if (params_file_write) {
 gc()
 
 
-
-#### TESTING, for experimental plots ####
-surf_r <- subs(data_surftype[[1]], data.frame(from = c(0, 1, 4, 5), to = c(100, 170, 0, 70)))
-surf_g <- subs(data_surftype[[1]], data.frame(from = c(0, 1, 4, 5), to = c(150, 213, 0, 20)))
-surf_b <- subs(data_surftype[[1]], data.frame(from = c(0, 1, 4, 5), to = c(200, 255, 0, 20)))
-surf_base <- ggRGB(stack(surf_r, surf_g, surf_b), r = 1, g = 2, b = 3, ggLayer = TRUE)
-
-
 #### Main loop ####
 # for (year_id in 1:run_params$n_years) {
   year_id <- 1 # TESTING!!
@@ -106,6 +98,15 @@ surf_base <- ggRGB(stack(surf_r, surf_g, surf_b), r = 1, g = 2, b = 3, ggLayer =
   # Select grids of the current year.
   grid_id <- data_dhms$grid_year_id[year_id]
   
+  
+  #------------------------- Compute image for background of daily SWE plots -------------------------#
+  surf_r <- subs(data_surftype[[grid_id]], data.frame(from = c(0, 1, 4, 5), to = c(100, 170, 0, 70)))
+  surf_g <- subs(data_surftype[[grid_id]], data.frame(from = c(0, 1, 4, 5), to = c(150, 213, 0, 20)))
+  surf_b <- subs(data_surftype[[grid_id]], data.frame(from = c(0, 1, 4, 5), to = c(200, 255, 0, 20)))
+  surf_base <- ggRGB(stack(surf_r, surf_g, surf_b), r = 1, g = 2, b = 3, ggLayer = TRUE)
+  #---------------------------------------------------------------------------------------------------#
+  
+  
   # Select mass balance measurements of the current year.
   massbal_annual_ids <- func_select_year_measurements(data_massbalance_annual, year_cur)
   massbal_winter_ids <- func_select_year_measurements(data_massbalance_winter, year_cur)
@@ -116,21 +117,41 @@ surf_base <- ggRGB(stack(surf_r, surf_g, surf_b), r = 1, g = 2, b = 3, ggLayer =
   # Only if we have some measurements of winter snow cover, else we can't.
   process_winter <- length(massbal_winter_ids) > 0
   
-  # Compute an initial snow distribution for the current year.
+  if (process_winter) {
+    dist_probes_idw           <- func_snow_probes_idw(run_params, massbal_winter_cur, data_dhms)
+    dist_probes_idw           <- clamp(dist_probes_idw, lower = 0, upper = Inf)
+    dist_probes_idw_norm      <- dist_probes_idw / mean(dist_probes_idw[data_dems$glacier_cell_ids[[grid_id]]])
+  } else {
+    # No winter probes to work with, so uniform distribution for the probes component.
+    dist_probes_idw_norm      <- setValues(data_dhms$elevation[[1]], 1.0)
+  }
+  dist_probes_norm_values     <- getValues(dist_probes_idw_norm) # For the accumulation model.
+  dist_probes_norm_mean       <- mean(dist_probes_norm_values)
+  dist_probes_norm_values_red <- dist_probes_norm_mean + run_params$accum_probes_red_fac * (dist_probes_norm_values - dist_probes_norm_mean)
+  
+  
+  
+  #### .  INITIAL SNOW COVER ####
   snowdist_init <- func_compute_initial_snow_cover(run_params,
                                                    data_dhms,
                                                    data_dems,
                                                    grids_snowdist_topographic,
                                                    grids_avalanche,
+                                                   dist_probes_idw_norm,
                                                    grid_id,
                                                    massbal_winter_cur)
   
   
+  #### .  MODELING PERIOD BOUNDS ####
   # Four POSIXct time objects: start and end of the annual
   # modeling period, and same for the winter modeling period.
-  model_time_bounds   <- func_compute_modeling_periods(run_params, massbal_annual_cur, massbal_winter_cur, year_cur)
+  model_time_bounds   <- func_compute_modeling_periods(run_params,
+                                                       massbal_annual_cur,
+                                                       massbal_winter_cur,
+                                                       year_cur)
   
-
+  
+  #### .  WINTER MASS BALANCE ####
   if (process_winter)  {
     model_winter_bounds <- model_time_bounds[3:4]
     # TODO:
@@ -138,6 +159,8 @@ surf_base <- ggRGB(stack(surf_r, surf_g, surf_b), r = 1, g = 2, b = 3, ggLayer =
       # run massbal_model (we cannot run it only on the stake grid cells due to avalanches!!)
   }
     
+  
+  #### .  ANNUAL MASS BALANCE ####
   # Here instead do the annual processing.
   # Find grid cells corresponding to the annual stakes.
   annual_stakes_cells <- fourCellsFromXY(data_dhms$elevation[[grid_id]], as.matrix(massbal_annual_cur[,4:5]))
@@ -145,7 +168,25 @@ surf_base <- ggRGB(stack(surf_r, surf_g, surf_b), r = 1, g = 2, b = 3, ggLayer =
   # Time specification of the annual run.
   model_annual_bounds <- model_time_bounds[1:2]
   
-
+  # Select weather series period.
+  # If the weather series time specification is wrong
+  # this step is where it all falls apart.
+  weather_series_cur <- data_weather[which(data_weather$timestamp == model_time_bounds[1]):(which(data_weather$timestamp == model_time_bounds[2]) - 1),]
+  
+  dist_topographic_values      <- getValues(grids_snowdist_topographic[[grid_id]])
+  dist_topographic_values_mean <- mean(dist_topographic_values)
+  dist_topographic_values_red  <- dist_topographic_values_mean + run_params$accum_snow_dist_red_fac * (dist_topographic_values - dist_topographic_values_mean)
+  
+  massbal_cumul_year_vec <- func_massbal_model(run_params,
+                                               year_cur_params,
+                                               model_annual_bounds,
+                                               getValues(data_dhms$elevation[[grid_id]]),
+                                               getValues(data_surftype[[grid_id]]),
+                                               getValues(snowdist_init),
+                                               radiation_grids,
+                                               weather_series_cur,
+                                               dist_topographic_values_red,
+                                               dist_probes_norm_values_red)
   
 
   

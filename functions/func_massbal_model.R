@@ -17,24 +17,25 @@ func_massbal_model <- function(run_params,
                                surftype_init_values,
                                snowdist_init_values,
                                radiation_grids,
-                               weather_series) {
+                               weather_series_cur,
+                               snowdist_topographic_values_red,
+                               snowdist_probes_norm_values_red) {
   
   year_cur_params$rad_fact_firn <- (year_cur_params$rad_fact_ice + year_cur_params$rad_fact_snow) / 2
   
   # TESTING #
+  model_time_bounds <- model_annual_bounds
   dhm_values <- getValues(data_dhms$elevation[[1]])
   surftype_init_values <- getValues(data_surftype[[1]])
   snowdist_init_values <- getValues(snowdist_init)
+  snowdist_topographic_values_red <- dist_topographic_values_red
+  snowdist_probes_norm_values_red <- dist_probes_norm_values_red
   ###########
   
   
   
   #### PROCESS AND EXTRAPOLATE WEATHER SERIES ####
-  # Select weather series period.
-  # If the weather series time specification is wrong
-  # this step is where it all falls apart.
-  weather_series_cur <- data_weather[which(data_weather$timestamp == model_time_bounds[1]):(which(data_weather$timestamp == model_time_bounds[2]) - 1),]
-  
+
   # Correct precipitation undercatch with given parameters
   # (lower correction in summer).
   weather_series_cur$precip_corr <- weather_series_cur$precip * (1 + (year_cur_params$prec_corr / 100.))
@@ -47,7 +48,7 @@ func_massbal_model <- function(run_params,
   # Temperature in °C, snowfall in mm w.e.
   vec_temperature     <- rep(weather_series_cur$t2m_mean, each = run_params$grid_ncells) + year_cur_params$temp_elegrad * (dhm_values - run_params$weather_aws_elevation) / 100
   vec_solid_prec_frac <- pmax(0, pmin(1, ((1 + run_params$weather_snowfall_temp) - vec_temperature) / 2))
-  vec_snowfall        <- vec_solid_prec_frac * rep(weather_series_cur$precip_corr, each = run_params$grid_ncells) * (1 + (pmin(run_params$weather_max_precip_ele, dhm_values) - run_params$weather_aws_elevation) * year_cur_params$prec_elegrad / 1e4 ) # 1e4: gradient is in [% / 100 m], we want [fraction / m].
+  vec_accumulation    <- snowdist_probes_norm_values_red * snowdist_topographic_values_red * vec_solid_prec_frac * rep(weather_series_cur$precip_corr, each = run_params$grid_ncells) * (1 + (pmin(run_params$weather_max_precip_ele, dhm_values) - run_params$weather_aws_elevation) * year_cur_params$prec_elegrad / 1e4 ) # 1e4: gradient is in [% / 100 m], we want [fraction / m].
   
   
   #### CREATE OUTPUT VECTORS ####
@@ -134,9 +135,9 @@ func_massbal_model <- function(run_params,
     vec_surf_type[cells_cur][cells_snow][ids_swe_depleted] <- surftype_init_values[cells_snow][ids_swe_depleted]
     
     # Add accumulation and update cumulative mass balance.
-    vec_snow_swe[cells_cur] <- vec_snow_swe[cells_cur] + vec_snowfall[cells_prev]
-    vec_massbal_cumul[cells_cur] <- vec_massbal_cumul[cells_prev] - melt_cur + vec_snowfall[cells_prev]
-    vec_surf_type[cells_cur][which(vec_snowfall[cells_prev] > 0.0)] <- 2 # Mark surface as snow after snowfall.
+    vec_snow_swe[cells_cur] <- vec_snow_swe[cells_cur] + vec_accumulation[cells_prev]
+    vec_massbal_cumul[cells_cur] <- vec_massbal_cumul[cells_prev] - melt_cur + vec_accumulation[cells_prev]
+    vec_surf_type[cells_cur][which(vec_accumulation[cells_prev] > 0.0)] <- 2 # Mark surface as snow after snowfall.
     
     
     # Experimental plot of daily evolution.
@@ -158,5 +159,8 @@ func_massbal_model <- function(run_params,
     ggsave(paste("output/surftype/", sprintf("%03d", day_id), ".png", sep=""), width = 5, height = 3)
 
   }
+  
+  # TODO: return a struct with also the swe, for snow line altitude and AAR.
+  return(vec_massbal_cumul)
   
 }

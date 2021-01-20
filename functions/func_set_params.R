@@ -27,7 +27,7 @@ func_set_params <- function() {
     file_weather_nskip           =   4,                            # [-]: number of lines to skip in the weather file
     weather_aws_elevation        =   3463,                         # [m a.s.l.]: AWS elevation
     weather_snowfall_temp        =   1.5,                          # [°C]: at this temperature precipitation is half rain, half snow. One degree above it is all rain, one degree below it is all snow (snow fraction is linearly interpolated).
-    weather_max_precip_ele       =   3700,                         # [m a.s.l.]: above this altitude, precipitation does not increase any more but becomes constant (cutoff).
+    weather_max_precip_ele       =   4000,                         # [m a.s.l.]: above this altitude, precipitation does not increase any more but becomes constant (cutoff).
     
     grids_crs                    =   CRS(SRS_string  ="EPSG:32642"), # Reference system of the grids, used in slope/aspect computations. Overrides any CRS info reported from the grid files.
     
@@ -83,9 +83,10 @@ func_set_params <- function() {
     initial_snow_dist_red_fac    =   0.5,                          # [-]: reduction factor to decrease the importance of the snow distribution variability (all components except winter snow probes), for the computed initial snow cover (of each year). 0 means uniform snow distribution, 1 means no reduction.
     
     
-    #### MELT MODEL fixed parameters ####
+    #### ACCUMULATION and MELT MODEL fixed parameters ####
     debris_red_fac               =   0.6,                          # [-]: reduction factor of melt over debris-covered ice.
-    
+    accum_probes_red_fac         =   0.5,                          # [-]: reduction factor to decrease the importance of the snow probes distribution when distributing snowfall over the grid, in case those are measured also over avalanche deposits (else we would be accounting twice for avalanche redistribution, since we run a process-based avalanche model). 0 means uniform distribution, 1 means no redution in variability.
+    accum_snow_dist_red_fac      =   0.5,                          # [-]: reduction factor to decrease the importance of the topographic snow distribution variability (curvature and elevation cutoff) when distributing snowfall over the grid. 0 means uniform snow distribution, 1 means no reduction.
     
     #### TIME-related parameters ####
     first_year                   =   2017,                         # First modeled year (usually from October of the previous year to September of this year)
