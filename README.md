@@ -11,7 +11,7 @@ First we compute an initial snow distribution for the year, from snowline elevat
 
 Specifically, the initial snow distribution can be expressed as:
 
-D_probes_norm * reduce(avalanche(D_curv_ele * D_tsl_snowgrad))          (1)
+D_probes_norm * reduce(avalanche(D_curv_ele * D_tsl_snowgrad)) (1)
 
 where\
 **D_probes_norm** is the normalized distribution from IDW interpolation of the winter snow probes (only if available),\
@@ -22,7 +22,7 @@ where\
 
 By contrast, snow distribution following each precipitation event (during the actual model run) can be expressed as:
 
-reduce(D_probes_norm) * D_curv_ele * solid_fraction * distribute_precgrad_cutoff(correct(precipitation)),            (2)\
+reduce(D_probes_norm) * reduce(D_curv_ele) * solid_fraction * distribute_precgrad_cutoff(correct(precipitation)), (2)\
 while the avalanche is simulated at user-defined fixed dates of the year (typically end-of-winter and sometime in summer).
 
 In (2),\
