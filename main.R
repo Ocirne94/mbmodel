@@ -23,7 +23,7 @@ library(scales)       # rescale()
 library(Rcpp)         # avalanche function implemented in C++ for performance
 library(gstat)        # IDW of snow probing data
 library(Rfast)        # rowSort() of the stake cells indices
-library(optimParallel)
+library(optim)
 
 # Experimental daily mass balance map plots.
 library(ggplot2)
@@ -154,8 +154,7 @@ gc()
                                                    grids_avalanche_cur,
                                                    dist_probes_idw_norm,
                                                    grid_id,
-                                                   massbal_winter_meas_cur,
-                                                   transport_deposit_mass)
+                                                   massbal_winter_meas_cur)
   
   
   #### .  MODELING PERIOD BOUNDS ####
@@ -225,8 +224,6 @@ gc()
         dist_topographic_values_red = dist_topographic_values_red, dist_probes_norm_values_red = dist_probes_norm_values_red,
         grids_avalanche_cur = grids_avalanche_cur, dx1 = dx1_annual, dx2 = dx2_annual, dy1 = dy1_annual, dy2 = dy2_annual,
         nstakes = nstakes_annual, model_days_n = model_days_n, massbal_meas_cur = massbal_annual_meas_cur,
-        transport_deposit_mass = transport_deposit_mass,
-        method = "L-BFGS-B",
         lower = year_params_multipliers_lowerbound,
         upper = year_params_multipliers_upperbound,
         control = list(trace = 6, maxit = 30)
