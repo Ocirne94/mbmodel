@@ -121,6 +121,15 @@ gc()
   massbal_annual_cur <- data_massbalance_annual[massbal_annual_ids,]
   massbal_winter_cur <- data_massbalance_winter[massbal_winter_ids,] # Empty if we have no winter stakes for the year.
   
+  # Find (vectorized) the distance of each annual stake from the 4 surrounding cell centers.
+  # We will use this later to extract the modeled series for each stake.
+  # dx1 = x distance from the two cells to the left,
+  # dy2 = y distance from the two cells above.
+  dx1_annual <- (massbal_annual_cur$x - (extent(data_dhms$elevation[[grid_id]])[1] - (run_params$grid_cell_size / 2))) %% run_params$grid_cell_size
+  dx2_annual <- run_params$grid_cell_size - dx1_annual
+  dy1_annual <- (massbal_annual_cur$y - (extent(data_dhms$elevation[[grid_id]])[3] - (run_params$grid_cell_size / 2))) %% run_params$grid_cell_size
+  dy2_annual <- run_params$grid_cell_size - dy1_annual
+  
   # Should we make a winter run to optimize the precipitation correction?
   # Only if we have some measurements of winter snow cover, else we can't.
   process_winter <- (nstakes_winter > 0)
@@ -202,6 +211,15 @@ gc()
                                         grids_avalanche_cur)
 
   
+  #### . .  COMPARE TO STAKE MEASUREMENTS ####
+  # Extract the whole modeled series for all stakes.
+  stakes_series_mod_all <- func_extract_modeled_stakes(run_params,
+                                                       dx1_annual, dx2_annual, dy1_annual, dy2_annual,
+                                                       vec_massbal_cumul,
+                                                       nstakes_annual,
+                                                       model_days_n)
+    
+  
   # Find indices of the days corresponding to the stake measurements.
   # We match w.r.t. weather_series_cur whose index is off by ~0.5 with the
   # mass balance (mb_model_out$gl_massbal_cumul[1] is the initial condition
@@ -215,60 +233,21 @@ gc()
   annual_stakes_end_ids   <- pmatch(massbal_annual_cur$end_date,
                                     weather_series_cur$timestamp,
                                     duplicates.ok = TRUE)
-
   
-  
-  
-  
-  #### Extract the whole modeled series for all stakes. ####
-  
-  stakes_series_mod_all <- matrix(NA, nrow = model_days_n + 1, ncol = nstakes_annual) # One row per day, one column per stake
-  # We do a manual bilinear interpolation of the four
-  # cells surrounding each stake, with a (fast) loop on stakes.
-  # We have verified that it corresponds exactly to raster::extract(..., method = "bilinear"), but much faster.
-  # First find (vectorized) the distance of each stake from the 4 surrounding cell centers.
-  # dx1 = x distance from the two cells to the left,
-  # dy2 = y distance from the two cells above.
-  dx1 <- (massbal_annual_cur$x - (extent(data_dhms$elevation[[grid_id]])[1] - (run_params$grid_cell_size / 2))) %% run_params$grid_cell_size
-  dx2 <- run_params$grid_cell_size - dx1
-  dy1 <- (massbal_annual_cur$y - (extent(data_dhms$elevation[[grid_id]])[3] - (run_params$grid_cell_size / 2))) %% run_params$grid_cell_size
-  dy2 <- run_params$grid_cell_size - dy1
-  
-  # Now extract the values.
-  for (stake_id in 1:nstakes_annual) {
-    
-    # Cells are ordered like this:
-    # 1 2
-    # 3 4
-    # with the stake somewhere in the middle.
-    # Repeated cells (i.e. if the stake lies at
-    # the same x and/or y as a cell) work fine.
-    cell_series1 <- mb_model_output$vec_massbal_cumul[annual_stakes_cells[stake_id, 1] + seq(0,length(mb_model_output$vec_massbal_cumul)-1,run_params$grid_ncells)]
-    cell_series2 <- mb_model_output$vec_massbal_cumul[annual_stakes_cells[stake_id, 2] + seq(0,length(mb_model_output$vec_massbal_cumul)-1,run_params$grid_ncells)]
-    cell_series3 <- mb_model_output$vec_massbal_cumul[annual_stakes_cells[stake_id, 3] + seq(0,length(mb_model_output$vec_massbal_cumul)-1,run_params$grid_ncells)]
-    cell_series4 <- mb_model_output$vec_massbal_cumul[annual_stakes_cells[stake_id, 4] + seq(0,length(mb_model_output$vec_massbal_cumul)-1,run_params$grid_ncells)]
-    
-    stakes_series_mod_all[, stake_id] <- (cell_series1 * dx2[stake_id] * dy1[stake_id] +
-                                          cell_series2 * dx1[stake_id] * dy1[stake_id] +
-                                          cell_series3 * dx2[stake_id] * dy2[stake_id] +
-                                          cell_series4 * dx1[stake_id] * dy2[stake_id]) / (run_params$grid_cell_size^2)
-    
-  }
-    
   
   # Find start date for stakes with NA (i.e. mass balance minimum of previous year):
-    # Find the minimum of the modeled series between the beginning and February 28 (or customizable parameter!)
-    # Set the found minimum as the stake period start.
   annual_stakes_start_ids_corr <- annual_stakes_start_ids  # We leave the original set unaltered, it will serve during optimization.
   stakes_start_unknown_ids <- which(is.na(annual_stakes_start_ids))
   
-  # Latest possible day for the search of the stake start at the mass balance minimum.
+  # User-defined latest possible day for the search of
+  # the stake start, i.e. for the mass balance minimum.
   stakes_start_latest_id <- which(format(weather_series_cur$timestamp, "%m/%d") == run_params$stakes_unknown_latest_start)
   
   for (stake_cur_id in stakes_start_unknown_ids) {
     # cat("Finding start date for stake", stake_cur_id, "...\n")
     annual_stakes_start_ids_corr[stake_cur_id] <- which.min(stakes_series_mod_all[1:stakes_start_latest_id, stake_cur_id])
   }
+  
   
   # Cumulative mass balance of each stake
   # over the measurement period (numeric vector).
@@ -279,7 +258,9 @@ gc()
   
   stakes_bias <- stakes_mb_mod - stakes_mb_meas
 
-  # Compute mean BIAS and RMS: mean(bias_vec) and sqrt(mean(bias_vec^2))
+  year_bias <- mean(stakes_bias)
+  year_rms  <- sqrt(mean(stakes_bias^2))
+
   # Then we're ready to optimize the model parameters.
   
   
