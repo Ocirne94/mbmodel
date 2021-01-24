@@ -27,21 +27,14 @@ func_massbal_model <- function(run_params,
   
   # t1 <- Sys.time()
   
+  # Compute here because the snow and ice factors are subject
+  # to optimization, this always stays in the middle of them.
+  year_cur_params$rad_fact_firn <- (year_cur_params$rad_fact_ice + year_cur_params$rad_fact_snow) / 2 # As per IDL implementation.
+  
   
   # This should be equal to the length of the selected weather series!
   # model_days_n <- as.integer(difftime(model_time_bounds[2], model_time_bounds[1], "days"))
   model_days_n <- length(weather_series_cur[,1])
-  
-  # TESTING #
-  # model_time_bounds <- model_annual_bounds
-  # dhm_values <- getValues(data_dhms$elevation[[1]])
-  # surftype_init_values <- getValues(data_surftype[[1]])
-  # snowdist_init_values <- getValues(snowdist_init)
-  # snowdist_topographic_values_red <- dist_topographic_values_red
-  # snowdist_probes_norm_values_red <- dist_probes_norm_values_red
-  # glacier_cell_ids <- data_dems$glacier_cell_ids[[grid_id]]
-  ###########
-  
   
   
   #### CORRECT PRECIPITATION UNDERCATCH ####

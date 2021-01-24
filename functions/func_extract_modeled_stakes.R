@@ -9,7 +9,7 @@
 #                 We have verified that the result corresponds exactly to                         #
 #                 raster::extract(..., method = "bilinear"), but much faster since we avoid the   #
 #                 conversions to raster.                                                          #
-################################################################################################### 
+###################################################################################################
 
 
 # We take the dx<i> and dy<i> as input,
@@ -28,10 +28,10 @@ func_extract_modeled_stakes <- function(run_params, dx1, dx2, dy1, dy2, vec_mass
     # with the stake somewhere in the middle.
     # Repeated cells (i.e. if the stake lies at
     # the same x and/or y as a cell) work fine.
-    cell_series1 <- mb_model_output$vec_massbal_cumul[annual_stakes_cells[stake_id, 1] + seq(0,length(mb_model_output$vec_massbal_cumul)-1,run_params$grid_ncells)]
-    cell_series2 <- mb_model_output$vec_massbal_cumul[annual_stakes_cells[stake_id, 2] + seq(0,length(mb_model_output$vec_massbal_cumul)-1,run_params$grid_ncells)]
-    cell_series3 <- mb_model_output$vec_massbal_cumul[annual_stakes_cells[stake_id, 3] + seq(0,length(mb_model_output$vec_massbal_cumul)-1,run_params$grid_ncells)]
-    cell_series4 <- mb_model_output$vec_massbal_cumul[annual_stakes_cells[stake_id, 4] + seq(0,length(mb_model_output$vec_massbal_cumul)-1,run_params$grid_ncells)]
+    cell_series1 <- vec_massbal_cumul[annual_stakes_cells[stake_id, 1] + seq(0,length(vec_massbal_cumul)-1,run_params$grid_ncells)]
+    cell_series2 <- vec_massbal_cumul[annual_stakes_cells[stake_id, 2] + seq(0,length(vec_massbal_cumul)-1,run_params$grid_ncells)]
+    cell_series3 <- vec_massbal_cumul[annual_stakes_cells[stake_id, 3] + seq(0,length(vec_massbal_cumul)-1,run_params$grid_ncells)]
+    cell_series4 <- vec_massbal_cumul[annual_stakes_cells[stake_id, 4] + seq(0,length(vec_massbal_cumul)-1,run_params$grid_ncells)]
     
     stakes_series_mod_all[, stake_id] <- (cell_series1 * dx2[stake_id] * dy1[stake_id] +
                                           cell_series2 * dx1[stake_id] * dy1[stake_id] +

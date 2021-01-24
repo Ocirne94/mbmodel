@@ -23,14 +23,13 @@ library(scales)       # rescale()
 library(Rcpp)         # avalanche function implemented in C++ for performance
 library(gstat)        # IDW of snow probing data
 library(Rfast)        # rowSort() of the stake cells indices
+library(optimParallel)
 
-# Experimental plots.
+# Experimental daily mass balance map plots.
 library(ggplot2)
 library(RStoolbox)
 
-library(profvis)
-
-
+# library(profvis) # profiling.
 # library(bitops)  # cksum(), for debugging.
 
 
@@ -97,7 +96,6 @@ gc()
   # Select current year.
   year_cur <- run_params$years[year_id]
   year_cur_params <- func_load_year_params(run_params, year_cur)
-  year_cur_params$rad_fact_firn <- (year_cur_params$rad_fact_ice + year_cur_params$rad_fact_snow) / 2 # As per IDL implementation.
   
   # Select grids of the current year.
   grid_id <- data_dhms$grid_year_id[year_id]
@@ -118,16 +116,16 @@ gc()
   nstakes_annual <- length(massbal_annual_ids)
   massbal_winter_ids <- func_select_year_measurements(data_massbalance_winter, year_cur)
   nstakes_winter <- length(massbal_winter_ids)
-  massbal_annual_cur <- data_massbalance_annual[massbal_annual_ids,]
-  massbal_winter_cur <- data_massbalance_winter[massbal_winter_ids,] # Empty if we have no winter stakes for the year.
+  massbal_annual_meas_cur <- data_massbalance_annual[massbal_annual_ids,]
+  massbal_winter_meas_cur <- data_massbalance_winter[massbal_winter_ids,] # Empty if we have no winter stakes for the year.
   
   # Find (vectorized) the distance of each annual stake from the 4 surrounding cell centers.
   # We will use this later to extract the modeled series for each stake.
   # dx1 = x distance from the two cells to the left,
   # dy2 = y distance from the two cells above.
-  dx1_annual <- (massbal_annual_cur$x - (extent(data_dhms$elevation[[grid_id]])[1] - (run_params$grid_cell_size / 2))) %% run_params$grid_cell_size
+  dx1_annual <- (massbal_annual_meas_cur$x - (extent(data_dhms$elevation[[grid_id]])[1] - (run_params$grid_cell_size / 2))) %% run_params$grid_cell_size
   dx2_annual <- run_params$grid_cell_size - dx1_annual
-  dy1_annual <- (massbal_annual_cur$y - (extent(data_dhms$elevation[[grid_id]])[3] - (run_params$grid_cell_size / 2))) %% run_params$grid_cell_size
+  dy1_annual <- (massbal_annual_meas_cur$y - (extent(data_dhms$elevation[[grid_id]])[3] - (run_params$grid_cell_size / 2))) %% run_params$grid_cell_size
   dy2_annual <- run_params$grid_cell_size - dy1_annual
   
   # Should we make a winter run to optimize the precipitation correction?
@@ -135,7 +133,7 @@ gc()
   process_winter <- (nstakes_winter > 0)
   
   if (process_winter) {
-    dist_probes_idw           <- func_snow_probes_idw(run_params, massbal_winter_cur, data_dhms)
+    dist_probes_idw           <- func_snow_probes_idw(run_params, massbal_winter_meas_cur, data_dhms)
     dist_probes_idw           <- clamp(dist_probes_idw, lower = 0, upper = Inf)
     dist_probes_idw_norm      <- dist_probes_idw / mean(dist_probes_idw[data_dems$glacier_cell_ids[[grid_id]]])
   } else {
@@ -156,15 +154,16 @@ gc()
                                                    grids_avalanche_cur,
                                                    dist_probes_idw_norm,
                                                    grid_id,
-                                                   massbal_winter_cur)
+                                                   massbal_winter_meas_cur,
+                                                   transport_deposit_mass)
   
   
   #### .  MODELING PERIOD BOUNDS ####
   # Four POSIXct time objects: start and end of the annual
   # modeling period, and same for the winter modeling period.
   model_time_bounds   <- func_compute_modeling_periods(run_params,
-                                                       massbal_annual_cur,
-                                                       massbal_winter_cur,
+                                                       massbal_annual_meas_cur,
+                                                       massbal_winter_meas_cur,
                                                        year_cur)
   
   
@@ -181,7 +180,7 @@ gc()
   # Here instead do the annual processing.
   # Find grid cells corresponding to the annual stakes.
   # We sort them to enable vectorized bilinear filtering.
-  annual_stakes_cells <- rowSort(fourCellsFromXY(data_dhms$elevation[[grid_id]], as.matrix(massbal_annual_cur[,4:5])))
+  annual_stakes_cells <- rowSort(fourCellsFromXY(data_dhms$elevation[[grid_id]], as.matrix(massbal_annual_meas_cur[,4:5])))
   
   # Time specification of the annual run.
   model_annual_bounds <- model_time_bounds[1:2]
@@ -197,71 +196,44 @@ gc()
   dist_topographic_values_red  <- dist_topographic_values_mean + run_params$accum_snow_dist_red_fac * (dist_topographic_values - dist_topographic_values_mean)
   
   
-  #### . .  RUN MASS BALANCE MODEL ####
-  mb_model_output <- func_massbal_model(run_params,
-                                        year_cur_params,
-                                        getValues(data_dhms$elevation[[grid_id]]),
-                                        data_dems$glacier_cell_ids[[grid_id]],
-                                        getValues(data_surftype[[grid_id]]),
-                                        getValues(snowdist_init),
-                                        data_radiation,
-                                        weather_series_cur,
-                                        dist_topographic_values_red,
-                                        dist_probes_norm_values_red,
-                                        grids_avalanche_cur)
+  # To optimize, we use a (sorted!) vector of multipliers for the model parameters
+  # (currently the melt factor, the two radiation factors for snow and ice, prec_corr, prec_summer_fac and prec_elegrad).
+  # This vector of multipliers is the first argument to the function
+  # and its values are subject to optimization. This way we don't mess
+  # with lists and parameters directly.
+  # So after optimizing we well have to call another specialized function
+  # which uses the optimized multipliers to run again the model and this
+  # time return the actual model output.
+  
+  # score_cur <- func_run_model_year_optim(year_params_multipliers,
+  #                                        run_params, year_cur_params, grid_id, data_dhms, data_dems, data_surftype,
+  #                                        snowdist_init, data_radiation, weather_series_cur, dist_topographic_values_red,
+  #                                        dist_probes_norm_values_red, grids_avalanche_cur,
+  #                                        dx1_annual, dx2_annual, dy1_annual, dy2_annual,
+  #                                        nstakes_annual, model_days_n, massbal_annual_meas_cur)
+  year_params_multipliers_init       <- c(1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
+  year_params_multipliers_lowerbound <- c(0.1, 0.1, 0.1, 0.2, 0.2, 0.2)
+  year_params_multipliers_upperbound <- c(10.0, 10.0, 10.0, 5.0, 5.0, 5.0)
+  
+  
+  
+  opt_result <- optim(par = year_params_multipliers_init,
+        fn = func_run_model_year_optim,
+        run_params = run_params, year_cur_params = year_cur_params, grid_id = grid_id, data_dhms = data_dhms,
+        data_dems = data_dems, data_surftype = data_surftype, snowdist_init = snowdist_init,
+        data_radiation = data_radiation, weather_series_cur = weather_series_cur,
+        dist_topographic_values_red = dist_topographic_values_red, dist_probes_norm_values_red = dist_probes_norm_values_red,
+        grids_avalanche_cur = grids_avalanche_cur, dx1 = dx1_annual, dx2 = dx2_annual, dy1 = dy1_annual, dy2 = dy2_annual,
+        nstakes = nstakes_annual, model_days_n = model_days_n, massbal_meas_cur = massbal_annual_meas_cur,
+        transport_deposit_mass = transport_deposit_mass,
+        method = "L-BFGS-B",
+        lower = year_params_multipliers_lowerbound,
+        upper = year_params_multipliers_upperbound,
+        control = list(trace = 6, maxit = 30)
+        )
+  
+  
 
-  
-  #### . .  COMPARE TO STAKE MEASUREMENTS ####
-  # Extract the whole modeled series for all stakes.
-  stakes_series_mod_all <- func_extract_modeled_stakes(run_params,
-                                                       dx1_annual, dx2_annual, dy1_annual, dy2_annual,
-                                                       vec_massbal_cumul,
-                                                       nstakes_annual,
-                                                       model_days_n)
-    
-  
-  # Find indices of the days corresponding to the stake measurements.
-  # We match w.r.t. weather_series_cur whose index is off by ~0.5 with the
-  # mass balance (mb_model_out$gl_massbal_cumul[1] is the initial condition
-  # (i.e. 0.0) at 00:00 of the first day, then the index of the weather series
-  # corresponds to the full following 24 hours, then gl_massbal_cumul[2] is the
-  # cumulative mass balance by the end of that same day.
-  # So it would be equally correct to also shift all the day indices by one (little to no change).
-  annual_stakes_start_ids <- pmatch(massbal_annual_cur$start_date,
-                                    weather_series_cur$timestamp,
-                                    duplicates.ok = TRUE)
-  annual_stakes_end_ids   <- pmatch(massbal_annual_cur$end_date,
-                                    weather_series_cur$timestamp,
-                                    duplicates.ok = TRUE)
-  
-  
-  # Find start date for stakes with NA (i.e. mass balance minimum of previous year):
-  annual_stakes_start_ids_corr <- annual_stakes_start_ids  # We leave the original set unaltered, it will serve during optimization.
-  stakes_start_unknown_ids <- which(is.na(annual_stakes_start_ids))
-  
-  # User-defined latest possible day for the search of
-  # the stake start, i.e. for the mass balance minimum.
-  stakes_start_latest_id <- which(format(weather_series_cur$timestamp, "%m/%d") == run_params$stakes_unknown_latest_start)
-  
-  for (stake_cur_id in stakes_start_unknown_ids) {
-    # cat("Finding start date for stake", stake_cur_id, "...\n")
-    annual_stakes_start_ids_corr[stake_cur_id] <- which.min(stakes_series_mod_all[1:stakes_start_latest_id, stake_cur_id])
-  }
-  
-  
-  # Cumulative mass balance of each stake
-  # over the measurement period (numeric vector).
-  stakes_mb_mod  <- as.numeric(stakes_series_mod_all)[((1:nstakes_annual)-1)*(model_days_n+1) + annual_stakes_end_ids] -
-                    as.numeric(stakes_series_mod_all)[((1:nstakes_annual)-1)*(model_days_n+1) + annual_stakes_start_ids_corr]
-  # Corresponding measurement.
-  stakes_mb_meas <- massbal_annual_cur$dh_cm * massbal_annual_cur$density * 10 # 10: cm w.e. to mm w.e.
-  
-  stakes_bias <- stakes_mb_mod - stakes_mb_meas
-
-  year_bias <- mean(stakes_bias)
-  year_rms  <- sqrt(mean(stakes_bias^2))
-
-  # Then we're ready to optimize the model parameters.
   
   
   
