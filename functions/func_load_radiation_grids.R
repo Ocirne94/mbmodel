@@ -5,8 +5,9 @@
 #                 mass balance measurements.                                                      #
 #                 This file contains the loading routine for the grid(s) of daily potential       #
 #                 radiation sum.                                                                  #
-#                 As output we get a list with one raster per day of year (366 elements,          #
-#                 last two equal)                                                                 #
+#                 As output we get a list with one numeric vector per day of year (366 vectors,   #
+#                 last two equal). We don't use rasters in order to enable Rcpp to use the        #
+#                 radiation values.                                                               #
 ###################################################################################################
 
 
@@ -25,8 +26,7 @@ func_load_radiation_grids <- function(run_params) {
   for (doy in 1:365) {
     
     cat("\rLoading radiation files...", doy, "/", 365)
-    grids_out[[doy]] <- readAll(raster(grid_paths[doy]))
-    crs(grids_out[[doy]]) <- run_params$grids_crs
+    grids_out[[doy]] <- getValues(raster(grid_paths[doy]))
     
   }
   cat("\n")

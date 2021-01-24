@@ -145,7 +145,9 @@ func_load_elevation_grids <- function(run_params, load_which) {
     grids_out$glacier_cell_ids <- list()
     
     for (grid_id in 1:grids_out$n_grids) {
-      grids_out$glacier_cell_ids[[grid_id]] <- which(!is.na(getValues(grids_out$elevation[[grid_id]])))
+      glacier_ids_logi                         <- is.na(getValues(grids_out$elevation[[grid_id]]))
+      grids_out$glacier_cell_ids[[grid_id]]    <- which(!glacier_ids_logi)
+      grids_out$no_glacier_cell_ids[[grid_id]] <- which(glacier_ids_logi)
     }
   }
   

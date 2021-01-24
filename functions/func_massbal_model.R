@@ -7,54 +7,54 @@
 #                 (winter or year).                                                               #
 ###################################################################################################  
 
+# NOTE: this R implementation is actually quite fast.
+# The C++ implementation (under directory old/) is actually
+# slower, so we keep this one.
 
 # year_cur_params are the melt/accumulation model parameters which we will optimize!
 # (For the first iteration we take the ones loaded from file).
 func_massbal_model <- function(run_params,
-                               year_cur_params,
-                               model_time_bounds,
-                               dhm_values,
-                               surftype_init_values,
-                               snowdist_init_values,
-                               radiation_grids,
-                               weather_series_cur,
-                               snowdist_topographic_values_red,
-                               snowdist_probes_norm_values_red) {
+                              year_cur_params,
+                              dhm_values,
+                              glacier_cell_ids,
+                              surftype_init_values,
+                              snowdist_init_values,
+                              radiation_values_list,
+                              weather_series_cur,
+                              snowdist_topographic_values_red,
+                              snowdist_probes_norm_values_red,
+                              grids_avalanche_cur) {
   
-  year_cur_params$rad_fact_firn <- (year_cur_params$rad_fact_ice + year_cur_params$rad_fact_snow) / 2
+  # t1 <- Sys.time()
+  
+  
+  # This should be equal to the length of the selected weather series!
+  # model_days_n <- as.integer(difftime(model_time_bounds[2], model_time_bounds[1], "days"))
+  model_days_n <- length(weather_series_cur[,1])
   
   # TESTING #
-  model_time_bounds <- model_annual_bounds
-  dhm_values <- getValues(data_dhms$elevation[[1]])
-  surftype_init_values <- getValues(data_surftype[[1]])
-  snowdist_init_values <- getValues(snowdist_init)
-  snowdist_topographic_values_red <- dist_topographic_values_red
-  snowdist_probes_norm_values_red <- dist_probes_norm_values_red
+  # model_time_bounds <- model_annual_bounds
+  # dhm_values <- getValues(data_dhms$elevation[[1]])
+  # surftype_init_values <- getValues(data_surftype[[1]])
+  # snowdist_init_values <- getValues(snowdist_init)
+  # snowdist_topographic_values_red <- dist_topographic_values_red
+  # snowdist_probes_norm_values_red <- dist_probes_norm_values_red
+  # glacier_cell_ids <- data_dems$glacier_cell_ids[[grid_id]]
   ###########
   
   
   
-  #### PROCESS AND EXTRAPOLATE WEATHER SERIES ####
-
+  #### CORRECT PRECIPITATION UNDERCATCH ####
   # Correct precipitation undercatch with given parameters
   # (lower correction in summer).
+  # We have to do it here since the correction factor
+  # is subject to optimization!
   weather_series_cur$precip_corr <- weather_series_cur$precip * (1 + (year_cur_params$prec_corr / 100.))
-  ids_summer <- (as.integer(format(weather_series_cur$timestamp, "%m")) %in% 5:9) # Logical indices: TRUE in May to September, FALSE elsewhere.
-  weather_series_cur$precip_corr[ids_summer] <- weather_series_cur$precip[ids_summer] * (1 + (year_cur_params$prec_summer_fact * year_cur_params$prec_corr / 100.))
-  
-  # These two vectors hold the whole gridded temperature and precipitation series.
-  # The computation uses the automatic repetition of a vector when it is
-  # multiplied element-wise by a longer vector.
-  # Temperature in °C, snowfall in mm w.e.
-  vec_temperature     <- rep(weather_series_cur$t2m_mean, each = run_params$grid_ncells) + year_cur_params$temp_elegrad * (dhm_values - run_params$weather_aws_elevation) / 100
-  vec_solid_prec_frac <- pmax(0, pmin(1, ((1 + run_params$weather_snowfall_temp) - vec_temperature) / 2))
-  vec_accumulation    <- snowdist_probes_norm_values_red * snowdist_topographic_values_red * vec_solid_prec_frac * rep(weather_series_cur$precip_corr, each = run_params$grid_ncells) * (1 + (pmin(run_params$weather_max_precip_ele, dhm_values) - run_params$weather_aws_elevation) * year_cur_params$prec_elegrad / 1e4 ) # 1e4: gradient is in [% / 100 m], we want [fraction / m].
+  ids_summer_logi <- (as.integer(format(weather_series_cur$timestamp, "%m")) %in% 5:9) # Logical indices: TRUE in May to September, FALSE elsewhere.
+  weather_series_cur$precip_corr[ids_summer_logi] <- weather_series_cur$precip[ids_summer_logi] * (1 + (year_cur_params$prec_summer_fact * year_cur_params$prec_corr / 100.))
   
   
   #### CREATE OUTPUT VECTORS ####
-  # This should be equal to the length of the selected weather series!
-  model_days_n <- as.integer(difftime(model_time_bounds[2], model_time_bounds[1], "days"))
-  
   # Length of each modeled vector.
   # NOTE: modeled vectors have one timestep more than weather vectors because
   # they also store the initial timestep.
@@ -73,6 +73,7 @@ func_massbal_model <- function(run_params,
   vec_surf_type     <- rep(NA_real_, vec_items_n) # We use 0 for ice, 1 for firn, 2 for snow, 4 for rock, 5 for debris.
   vec_massbal_cumul <- rep(NA_real_, vec_items_n)
   melt_cur          <- rep(NA_real_, run_params$grid_ncells) # This instead holds only a single timestep. Here goes the daily melt amount.
+  gl_massbal_cumul  <- c(0.0, rep(NA_real_, model_days_n))   # This holds the cumulative glacier-wide mass balance.
 
   # Fill vectors with initial conditions.
   vec_snow_swe[1:run_params$grid_ncells]  <- snowdist_init_values
@@ -80,47 +81,95 @@ func_massbal_model <- function(run_params,
   vec_surf_type[which(vec_snow_swe[1:run_params$grid_ncells] > 0)] <- 2  # Add computed snow to the initial ice/firn/debris map.
   vec_massbal_cumul[1:run_params$grid_ncells] <- 0
   
+  # This below is a vector[ncells] to keep track of the swe
+  # after the last avalanche: we assume that snow can be
+  # avalanched only once, so the input grid to the avalanche
+  # model will be the difference between the current swe
+  # and the latest swe_post_previous_avalanche (clamped to
+  # positive values in case of significant melt).
+  swe_post_previous_avalanche <- snowdist_init_values
+  
   
   #### MAIN SIMULATION LOOP ####
-  # day_id <- 1
-  for (day_id in 1:model_days_n) { # DISABLED FOR TESTING
-    cat(day_id, "/", model_days_n, "\n")
+  for (day_id in 1:model_days_n) {
     
+    # cat("\r", day_id, "/", model_days_n)
+    
+    #### .  COMPUTE GRIDDED WEATHER OF THE DAY ####
+    # Temperature in °C, snowfall in mm w.e.
+    temp_cur <- weather_series_cur$t2m_mean[day_id] + year_cur_params$temp_elegrad * (dhm_values - run_params$weather_aws_elevation) / 100
+    solid_prec_frac_cur <- clamp(((1 + run_params$weather_snowfall_temp) - temp_cur) / 2, 0, 1)
+    accumulation_cur    <- snowdist_probes_norm_values_red * snowdist_topographic_values_red * solid_prec_frac_cur * weather_series_cur$precip_corr[day_id] * (1 + (pmin(run_params$weather_max_precip_ele, dhm_values) - run_params$weather_aws_elevation) * year_cur_params$prec_elegrad / 1e4 ) # 1e4: gradient is in [% / 100 m], we want [fraction / m].
+    
+    
+    #### .  SETUP INDICES ####
     doy <- weather_series_cur$doy[day_id]
     
-    radiation_cur <- getValues(data_radiation[[doy]])
+    radiation_cur <- radiation_values_list[[doy]]
     
     offset_cur <- day_id * run_params$grid_ncells
     offset_prev <- (day_id - 1) * run_params$grid_ncells
     cells_cur  <- offset_cur + 1:run_params$grid_ncells # Indices of all the grid cells with values at the end of the current day.
     cells_prev <- cells_cur - run_params$grid_ncells    # Indices of all the grid cells with values at the beginning of the current day.
+
     
+    #### .  AVALANCHE ROUTINE ####
+    avalanche_condition <- FALSE
+    if (format(weather_series_cur$timestamp[day_id], "%m/%d") %in% run_params$model_avalanche_dates) {
+      avalanche_condition <- TRUE
+    }
+    # If we are to have an avalanche today, make it so
+    # (first thing of the day, before melt and accumulation).
+    # Algorithm:
+      # compute grid of swe contributing to avalanche, as difference between current swe and last post-avalanche swe, clamped to positives
+      # run avalanche on it
+      # compute the new swe (sum of avalanche deposit and previous non-avalanched mass)
+      # update cumulative mass balance, swe, surface type
+      # NOTE: to update the vectors we use the cells_prev indices, since those are used as input to the melt model just below. This means that the mass balance change due to the avalanche is assigned to the day BEFORE the avalanche.
+    if (avalanche_condition) {
+      
+      # cat("Avalanche!\n")
+      
+      avalanche_input_values        <- pmax(0.0, vec_snow_swe[cells_prev] - swe_post_previous_avalanche)
+      avalanche_output              <- func_avalanche(grids_avalanche_cur,
+                                                      avalanche_input_values,
+                                                      deposition_max_multiplier = 1.0,
+                                                      preserve_edges = TRUE)
+      swe_post_previous_avalanche   <- avalanche_output + (vec_snow_swe[cells_prev] - avalanche_input_values)
+      
+      vec_massbal_cumul[cells_prev] <- vec_massbal_cumul[cells_prev] + swe_post_previous_avalanche - vec_snow_swe[cells_prev]
+      vec_snow_swe[cells_prev]      <- swe_post_previous_avalanche
+      
+      ids_snow_logi                             <- vec_snow_swe[cells_prev] > 0
+      vec_surf_type[cells_prev][ids_snow_logi]  <- 2
+      vec_surf_type[cells_prev][!ids_snow_logi] <- surftype_init_values[!ids_snow_logi]
+    }
+
+    
+    #### .  MELT MODEL ####
     # Set the entire melt_cur to NA before computing,
     # to avoid any possible problems from values of the
     # previous iteration.
     melt_cur[1:run_params$grid_ncells] <- NA_real_
-    
-    # TODO
-    # Compute condition for avalanche
-    # Check condition for avalanche, if true run avalanche
-    # END TODO
-    
     # Melt ice, firn and debris-covered cells.
     # We take the surf type from the previous
     # timestep to find out which cells to consider.
     # The result is a vector of cell indices
     # directly applicable to the melt_cur vector
     # (i.e. indices starting at 1).
-    cells_ice    <- which(vec_surf_type[cells_prev] == 0)
-    cells_firn   <- which(vec_surf_type[cells_prev] == 1)
-    cells_snow   <- which(vec_surf_type[cells_prev] == 2)
-    cells_debris <- which(vec_surf_type[cells_prev] == 5)
+    surf_type_prev <- vec_surf_type[cells_prev]
+    cells_ice      <- which(surf_type_prev == 0)
+    cells_firn     <- which(surf_type_prev == 1)
+    cells_snow     <- which(surf_type_prev == 2)
+    cells_debris   <- which(surf_type_prev == 5)
+    
     
     # Compute melt amounts.
-    melt_cur[cells_ice]    <- year_cur_params$melt_factor + 24 * year_cur_params$rad_fact_ice / 1000. * radiation_cur[cells_ice] * vec_temperature[offset_prev + cells_ice] # We use offset_prev in the temperature vector because it has one timestep less than the modeled grids (which also have the initial conditions as first timestep).
-    melt_cur[cells_firn]   <- year_cur_params$melt_factor + 24 * year_cur_params$rad_fact_firn / 1000. * radiation_cur[cells_firn] * vec_temperature[offset_prev + cells_firn]
-    melt_cur[cells_snow]   <- year_cur_params$melt_factor + 24 * year_cur_params$rad_fact_firn / 1000. * radiation_cur[cells_snow] * vec_temperature[offset_prev + cells_snow]
-    melt_cur[cells_debris] <- year_cur_params$melt_factor + 24 * run_params$debris_red_fac * year_cur_params$rad_fact_ice / 1000. * radiation_cur[cells_debris] * vec_temperature[offset_prev + cells_debris]
+    melt_cur[cells_ice]    <- year_cur_params$melt_factor + 24 * year_cur_params$rad_fact_ice / 1000. * radiation_cur[cells_ice] * temp_cur[cells_ice] # We use offset_prev in the temperature vector because it has one timestep less than the modeled grids (which also have the initial conditions as first timestep).
+    melt_cur[cells_firn]   <- year_cur_params$melt_factor + 24 * year_cur_params$rad_fact_firn / 1000. * radiation_cur[cells_firn] * temp_cur[cells_firn]
+    melt_cur[cells_snow]   <- year_cur_params$melt_factor + 24 * year_cur_params$rad_fact_snow / 1000. * radiation_cur[cells_snow] * temp_cur[cells_snow]
+    melt_cur[cells_debris] <- year_cur_params$melt_factor + 24 * run_params$debris_red_fac * year_cur_params$rad_fact_ice / 1000. * radiation_cur[cells_debris] * temp_cur[cells_debris]
+    
     melt_cur[is.na(melt_cur)] <- 0.0 # Don't melt rock, but never go into the NAs (we care about the SWE over rock, for avalanches!)
     melt_cur <- pmax(0.0, melt_cur)  # Clamp to positive values: negative PDDs do not add mass.
     
@@ -129,38 +178,49 @@ func_massbal_model <- function(run_params,
     # We ignore the "mixed" melting regime arising from a day
     # where snow cover is depleted (radiation factor should in
     # principle be partly snow, partly ice or firn or debris).
-    ids_swe_depleted <- which(melt_cur[cells_snow] > vec_snow_swe[cells_prev][cells_snow])
+    ids_swe_depleted <- which(melt_cur[cells_snow] >= vec_snow_swe[cells_prev][cells_snow])
     vec_snow_swe[cells_cur] <- pmax(0, vec_snow_swe[cells_prev] - melt_cur)
     vec_surf_type[cells_cur] <- vec_surf_type[cells_prev]
     vec_surf_type[cells_cur][cells_snow][ids_swe_depleted] <- surftype_init_values[cells_snow][ids_swe_depleted]
     
+    
+    #### .  ACCUMULATION and MASS BALANCE ####
     # Add accumulation and update cumulative mass balance.
-    vec_snow_swe[cells_cur] <- vec_snow_swe[cells_cur] + vec_accumulation[cells_prev]
-    vec_massbal_cumul[cells_cur] <- vec_massbal_cumul[cells_prev] - melt_cur + vec_accumulation[cells_prev]
-    vec_surf_type[cells_cur][which(vec_accumulation[cells_prev] > 0.0)] <- 2 # Mark surface as snow after snowfall.
+    vec_snow_swe[cells_cur] <- vec_snow_swe[cells_cur] + accumulation_cur
+    vec_massbal_cumul[cells_cur] <- vec_massbal_cumul[cells_prev] - melt_cur + accumulation_cur
+    vec_surf_type[cells_cur][which(accumulation_cur > 0.0)] <- 2 # Mark surface as snow after snowfall.
+    gl_massbal_cumul[day_id + 1] <- mean(vec_massbal_cumul[offset_cur + glacier_cell_ids])
     
     
-    # Experimental plot of daily evolution.
-    ras <- setValues(data_dhms$elevation[[1]], vec_surf_type[cells_cur])
-    plot_df <- data.frame(coordinates(ras))
-    max_swe <- 1500
-    plot_df$swe <- clamp(vec_snow_swe[cells_cur], -Inf, max_swe)
-    plot_df$snow <- as.integer(plot_df$swe > 0)
-    plot_df$surf <- vec_surf_type[cells_cur]
-    date_text <- format(weather_series_cur$timestamp[day_id], "%Y/%m/%d")
-    ggplot(plot_df) +
-      surf_base +
-      geom_raster(aes(x = x, y = y, fill = swe, alpha = as.character(snow))) +
-      scale_alpha_manual(values = c("0" = 0, "1" = 1)) +
-      annotate("label", x = Inf, y = Inf, hjust = 1.3, vjust = 1.5, label = date_text) +
-      scale_fill_distiller(palette = "RdPu", direction = 1, limits = c(0,max_swe)) +
-      guides(alpha = "none") +
-      theme_void()
-    ggsave(paste("output/surftype/", sprintf("%03d", day_id), ".png", sep=""), width = 5, height = 3)
+    
+    #### .  DAILY PLOTS ####
+    # Plot of daily SWE evolution.
+    # ras <- setValues(data_dhms$elevation[[1]], vec_surf_type[cells_cur])
+    # plot_df <- data.frame(coordinates(ras))
+    # max_swe <- 3500
+    # plot_df$swe <- clamp(vec_snow_swe[cells_cur], -Inf, max_swe)
+    # plot_df$snow <- as.integer(plot_df$swe > 0)
+    # plot_df$surf <- vec_surf_type[cells_cur]
+    # date_text <- format(weather_series_cur$timestamp[day_id], "%Y/%m/%d")
+    # ggplot(plot_df) +
+    #   surf_base +
+    #   geom_raster(aes(x = x, y = y, fill = swe, alpha = as.character(snow))) +
+    #   scale_alpha_manual(values = c("0" = 0, "1" = 1)) +
+    #   annotate("label", x = Inf, y = Inf, hjust = 1.3, vjust = 1.5, label = date_text) +
+    #   scale_fill_distiller(palette = "RdPu", direction = 1, limits = c(0,max_swe)) +
+    #   guides(alpha = "none") +
+    #   theme_void()
+    # ggsave(paste("output/surftype/", sprintf("%03d", day_id), ".png", sep=""), width = 5, height = 3)
 
   }
   
-  # TODO: return a struct with also the swe, for snow line altitude and AAR.
-  return(vec_massbal_cumul)
+  mb_model_output <- list(vec_massbal_cumul = vec_massbal_cumul,
+                          gl_massbal_cumul  = gl_massbal_cumul)
+  
+  
+  # t2 <- Sys.time()
+  # print(t2-t1)
+  
+  return(mb_model_output)
   
 }

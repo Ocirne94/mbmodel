@@ -31,9 +31,6 @@ NumericVector transport_deposit_mass(IntegerVector elevation_sorted_ids,
     // Iterate over the cells from the highest to the lowest,
     // moving mass downstream according to the geometries and thresholds.
     for (unsigned int cell_cur_id_id = 0; cell_cur_id_id < n_cells; cell_cur_id_id++) {
-        
-        // Make loop interruptible.
-        if (cell_cur_id_id % 1000u == 0u) Rcpp::checkUserInterrupt();
     
         unsigned int cell_cur_id = elevation_sorted_ids_cpp[cell_cur_id_id];
         

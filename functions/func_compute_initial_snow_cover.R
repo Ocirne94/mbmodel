@@ -19,12 +19,10 @@ func_compute_initial_snow_cover <- function(run_params,
                                             data_dhms,
                                             data_dems,
                                             grids_snowdist_topographic,
-                                            grids_avalanche,
+                                            grids_avalanche_cur,
                                             grid_probes_norm,
                                             grid_id,
                                             data_massbal_winter) {
-  
-  grids_avalanche_cur <- sapply(grids_avalanche, `[[`, grid_id)
   
   # We start with the elevation/curvature effect.
   dist_cur <- grids_snowdist_topographic[[grid_id]]
@@ -42,7 +40,8 @@ func_compute_initial_snow_cover <- function(run_params,
   
   # We set the mass deposition limit so that avalanches
   # won't carry snow below the marked initial snow line.
-  dist_cur <- func_avalanche(grids_avalanche_cur, dist_cur, run_params$deposition_max_ratio_init / mean(dist_cur[data_dems$glacier_cell_ids[[grid_id]]]), TRUE)
+  dist_cur <- setValues(dist_cur,
+                        func_avalanche(grids_avalanche_cur, getValues(dist_cur), run_params$deposition_max_ratio_init / mean(dist_cur[data_dems$glacier_cell_ids[[grid_id]]]), TRUE))
 
   # writeRaster(dist_cur, "3-dist-topo-snl-aval.tif", overwrite = T)
   
@@ -58,6 +57,8 @@ func_compute_initial_snow_cover <- function(run_params,
   
   # If we have any winter stakes for the year,
   # use them to correct the final distribution.
+  # In fact just one of the two conditions in
+  # the if() should be enough.
   if((length(data_massbal_winter[,1]) > 0) & (!is.null(grid_probes_norm))) {
     
     dist_cur <- dist_cur * grid_probes_norm

@@ -67,7 +67,7 @@ func_set_params <- function() {
     #### AVALANCHE model parameters ####
     elevation_equal_threshold    =   1e-3,                         # [m]: threshold for considering two elevation values equal when we look for problematic flat patches
     deposition_slope_lim         =   40,                           # [°]: at or above this slope value snow will not be deposited during an avalanche. A lower value makes avalanches travel farther. Called beta_lim in Gruber (2007).
-    deposition_mass_lim          =   4000,                         # [kg m-2]: maximum deposition during an avalanche. A lower value makes avalanches travel farther. Called D_lim in Gruber (2007).
+    deposition_mass_lim          =   2000,                         # [kg m-2]: maximum deposition during an avalanche. A lower value makes avalanches travel farther. Called D_lim in Gruber (2007).
     movable_slope_lim_lower      =   30,                           # [°]: above this slope value, there is a linearly increasing movable fraction in the initial mass distribution, for avalanches. A lower value makes avalanches start also on more gentle slopes.
     movable_slope_lim_upper      =   60,                           # [°]: above this slope value, all input snow is movable in the avalanche routine.
     deposition_max_ratio_init    =   12,                           # [-]: ONLY for the initial snow distribution grid, how much accumulation can locally result from an avalanche relative to the mean snow distribution before the avalanche? This controls how far avalanches travel, it should be set to a value low enough that avalanches don't bring snow below the marked snow line elevation, and high enough that avalanche deposits look plausible. An exploratory value of 10 can make sense.
@@ -87,8 +87,14 @@ func_set_params <- function() {
     debris_red_fac               =   0.6,                          # [-]: reduction factor of melt over debris-covered ice.
     accum_probes_red_fac         =   0.5,                          # [-]: reduction factor to decrease the importance of the snow probes distribution when distributing snowfall over the grid, in case those are measured also over avalanche deposits (else we would be accounting twice for avalanche redistribution, since we run a process-based avalanche model). 0 means uniform distribution, 1 means no redution in variability.
     accum_snow_dist_red_fac      =   0.5,                          # [-]: reduction factor to decrease the importance of the topographic snow distribution variability (curvature and elevation cutoff) when distributing snowfall over the grid. 0 means uniform snow distribution, 1 means no reduction.
+    model_avalanche_dates        =   c("1/31", "4/30", "6/30", "7/31", "8/31"),  # [month/day]: dates at which an avalanche is simulated. Usually one at the end of winter (but before winter stakes are measured), and one or more in summer to avoid overloading the slopes with summer snowfall.
     
-    #### TIME-related parameters ####
+    
+    #### STAKES COMPARISON parameters ####
+    stakes_unknown_latest_start  =   "2/28",                       # [month/day]: in the automatic search of the start date for snow pits and depth probings without a measured start date, we search no later than this day of year. The starting date will be set to the day of the minimum cumulative mass balance between the start of the simulation and the date set here. Something like end of February should be safe for all stakes. 
+    
+    
+    #### MODELED YEARS choice ####
     first_year                   =   2017,                         # First modeled year (usually from October of the previous year to September of this year)
     last_year                    =   2020                          # Last modeled year (same as previous comment)
     
@@ -101,6 +107,10 @@ func_set_params <- function() {
   
   run_params$curvature_dhm_smooth <- max(1e-9,run_params$curvature_dhm_smooth) # The gaussian smoothing fails if sigma   = 0 (but 1e-9 still corresponds to no smoothing!)
   run_params$dhm_smooth_windowsize <- max(5, 2 * run_params$curvature_dhm_smooth + 1)
+  
+  run_params$model_avalanche_dates <- format(as.POSIXct(run_params$model_avalanche_dates, format = "%m/%d"), format = "%m/%d") # Add leading zeroes to single-digit values if needed.
+  
+  run_params$stakes_unknown_latest_start <- format(as.POSIXct(run_params$stakes_unknown_latest_start, format = "%m/%d"), format = "%m/%d") # Same.
   
   return(run_params)
 
