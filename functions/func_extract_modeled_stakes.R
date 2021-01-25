@@ -16,11 +16,11 @@
 # so that we pre-compute them just once
 # per year (stakes don't move around
 # during optimization).
-func_extract_modeled_stakes <- function(run_params, dx1, dx2, dy1, dy2, vec_massbal_cumul, nstakes_annual, model_days_n) {
+func_extract_modeled_stakes <- function(run_params, dx1, dx2, dy1, dy2, vec_massbal_cumul, nstakes, model_days_n, stakes_cells) {
   
-  stakes_series_mod_all <- matrix(NA, nrow = model_days_n + 1, ncol = nstakes_annual) # One row per day, one column per stake
+  stakes_series_mod_all <- matrix(NA, nrow = model_days_n + 1, ncol = nstakes) # One row per day, one column per stake
   
-  for (stake_id in 1:nstakes_annual) {
+  for (stake_id in 1:nstakes) {
     
     # Cells are ordered like this:
     # 1 2
@@ -28,10 +28,10 @@ func_extract_modeled_stakes <- function(run_params, dx1, dx2, dy1, dy2, vec_mass
     # with the stake somewhere in the middle.
     # Repeated cells (i.e. if the stake lies at
     # the same x and/or y as a cell) work fine.
-    cell_series1 <- vec_massbal_cumul[annual_stakes_cells[stake_id, 1] + seq(0,length(vec_massbal_cumul)-1,run_params$grid_ncells)]
-    cell_series2 <- vec_massbal_cumul[annual_stakes_cells[stake_id, 2] + seq(0,length(vec_massbal_cumul)-1,run_params$grid_ncells)]
-    cell_series3 <- vec_massbal_cumul[annual_stakes_cells[stake_id, 3] + seq(0,length(vec_massbal_cumul)-1,run_params$grid_ncells)]
-    cell_series4 <- vec_massbal_cumul[annual_stakes_cells[stake_id, 4] + seq(0,length(vec_massbal_cumul)-1,run_params$grid_ncells)]
+    cell_series1 <- vec_massbal_cumul[stakes_cells[stake_id, 1] + seq(0,length(vec_massbal_cumul)-1,run_params$grid_ncells)]
+    cell_series2 <- vec_massbal_cumul[stakes_cells[stake_id, 2] + seq(0,length(vec_massbal_cumul)-1,run_params$grid_ncells)]
+    cell_series3 <- vec_massbal_cumul[stakes_cells[stake_id, 3] + seq(0,length(vec_massbal_cumul)-1,run_params$grid_ncells)]
+    cell_series4 <- vec_massbal_cumul[stakes_cells[stake_id, 4] + seq(0,length(vec_massbal_cumul)-1,run_params$grid_ncells)]
     
     stakes_series_mod_all[, stake_id] <- (cell_series1 * dx2[stake_id] * dy1[stake_id] +
                                           cell_series2 * dx1[stake_id] * dy1[stake_id] +

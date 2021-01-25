@@ -41,7 +41,11 @@ func_compute_initial_snow_cover <- function(run_params,
   # We set the mass deposition limit so that avalanches
   # won't carry snow below the marked initial snow line.
   dist_cur <- setValues(dist_cur,
-                        func_avalanche(grids_avalanche_cur, getValues(dist_cur), run_params$deposition_max_ratio_init / mean(dist_cur[data_dems$glacier_cell_ids[[grid_id]]]), TRUE))
+                        func_avalanche(run_params,
+                                       grids_avalanche_cur,
+                                       getValues(dist_cur),
+                                       run_params$deposition_max_ratio_init / mean(dist_cur[data_dems$glacier_cell_ids[[grid_id]]]),
+                                       TRUE))
 
   # writeRaster(dist_cur, "3-dist-topo-snl-aval.tif", overwrite = T)
   

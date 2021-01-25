@@ -21,7 +21,7 @@
   # This addresses the discussion of Section 4.4 in Gruber (2007).
 # The preserve_edges switch makes the function put back the mass_initial value
   # at the edges, so that the output of func_avalanche has no NAs.
-func_avalanche <- function(grids_avalanche_cur, mass_initial_values, deposition_max_multiplier = 1.0, preserve_edges = TRUE) {
+func_avalanche <- function(run_params, grids_avalanche_cur, mass_initial_values, deposition_max_multiplier = 1.0, preserve_edges = TRUE) {
   
   deposition <- setValues(grids_avalanche_cur$elevation_proc, 0.0)
   mass_movable <- mass_initial_values * grids_avalanche_cur$movable_frac

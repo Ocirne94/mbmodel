@@ -124,7 +124,8 @@ func_massbal_model <- function(run_params,
       # cat("Avalanche!\n")
       
       avalanche_input_values        <- pmax(0.0, vec_snow_swe[cells_prev] - swe_post_previous_avalanche)
-      avalanche_output              <- func_avalanche(grids_avalanche_cur,
+      avalanche_output              <- func_avalanche(run_params,
+                                                      grids_avalanche_cur,
                                                       avalanche_input_values,
                                                       deposition_max_multiplier = 1.0,
                                                       preserve_edges = TRUE)
