@@ -159,10 +159,10 @@ func_massbal_model <- function(run_params,
     
     
     # Compute melt amounts.
-    melt_cur[cells_ice]    <- year_cur_params$melt_factor + 24 * year_cur_params$rad_fact_ice / 1000. * radiation_cur[cells_ice] * temp_cur[cells_ice] # We use offset_prev in the temperature vector because it has one timestep less than the modeled grids (which also have the initial conditions as first timestep).
-    melt_cur[cells_firn]   <- year_cur_params$melt_factor + 24 * year_cur_params$rad_fact_firn / 1000. * radiation_cur[cells_firn] * temp_cur[cells_firn]
-    melt_cur[cells_snow]   <- year_cur_params$melt_factor + 24 * year_cur_params$rad_fact_snow / 1000. * radiation_cur[cells_snow] * temp_cur[cells_snow]
-    melt_cur[cells_debris] <- year_cur_params$melt_factor + 24 * run_params$debris_red_fac * year_cur_params$rad_fact_ice / 1000. * radiation_cur[cells_debris] * temp_cur[cells_debris]
+    melt_cur[cells_ice]    <- (year_cur_params$melt_factor + 24 * year_cur_params$rad_fact_ice / 1000. * radiation_cur[cells_ice]) * temp_cur[cells_ice] # We use offset_prev in the temperature vector because it has one timestep less than the modeled grids (which also have the initial conditions as first timestep).
+    melt_cur[cells_firn]   <- (year_cur_params$melt_factor + 24 * year_cur_params$rad_fact_firn / 1000. * radiation_cur[cells_firn]) * temp_cur[cells_firn]
+    melt_cur[cells_snow]   <- (year_cur_params$melt_factor + 24 * year_cur_params$rad_fact_snow / 1000. * radiation_cur[cells_snow]) * temp_cur[cells_snow]
+    melt_cur[cells_debris] <- run_params$debris_red_fac * (year_cur_params$melt_factor + 24  * year_cur_params$rad_fact_ice / 1000. * radiation_cur[cells_debris]) * temp_cur[cells_debris]
     
     melt_cur[is.na(melt_cur)] <- 0.0 # Don't melt rock, but never go into the NAs (we care about the SWE over rock, for avalanches!)
     melt_cur <- pmax(0.0, melt_cur)  # Clamp to positive values: negative PDDs do not add mass.
@@ -184,31 +184,12 @@ func_massbal_model <- function(run_params,
     vec_massbal_cumul[cells_cur] <- vec_massbal_cumul[cells_prev] - melt_cur + accumulation_cur
     vec_surf_type[cells_cur][which(accumulation_cur > 0.0)] <- 2 # Mark surface as snow after snowfall.
     gl_massbal_cumul[day_id + 1] <- mean(vec_massbal_cumul[offset_cur + glacier_cell_ids])
-    
-    
-    
-    #### .  DAILY PLOTS ####
-    # Plot of daily SWE evolution.
-    # ras <- setValues(data_dhms$elevation[[1]], vec_surf_type[cells_cur])
-    # plot_df <- data.frame(coordinates(ras))
-    # max_swe <- 3500
-    # plot_df$swe <- clamp(vec_snow_swe[cells_cur], -Inf, max_swe)
-    # plot_df$snow <- as.integer(plot_df$swe > 0)
-    # plot_df$surf <- vec_surf_type[cells_cur]
-    # date_text <- format(weather_series_cur$timestamp[day_id], "%Y/%m/%d")
-    # ggplot(plot_df) +
-    #   surf_base +
-    #   geom_raster(aes(x = x, y = y, fill = swe, alpha = as.character(snow))) +
-    #   scale_alpha_manual(values = c("0" = 0, "1" = 1)) +
-    #   annotate("label", x = Inf, y = Inf, hjust = 1.3, vjust = 1.5, label = date_text) +
-    #   scale_fill_distiller(palette = "RdPu", direction = 1, limits = c(0,max_swe)) +
-    #   guides(alpha = "none") +
-    #   theme_void()
-    # ggsave(paste("output/surftype/", sprintf("%03d", day_id), ".png", sep=""), width = 5, height = 3)
 
   }
   
-  mb_model_output <- list(vec_massbal_cumul = vec_massbal_cumul,
+  mb_model_output <- list(vec_swe_all       = vec_snow_swe,
+                          vec_surftype_all  = vec_surf_type,
+                          vec_massbal_cumul = vec_massbal_cumul,
                           gl_massbal_cumul  = gl_massbal_cumul)
   
   

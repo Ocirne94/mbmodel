@@ -18,16 +18,16 @@ boot_file_name    <- "boot_file.RData"    # Name of the .RData input data file.
 
 #### Include libraries ####
 library(raster)
-library(spatialEco)   # curvature()
-library(scales)       # rescale()
-library(Rcpp)         # avalanche function implemented in C++ for performance
-library(gstat)        # IDW of snow probing data
-library(Rfast)        # rowSort() of the stake cells indices
-library(stats)        # uniroot()
-library(sf)           # geom_sf(), to plot the glacier outline in the maps
-library(metR)         # geom_text_contour()
+library(spatialEco)    # curvature()
+library(scales)        # rescale()
+library(Rcpp)          # avalanche function implemented in C++ for performance
+library(gstat)         # IDW of snow probing data
+library(Rfast)         # rowSort() of the stake cells indices
+library(optimParallel) # For the optimization of the mass balance model parameters
+
+# Experimental daily mass balance map plots.
 library(ggplot2)
-library(RStoolbox)    # For the surface type basemap under the SWE plots.
+library(RStoolbox)
 
 # library(profvis) # profiling.
 # library(bitops)  # cksum(), for debugging.
@@ -41,8 +41,7 @@ sourceCpp("functions/func_avalanche_gruber.cpp", cacheDir = "functions/") # Remo
 
 #### Load or set run parameters ####
 if (params_file_read) {
-  load(params_file_name)
-  } else {
+  load(params_file_name) } else {
   run_params <- func_set_params()
 }
 
@@ -55,7 +54,6 @@ if (boot_file_read) {
   data_dems                  <-   func_load_elevation_grids(run_params, "dem")
   data_dhms                  <-   func_load_elevation_grids(run_params, "dhm")
   data_surftype              <-   func_load_surftype_grids(run_params)
-  data_outlines              <-   func_load_outlines(run_params)
   data_radiation             <-   func_load_radiation_grids(run_params)
   data_massbalance_annual    <-   func_load_massbalance_measurements(run_params, "annual")
   data_massbalance_winter    <-   func_load_massbalance_measurements(run_params, "winter")
@@ -88,7 +86,7 @@ if (params_file_write) {
 }
 
 # Cleanup memory (temporary variables during loading!)
-invisible(gc())
+gc()
 
 
 #### Main loop ####
@@ -100,15 +98,19 @@ invisible(gc())
   year_cur_params <- func_load_year_params(run_params, year_cur)
   
   # Select grids of the current year.
-  # We may be using different ids for elevation and surface type
-  # since elevation grids could be interpolated (unlike surface type).
-  # The fixed avalanche grids use the same indices as the elevation ones.
-  elevation_grid_id <- data_dhms$grid_year_id[year_id]
-  surftype_grid_id  <- data_surftype$grid_year_id[year_id]
-  outline_id        <- data_outlines$outline_year_id[year_id]
+  grid_id <- data_dhms$grid_year_id[year_id]
   
-  grids_avalanche_cur <- sapply(grids_avalanche, `[[`, elevation_grid_id)
-
+  grids_avalanche_cur <- sapply(grids_avalanche, `[[`, grid_id)
+  
+  
+  #------------------------- Compute image for background of daily SWE plots -------------------------#
+  surf_r <- subs(data_surftype[[grid_id]], data.frame(from = c(0, 1, 4, 5), to = c(100, 170, 0, 70)))
+  surf_g <- subs(data_surftype[[grid_id]], data.frame(from = c(0, 1, 4, 5), to = c(150, 213, 0, 20)))
+  surf_b <- subs(data_surftype[[grid_id]], data.frame(from = c(0, 1, 4, 5), to = c(200, 255, 0, 20)))
+  surf_base <- ggRGB(stack(surf_r, surf_g, surf_b), r = 1, g = 2, b = 3, ggLayer = TRUE)
+  #---------------------------------------------------------------------------------------------------#
+  
+  
   # Select mass balance measurements of the current year.
   massbal_annual_ids <- func_select_year_measurements(data_massbalance_annual, year_cur)
   nstakes_annual <- length(massbal_annual_ids)
@@ -121,9 +123,9 @@ invisible(gc())
   # We will use this later to extract the modeled series for each stake.
   # dx1 = x distance from the two cells to the left,
   # dy2 = y distance from the two cells above.
-  dx1_annual <- (massbal_annual_meas_cur$x - (extent(data_dhms$elevation[[elevation_grid_id]])[1] - (run_params$grid_cell_size / 2))) %% run_params$grid_cell_size
+  dx1_annual <- (massbal_annual_meas_cur$x - (extent(data_dhms$elevation[[grid_id]])[1] - (run_params$grid_cell_size / 2))) %% run_params$grid_cell_size
   dx2_annual <- run_params$grid_cell_size - dx1_annual
-  dy1_annual <- (massbal_annual_meas_cur$y - (extent(data_dhms$elevation[[elevation_grid_id]])[3] - (run_params$grid_cell_size / 2))) %% run_params$grid_cell_size
+  dy1_annual <- (massbal_annual_meas_cur$y - (extent(data_dhms$elevation[[grid_id]])[3] - (run_params$grid_cell_size / 2))) %% run_params$grid_cell_size
   dy2_annual <- run_params$grid_cell_size - dy1_annual
   
   # Should we make a winter run to optimize the precipitation correction?
@@ -133,7 +135,7 @@ invisible(gc())
   if (process_winter) {
     dist_probes_idw           <- func_snow_probes_idw(run_params, massbal_winter_meas_cur, data_dhms)
     dist_probes_idw           <- clamp(dist_probes_idw, lower = 0, upper = Inf)
-    dist_probes_idw_norm      <- dist_probes_idw / mean(dist_probes_idw[data_dems$glacier_cell_ids[[elevation_grid_id]]])
+    dist_probes_idw_norm      <- dist_probes_idw / mean(dist_probes_idw[data_dems$glacier_cell_ids[[grid_id]]])
   } else {
     # No winter probes to work with, so uniform distribution for the probes component.
     dist_probes_idw_norm      <- setValues(data_dhms$elevation[[1]], 1.0)
@@ -151,7 +153,7 @@ invisible(gc())
                                                    grids_snowdist_topographic,
                                                    grids_avalanche_cur,
                                                    dist_probes_idw_norm,
-                                                   elevation_grid_id,
+                                                   grid_id,
                                                    massbal_winter_meas_cur)
   
   
@@ -177,7 +179,7 @@ invisible(gc())
   # Here instead do the annual processing.
   # Find grid cells corresponding to the annual stakes.
   # We sort them to enable vectorized bilinear filtering.
-  annual_stakes_cells <- rowSort(fourCellsFromXY(data_dhms$elevation[[elevation_grid_id]], as.matrix(massbal_annual_meas_cur[,4:5])))
+  annual_stakes_cells <- rowSort(fourCellsFromXY(data_dhms$elevation[[grid_id]], as.matrix(massbal_annual_meas_cur[,4:5])))
   
   # Time specification of the annual run.
   model_annual_bounds <- model_time_bounds[1:2]
@@ -188,43 +190,83 @@ invisible(gc())
   weather_series_cur <- data_weather[which(data_weather$timestamp == model_time_bounds[1]):(which(data_weather$timestamp == model_time_bounds[2]) - 1),]
   model_days_n <- length(weather_series_cur[,1])
   
-  dist_topographic_values      <- getValues(grids_snowdist_topographic[[elevation_grid_id]])
+  dist_topographic_values      <- getValues(grids_snowdist_topographic[[grid_id]])
   dist_topographic_values_mean <- mean(dist_topographic_values)
   dist_topographic_values_red  <- dist_topographic_values_mean + run_params$accum_snow_dist_red_fac * (dist_topographic_values - dist_topographic_values_mean)
   
-  # This leaves the result of the last optimization
-  # iteration in mod_output_annual_cur.
-  optim_corr_annual <- func_optimize_mb_annual(run_params, year_cur_params, elevation_grid_id, surftype_grid_id,
-                                               data_dhms, data_dems, data_surftype, snowdist_init, data_radiation,
-                                               weather_series_cur, dist_topographic_values_red,
-                                               dist_probes_norm_values_red, grids_avalanche_cur,
-                                               dx1_annual, dx2_annual, dy1_annual, dy2_annual,
-                                               nstakes_annual, model_days_n, massbal_annual_meas_cur,
-                                               annual_stakes_cells)
-  # Free some memory after processing.
-  invisible(gc())
   
   
+  
+  
+  
+  #### . .  OPTIMIZATION ####
+  
+  # To optimize, we use a (sorted!) vector of multipliers for the model parameters
+  # (currently the melt factor, the two radiation factors for snow and ice, prec_summer_fac and prec_elegrad).
+  # This vector of multipliers is the first argument to the function
+  # and its values are subject to optimization. This way we don't mess
+  # with lists and parameters directly.
+  # So after optimizing we will have to call another specialized function
+  # which uses the optimized multipliers to run again the model and this
+  # time return the actual model output.
+  # year_params_multipliers_init       <- c(1.0, 1.0, 1.0, 1.0, 1.0)
+  # year_params_multipliers_lowerbound <- c(0.1, 0.1, 0.1, 0.5, 0.5)
+  # year_params_multipliers_upperbound <- c(10.0, 10.0, 10.0, 2.0, 2.0)
+  # year_params_multipliers_init       <- c(1.0, 1.0, 1.0)
+  # year_params_multipliers_lowerbound <- c(0.1, 0.1, 0.1)
+  # year_params_multipliers_upperbound <- c(10.0, 10.0, 10.0)
+  year_params_multipliers_init       <- c(1.0)
+  year_params_multipliers_lowerbound <- c(0.1)
+  year_params_multipliers_upperbound <- c(10.0)
+
+  
+  opt_result <- optim(
+    par = year_params_multipliers_init,
+    fn = func_run_model_year_optim,
+    run_params = run_params, year_cur_params = year_cur_params, grid_id = grid_id, data_dhms = data_dhms,
+    data_dems = data_dems, data_surftype = data_surftype, snowdist_init = snowdist_init,
+    data_radiation = data_radiation, weather_series_cur = weather_series_cur,
+    dist_topographic_values_red = dist_topographic_values_red, dist_probes_norm_values_red = dist_probes_norm_values_red,
+    grids_avalanche_cur = grids_avalanche_cur, dx1 = dx1_annual, dx2 = dx2_annual, dy1 = dy1_annual, dy2 = dy2_annual,
+    nstakes = nstakes_annual, model_days_n = model_days_n, massbal_meas_cur = massbal_annual_meas_cur,
+    stakes_cells = annual_stakes_cells,
+    method = "SANN",
+    # lower = year_params_multipliers_lowerbound,
+    # upper = year_params_multipliers_upperbound,
+    control = list(maxit = 15, trace = 6)
+  )
+  
+  # BELOW: multi-threaded L-BFGS-B optimization. Quite slow.
+  # # This function so that the threads won't try to access the cpp file all together (bad things happen!)
+  # fun_read_gruber <- function(x) {Sys.sleep(x); sourceCpp("functions/func_avalanche_gruber.cpp", cacheDir = "functions/")}
+  # 
+  # cl <- makeCluster(8)     # set the number of processor cores
+  # setDefaultCluster(cl=cl) # set 'cl' as default cluster
+  # clusterEvalQ(cl, library("raster"))
+  # clusterEvalQ(cl, library("Rcpp"))
+  # clusterApply(cl, x = (1:8) / 10, fun_read_gruber)
+  # clusterExport(cl = cl, varlist = c("func_massbal_model", "func_avalanche", "func_extract_modeled_stakes", "func_compute_unknown_stakes_start_ids"), envir = .GlobalEnv)
+  # 
+  # opt_result <- optimParallel(
+  #       par = year_params_multipliers_init,
+  #       fn = func_run_model_year_optim,
+  #       run_params = run_params, year_cur_params = year_cur_params, grid_id = grid_id, data_dhms = data_dhms,
+  #       data_dems = data_dems, data_surftype = data_surftype, snowdist_init = snowdist_init,
+  #       data_radiation = data_radiation, weather_series_cur = weather_series_cur,
+  #       dist_topographic_values_red = dist_topographic_values_red, dist_probes_norm_values_red = dist_probes_norm_values_red,
+  #       grids_avalanche_cur = grids_avalanche_cur, dx1 = dx1_annual, dx2 = dx2_annual, dy1 = dy1_annual, dy2 = dy2_annual,
+  #       nstakes = nstakes_annual, model_days_n = model_days_n, massbal_meas_cur = massbal_annual_meas_cur,
+  #       stakes_cells = annual_stakes_cells,
+  #       lower = year_params_multipliers_lowerbound,
+  #       upper = year_params_multipliers_upperbound,
+  #       control = list(maxit = 15, trace = 6)
+  #       )
+  # 
+  # setDefaultCluster(cl=NULL)
+  # stopCluster(cl) 
   
 
   
-  
-  
-  
-  #### .  DAILY PLOTS (SLOW!) ####
-  # Compute surface type image, to use as background for the daily SWE plots.
-  surf_r    <- subs(data_surftype$grids[[surftype_grid_id]], data.frame(from = c(0, 1, 4, 5), to = c(100, 170, 0, 70)))
-  surf_g    <- subs(data_surftype$grids[[surftype_grid_id]], data.frame(from = c(0, 1, 4, 5), to = c(150, 213, 0, 20)))
-  surf_b    <- subs(data_surftype$grids[[surftype_grid_id]], data.frame(from = c(0, 1, 4, 5), to = c(200, 255, 0, 20)))
-  surf_base <- ggRGB(stack(surf_r, surf_g, surf_b), r = 1, g = 2, b = 3, ggLayer = TRUE)
-  func_plot_daily_maps(run_params,
-                       weather_series_cur,
-                       data_dems,
-                       data_outlines,
-                       mod_output_annual_cur,
-                       surf_base,
-                       elevation_grid_id,
-                       outline_id)
   
   
 # }

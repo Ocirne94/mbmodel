@@ -75,11 +75,9 @@ func_load_elevation_grids <- function(run_params, load_which) {
 
       # For each modeled year find the closest grid year and use its grid.
       for (year_cur_id in 1:run_params$n_years) {
-        
         year_cur <- run_params$years[year_cur_id]
         grid_year_closest_id <- which.min(abs(grid_years - year_cur))
         grids_out$grid_year_id[year_cur_id] <- grid_year_closest_id
-        
       }
       
       # Here the case grid_interpolate == TRUE

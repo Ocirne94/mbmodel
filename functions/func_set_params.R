@@ -15,10 +15,11 @@ func_set_params <- function() {
     #### INPUT-related parameters ####
     # Set paths (don't forget the final / or \).
     dir_data_weather             =   "./input/data/weather/",      # The weather series goes here
-    dir_data_dem                 =   "./input/data/dem/",          # Path to the DEM(s)   = elevation grid(s) (masked to the glacier surface, nodata outside)
-    dir_data_dhm                 =   "./input/data/dhm/",          # Path to the DHM(s)   = elevation grids(s) (rectangular, to compute slopes and curvatures)
-    dir_data_surftype            =   "./input/data/surftype/",     # Grids of surface type (snow/ice/firn/rock/debris) go here
-    dir_data_radiation           =   "./input/data/radiation/",    # Grids of potential direct radiation sum go here
+    dir_data_dem                 =   "./input/data/dem/",          # Path to the DEM(s) = elevation grid(s) (masked to the glacier surface, nodata outside)
+    dir_data_dhm                 =   "./input/data/dhm/",          # Path to the DHM(s) = elevation grids(s) (rectangular, to compute slopes and curvatures)
+    dir_data_surftype            =   "./input/data/surftype/",     # Path to the grids of surface type (snow/ice/firn/rock/debris) go here
+    dir_data_outline             =   "./input/data/outline/",      # Path to the outlines
+    dir_data_radiation           =   "./input/data/radiation/",    # Path to the grids of potential direct radiation (daily sums)
     dir_data_massbalance         =   "./input/data/massbalance/",  # The mass balance observations go here
     dir_annual_params            =   "./input/params/",            # The annual model parameter files go here
     
@@ -33,17 +34,21 @@ func_set_params <- function() {
     
     filename_dem_prefix          =   "dem_barkrak_",
     filename_dem_suffix          =   ".tif",                       # DEM name is <prefix><year><suffix>
-    dem_years                    =   c(2015),                      # Years for which a DEM is available. These whould be sorted in ascending order. Syntax is like this: c(2010, 2015, 2020)
+    dem_years                    =   c(2015),                      # Years for which a DEM is available. These should be sorted in ascending order. Syntax is like this: c(2010, 2015, 2020)
     dem_interpolate              =   FALSE,                        # Should we use linear interpolation to compute each year's DEM? (WARNING: if the glacier area changes, the interpolation between a NA cell and a non-NA one gives NA!)
     
     filename_dhm_prefix          =   "dhm_barkrak_",
     filename_dhm_suffix          =   ".tif",                       # DHM name is <prefix><year><suffix>
-    dhm_years                    =   c(2015),                      # Years for which a DHM is available. These whould be sorted in ascending order.
+    dhm_years                    =   c(2015),                      # Years for which a DHM is available. These should be sorted in ascending order.
     dhm_interpolate              =   FALSE,                        # Should we use linear interpolation to compute each year's DHM?
     
     filename_surftype_prefix     =   "surf_type_barkrak",
     filename_surftype_suffix     =   ".grid",                      # Surface type filename is <prefix><year><suffix>
     surftype_years               =   c(2015),                      # Years for which a surface type file is available. These whould be sorted in ascending order.
+    
+    filename_outline_prefix      =   "barkrak",
+    filename_outline_suffix      =   "_gltot.xyzn",                # Outline name is <prefix><year><suffix>
+    outline_years                =   c(2015),                      # Years for which an outline is available.
     
     filename_radiation_prefix    =   "dir",
     filename_radiation_suffix    =   "24.grid",                    # Radiation files are called <prefix><doy><suffix> where <doy> is the day of year, zero-padded to length 3 (e.g. 001).
@@ -93,6 +98,10 @@ func_set_params <- function() {
     #### STAKES COMPARISON parameters ####
     stakes_unknown_latest_start  =   "2/28",                       # [month/day]: in the automatic search of the start date for snow pits and depth probings without a measured start date, we search no later than this day of year. The starting date will be set to the day of the minimum cumulative mass balance between the start of the simulation and the date set here. Something like end of February should be safe for all stakes. 
     
+    
+    #### MODEL OPTIMIZATION parameters ####
+    optim_max_corr_fact          =   1,                            # [-]: maximum allowable positive correction to the melt factor and the radiation factor during optimization, in units of the factors themselves (i.e. by how many times these can be increased). Only positive values make sense. A larger value is safer if a reasonable value for the melt factors is not known, but the optimization will be a bit slower. There is no parameter for the negative correction: it is automatically set to maximum 0.
+    optim_bias_threshold         =   1,                            # [mm w.e.]: if abs(bias) is below this threshold then we stop the optimization. This saves us a couple iterations since the optim() function will stop when the value *change* is less than a threshold, not the value itself.
     
     #### MODELED YEARS choice ####
     first_year                   =   2017,                         # First modeled year (usually from October of the previous year to September of this year)

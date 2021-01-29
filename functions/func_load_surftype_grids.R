@@ -13,7 +13,8 @@
 func_load_surftype_grids <- function(run_params) {
   
   # Here we will put the output.
-  grids_out <- list()
+  grids_out <- list(grids = list(),
+                    grid_year_id = rep(NA, run_params$n_years))
   
   grid_paths <- paste(run_params$dir_data_surftype,
                       run_params$filename_surftype_prefix,
@@ -23,14 +24,17 @@ func_load_surftype_grids <- function(run_params) {
   
   grid_years <- run_params$surftype_years
   
+  # Load grids.
+  for (grid_id in 1:length(grid_paths)) {
+    grids_out$grids[[grid_id]] <- readAll(raster(grid_paths[grid_id]))
+    crs(grids_out$grids[[grid_id]]) <- run_params$grids_crs
+  }
+  
   # For each modeled year find the closest grid year and use its grid.
   for (year_cur_id in 1:run_params$n_years) {
-    
     year_cur <- run_params$years[year_cur_id]
     grid_year_closest_id <- which.min(abs(grid_years - year_cur))
-    grids_out[[year_cur_id]] <- readAll(raster(grid_paths[grid_year_closest_id]))
-    crs(grids_out[[year_cur_id]]) <- run_params$grids_crs
-    
+    grids_out$grid_year_id[year_cur_id] <- grid_year_closest_id
   }
   
   return(grids_out)

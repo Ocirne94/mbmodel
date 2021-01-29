@@ -36,6 +36,12 @@ func_load_year_params <- function(run_params, year_cur) {
     year_params$mb_corr_ele_bands <- as.numeric(unlist(strsplit(year_params$mb_corr_ele_bands, ",")))
   }
   
+  # Compute ratio of snow to ice radiation factors.
+  # We will keep this ratio constant as we optimize
+  # the radiation factors, then possibly use it
+  # for subsequent optimization steps.
+  year_params$rad_fact_ratio_snow_ice <- year_params$rad_fact_snow / year_params$rad_fact_ice
+  
   return(year_params)
   
 }

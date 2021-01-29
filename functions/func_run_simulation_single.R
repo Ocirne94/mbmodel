@@ -5,38 +5,43 @@
 #                 mass balance measurements.                                                      #
 #                 This file contains the routine to call the mass balance model and compare       #
 #                 its output to the measured stakes, computing BIAS w.r.t. each stake.            #
-#                 The first argument is a vector of named multipliers which is passed to this     #
+#                 The first argument is a list of named multipliers which is passed to this       #
 #                 by the optimization routine, to find best parameters to fit the data.           #
-#                 The second argument defines whether those multipliers are for winter or summer  #
-#                 variables (cprec and precgrad, or melt_factor and rad_factor_ice).              #
 ###################################################################################################
 
-func_run_simulation_single <- function(year_param_multipliers, multiplier_period,
-                                       run_params, year_cur_params, grid_id, data_dhms, data_dems, data_surftype,
+func_run_simulation_single <- function(year_param_corrections,
+                                       run_params, year_cur_params, elevation_grid_id, surftype_grid_id,
+                                       data_dhms, data_dems, data_surftype,
                                        snowdist_init, data_radiation, weather_series_cur, dist_topographic_values_red,
                                        dist_probes_norm_values_red, grids_avalanche_cur, dx1, dx2, dy1, dy2,
                                        nstakes, model_days_n, massbal_meas_cur, stakes_cells) {
   
   
-  #### . .  APPLY MULTIPLIERS FOR OPTIMIZATION ####
-  year_cur_params_multiplied <- year_cur_params
-  year_cur_params_multiplied$melt_factor <- year_cur_params$melt_factor * year_param_multipliers[1]
-  mf_ri <- year_cur_params$melt_factor / year_cur_params$rad_fact_ice
-  mf_rs <- year_cur_params$melt_factor / year_cur_params$rad_fact_snow
-  year_cur_params_multiplied$rad_fact_ice <- year_cur_params_multiplied$melt_factor / mf_ri
-  year_cur_params_multiplied$rad_fact_snow <- year_cur_params_multiplied$melt_factor / mf_rs
-  # year_cur_params_multiplied$rad_fact_ice <- year_cur_params$rad_fact_ice * year_param_multipliers[2]
-  # year_cur_params_multiplied$rad_fact_snow <- year_cur_params$rad_fact_snow * year_param_multipliers[3]
-  # year_cur_params_multiplied$prec_summer_fact <- year_cur_params$prec_summer_fact * year_param_multipliers[4]
-  # year_cur_params_multiplied$prec_elegrad <- year_cur_params$prec_elegrad * year_param_multipliers[5]
+  #### . .  APPLY ADDITIVE CORRECTIONS FOR OPTIMIZATION ####
+  # We apply all the available corrections
+  # It is up to anyone using this function to
+  # pass only the proper corrections when simulating
+  # winter / year / year without previous winter optimization.
+  corr_available <- names(year_param_corrections)
+  year_cur_params_corr <- year_cur_params
+  for (corr_cur in corr_available) {
+    year_cur_params_corr[[corr_cur]] <- year_cur_params_corr[[corr_cur]] + year_param_corrections[[corr_cur]]
+  }
   
+  # Compute radiation factor for snow, using the
+  # fixed (initial) ratio of the radiation factors.
+  year_cur_params_corr$rad_fact_snow <- year_cur_params_corr$rad_fact_ice * year_cur_params_corr$rad_fact_ratio_snow_ice
+  
+  # cat("rad_fact_ratio_snow_ice =", year_cur_params_corr$rad_fact_ratio_snow_ice, "\n")
+  # cat("rad_fact_snow =", year_cur_params_corr$rad_fact_snow, "\n")
+  # cat("rad_fact_ice =", year_cur_params_corr$rad_fact_ice, "\n")
   
   #### . .  RUN MASS BALANCE MODEL ####
   mb_model_output <- func_massbal_model(run_params,
-                                        year_cur_params_multiplied,
-                                        getValues(data_dhms$elevation[[grid_id]]),
-                                        data_dems$glacier_cell_ids[[grid_id]],
-                                        getValues(data_surftype[[grid_id]]),
+                                        year_cur_params_corr,
+                                        getValues(data_dhms$elevation[[elevation_grid_id]]),
+                                        data_dems$glacier_cell_ids[[elevation_grid_id]],
+                                        getValues(data_surftype$grids[[surftype_grid_id]]),
                                         getValues(snowdist_init),
                                         data_radiation,
                                         weather_series_cur,
@@ -76,9 +81,11 @@ func_run_simulation_single <- function(year_param_multipliers, multiplier_period
   # over the measurement period (numeric vector).
   stakes_mb_mod  <- as.numeric(stakes_series_mod_all)[((1:nstakes)-1)*(model_days_n+1) + stakes_end_ids] -
                     as.numeric(stakes_series_mod_all)[((1:nstakes)-1)*(model_days_n+1) + stakes_start_ids_corr]
+  
   # Corresponding measurement.
   stakes_mb_meas <- massbal_meas_cur$dh_cm * massbal_meas_cur$density * 10 # 10: cm w.e. to mm w.e.
   
+  # Bias of each stake (numeric vector, one element per stake).
   stakes_bias <- stakes_mb_mod - stakes_mb_meas
   
   global_bias <- mean(stakes_bias)
@@ -87,7 +94,11 @@ func_run_simulation_single <- function(year_param_multipliers, multiplier_period
   cat("BIAS:", global_bias, "mm w.e.\n")
   cat("RMS:", global_rms, "mm w.e.\n")
   
-  run_output <- list(vec_massbal_cumul     = mb_model_output$vec_massbal_cumul,
+  # Compile output with everything we may need
+  # for either plots or optimization.
+  run_output <- list(vec_swe_all           = mb_model_output$vec_swe_all,
+                     vec_surftype_all      = mb_model_output$vec_surftype_all,
+                     vec_massbal_cumul     = mb_model_output$vec_massbal_cumul,
                      gl_massbal_cumul      = mb_model_output$gl_massbal_cumul,
                      stakes_series_mod_all = stakes_series_mod_all,
                      stakes_mb_mod         = stakes_mb_mod,
