@@ -158,7 +158,7 @@ gc()
   
   
   #### .  MODELING PERIOD BOUNDS ####
-  # Four POSIXct time objects: start and end of the annual
+  # Four Date objects: start and end of the annual
   # modeling period, and same for the winter modeling period.
   model_time_bounds   <- func_compute_modeling_periods(run_params,
                                                        massbal_annual_meas_cur,

@@ -103,6 +103,19 @@ func_set_params <- function() {
     optim_max_corr_fact          =   1,                            # [-]: maximum allowable positive correction to the melt factor and the radiation factor during optimization, in units of the factors themselves (i.e. by how many times these can be increased). Only positive values make sense. A larger value is safer if a reasonable value for the melt factors is not known, but the optimization will be a bit slower. There is no parameter for the negative correction: it is automatically set to maximum 0.
     optim_bias_threshold         =   1,                            # [mm w.e.]: if abs(bias) is below this threshold then we stop the optimization. This saves us a couple iterations since the optim() function will stop when the value *change* is less than a threshold, not the value itself.
     
+    
+    #### FIXED MASS BALANCE PERIODS choice ####
+    massbal_fixed_annual_start   =   "8/13",                       # [month/day]: start of the user-defined fixed period for annual mass balance evaluation. This is referred to (<year_cur> - 1).
+    massbal_fixed_annual_end     =   "8/12",                       # [month/day]: end of the user-defined fixed period for annual mass balance evaluation. This is referred to <year_cur>.
+    massbal_fixed_winter_start   =   "10/1",                       # [month/day]: start of the user-defined fixed period for winter mass balance evaluation. This is referred to (<year_cur> - 1).
+    massbal_fixed_winter_end     =   "4/30",                       # [month/day]: end of the user-defined fixed period for winter mass balance evaluation. This is referred to <year_cur>.
+    
+    
+    #### MASS BALANCE PROCESSING choices ####
+    mb_optimization_skip         =   TRUE,                         # [-]: CURRENTLY NOT IMPLEMENTED, SHOULD WE SKIP THE OPTIMIZATION OF THE MASS BALANCE MODEL?
+    mb_corr_bands_skip           =   FALSE,                        # [-]: CURRENTLY NOT IMPLEMENTED, SHOULD WE SKIP THE CORRECTION OF MASS BALANCE BASED ON ELEVATION BANDS?
+    
+    
     #### MODELED YEARS choice ####
     first_year                   =   2017,                         # First modeled year (usually from October of the previous year to September of this year)
     last_year                    =   2020                          # Last modeled year (same as previous comment)
@@ -111,15 +124,20 @@ func_set_params <- function() {
   
   
   #### DERIVED parameters, automatically computed ####
-  run_params$years <- run_params$first_year:run_params$last_year
-  run_params$n_years <- length(run_params$years)
+  run_params$years                       <- run_params$first_year:run_params$last_year
+  run_params$n_years                     <- length(run_params$years)
   
-  run_params$curvature_dhm_smooth <- max(1e-9,run_params$curvature_dhm_smooth) # The gaussian smoothing fails if sigma   = 0 (but 1e-9 still corresponds to no smoothing!)
-  run_params$dhm_smooth_windowsize <- max(5, 2 * run_params$curvature_dhm_smooth + 1)
+  run_params$curvature_dhm_smooth        <- max(1e-9,run_params$curvature_dhm_smooth) # The gaussian smoothing fails if sigma   = 0 (but 1e-9 still corresponds to no smoothing!)
+  run_params$dhm_smooth_windowsize       <- max(5, 2 * run_params$curvature_dhm_smooth + 1)
   
-  run_params$model_avalanche_dates <- format(as.POSIXct(run_params$model_avalanche_dates, format = "%m/%d"), format = "%m/%d") # Add leading zeroes to single-digit values if needed.
+  run_params$model_avalanche_dates       <- format(as.Date(run_params$model_avalanche_dates, format = "%m/%d"), format = "%m/%d") # Add leading zeroes to single-digit values if needed.
   
-  run_params$stakes_unknown_latest_start <- format(as.POSIXct(run_params$stakes_unknown_latest_start, format = "%m/%d"), format = "%m/%d") # Same.
+  run_params$stakes_unknown_latest_start <- format(as.Date(run_params$stakes_unknown_latest_start, format = "%m/%d"), format = "%m/%d") # Same.
+  
+  run_params$massbal_fixed_annual_start <- format(as.Date(run_params$massbal_fixed_annual_start, format = "%m/%d"), format = "%m/%d")
+  run_params$massbal_fixed_annual_end <- format(as.Date(run_params$massbal_fixed_annual_end, format = "%m/%d"), format = "%m/%d")
+  run_params$massbal_fixed_winter_start <- format(as.Date(run_params$massbal_fixed_winter_start, format = "%m/%d"), format = "%m/%d")
+  run_params$massbal_fixed_winter_end <- format(as.Date(run_params$massbal_fixed_winter_end, format = "%m/%d"), format = "%m/%d")
   
   return(run_params)
 

@@ -10,15 +10,15 @@
 
 # ANNUAL modeling period starts at the beginning of the observation
 # period with the earliest start (i.e. the annual stake which was surveyed first
-# on the previous year), but no later than Oct 1 (to include the whole hydrological year).
+# on the previous year), but no later than Oct 1 (to include the whole hydrological year),
+# and no later than the date of fixed mass balance evaluation, set by the user.
 # Annual modeling period ends at the end of the observation period with the latest end
-# (i.e. the annual stake which was surveyed last on the current year), but no earlier than Sep 30 (hydro year).
+# (i.e. the annual stake which was surveyed last on the current year), but no earlier than Sep 30 (hydro year),
+# and no earlier than the date of fixed mass balance evaluation, set by the user.
 # WINTER modeling period starts at the beginning of the observation period with the earliest start
 # (among the winter ones) and ends at the end of the period with the latest end (among the winter ones).
-func_compute_modeling_periods <- function(run_params, massbal_annual, massbal_winter, year_cur) {
-  
-  hydro_start <- as.POSIXct(paste(year_cur-1, 10, 1), format="%Y %m %d", tz = "UTC")
-  hydro_end   <- as.POSIXct(paste(year_cur, 9, 30), format = "%Y %m %d", tz = "UTC")
+# It is extended to include te dates of fixed mass balance evaluation set by the user.
+func_compute_modeling_periods <- function(run_params, massbal_annual, massbal_winter, year_cur, year_cur_params) {
   
   # na.rm because we support NA as start date, meaning
   # "end of previous ablation season" i.e. mass balance minimum.
@@ -28,8 +28,8 @@ func_compute_modeling_periods <- function(run_params, massbal_annual, massbal_wi
   # before that date, the starting date of those stakes will be
   # set at Sep 30.
   # In the future we may support having a custom starting date.
-  annual_start <- min(c(hydro_start, massbal_annual$start_date), na.rm = T)
-  annual_end   <- max(c(hydro_end, massbal_annual$end_date))
+  annual_start <- min(c(year_cur_params$hydro_start, massbal_annual$start_date, year_cur_params$fixed_annual_start), na.rm = T)
+  annual_end   <- max(c(year_cur_params$hydro_end, massbal_annual$end_date, year_cur_params$fixed_annual_end))
   
   winter_start <- NA
   winter_end   <- NA

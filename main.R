@@ -156,12 +156,13 @@ invisible(gc())
   
   
   #### .  MODELING PERIOD BOUNDS ####
-  # Four POSIXct time objects: start and end of the annual
+  # Four Date objects: start and end of the annual
   # modeling period, and same for the winter modeling period.
   model_time_bounds   <- func_compute_modeling_periods(run_params,
                                                        massbal_annual_meas_cur,
                                                        massbal_winter_meas_cur,
-                                                       year_cur)
+                                                       year_cur,
+                                                       year_cur_params)
   
   
   #### .  WINTER MASS BALANCE ####
@@ -185,7 +186,7 @@ invisible(gc())
   # Select weather series period.
   # If the weather series time specification is wrong
   # this step is where it all falls apart.
-  weather_series_cur <- data_weather[which(data_weather$timestamp == model_time_bounds[1]):(which(data_weather$timestamp == model_time_bounds[2]) - 1),]
+  weather_series_cur <- data_weather[which(data_weather$timestamp == model_annual_bounds[1]):(which(data_weather$timestamp == model_annual_bounds[2])),]
   model_days_n <- length(weather_series_cur[,1])
   
   dist_topographic_values      <- getValues(grids_snowdist_topographic[[elevation_grid_id]])
@@ -205,8 +206,28 @@ invisible(gc())
   invisible(gc())
   
   
+  #### . EXTRACT CUMULATIVE MASS BALANCE AT DATES OF INTEREST ####
+  # We extract three annual mass balances:
+  # (1) "hydro":      hydrological year
+  # (2) "measperiod": measurement period, defined as (latest stake end - earliest stake start)
+  # (3) "fixed":      user-defined fixed period.
+  massbal_maps <- func_extract_year_massbal_maps(run_params,
+                                                 year_cur_params,
+                                                 weather_series_cur,
+                                                 mod_output_annual_cur,
+                                                 data_dhms)
   
-
+  
+  
+  
+  #### . CORRECT ANNUAL MASS BALANCE IN ELEVATION BANDS ####
+  massbal_maps$meas_period_corr <- func_correct_massbal_elebands(year_cur_params,
+                                                                 data_dems,
+                                                                 massbal_annual_meas_cur,
+                                                                 mod_output_annual_cur,
+                                                                 massbal_maps)
+    
+  
   
   
   

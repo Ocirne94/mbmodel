@@ -14,10 +14,10 @@ func_load_weather <- function(run_params) {
   names(data_raw) <- c("year", "doy", "hour", "t2m_mean", "precip")
   
   
-  data_raw$timestamp <- as.POSIXct(paste(data_raw$year, data_raw$doy), format = "%Y %j", tz = "UTC")
+  data_raw$timestamp <- as.Date(paste(data_raw$year, data_raw$doy), format = "%Y %j", tz = "UTC")
   data_raw$month <- as.integer(format(data_raw$timestamp, "%m"))
-  # Hydrological year starts 92 days before calendar year.
-  data_raw$year_hydro <- as.integer(format(data_raw$timestamp + (86400 * 92), "%Y"))
+  # Hydrological year always starts 92 days before calendar year.
+  data_raw$year_hydro <- as.integer(format(data_raw$timestamp + 92, "%Y"))
   
   data_weather <- data_raw[, c(6, 1, 8, 7, 2, 4, 5)]
   

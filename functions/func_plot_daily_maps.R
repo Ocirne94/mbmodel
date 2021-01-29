@@ -32,7 +32,7 @@ func_plot_daily_maps <- function(run_params,
     plot_df$swe <- clamp(mb_model_output$vec_swe_all[cells_cur], -Inf, max_swe)
     plot_df$snow <- as.integer(plot_df$swe > 0)
     plot_df$surf <- mb_model_output$vec_surftype_all[cells_cur]
-    date_text <- format(c(weather_series_cur$timestamp, weather_series_cur$timestamp[length(weather_series_cur[,1])] + 86400)[day_id], "%Y/%m/%d")
+    date_text <- format(c(weather_series_cur$timestamp, weather_series_cur$timestamp[length(weather_series_cur[,1])] + 1)[day_id], "%Y/%m/%d")
     ggplot(plot_df) +
       surf_base +
       geom_raster(aes(x = x, y = y, fill = swe, alpha = as.character(snow))) +

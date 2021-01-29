@@ -82,7 +82,13 @@ func_optimize_mb_annual <- function(run_params, year_cur_params, elevation_grid_
                                         nstakes_annual, model_days_n, massbal_annual_meas_cur, annual_stakes_cells)
   
   cat("\n* Model run # 2\n")
-  corr_fact_cur <- 0.01 # This 0.01 is arbitrary, we just need a small interval to approximate the bias derivative with a finite difference.
+  # This 0.01 increment is arbitrary, we just need
+  # a small interval to approximate the bias
+  # derivative with a finite difference.
+  # A very small value is safer in case the starting
+  # value of the factors was very low
+  # (we don't want to go to the negatives!).
+  corr_fact_cur <- 0.01
   bias_cur <- func_optim_annual_worker(corr_fact_cur,
                                        run_params, year_cur_params, elevation_grid_id, surftype_grid_id,
                                        data_dhms, data_dems, data_surftype,
@@ -96,7 +102,7 @@ func_optimize_mb_annual <- function(run_params, year_cur_params, elevation_grid_
     bias_slope <- (bias_cur - bias_prev) / (corr_fact_cur - corr_fact_prev)
     bias_prev <- bias_cur
     corr_fact_prev <- corr_fact_cur
-    corr_fact_cur <- corr_fact_cur - (bias_cur / bias_slope)
+    corr_fact_cur <- corr_fact_cur - (bias_cur / bias_slope) # Apply linear correction with the computed derivative.
     niter <- niter + 1
     cat("\n* Model run #", niter, "\n")
     bias_cur <- func_optim_annual_worker(corr_fact_cur,
