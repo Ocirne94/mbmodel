@@ -48,8 +48,25 @@ func_compute_avalanche_fixed_grids <- function(run_params, data_dhms) {
     # Process the elevation grid to make it hydrologically correct
     # (no flat patches, no sinks).
     avalanche$elevation_proc[[grid_id]]       <- func_elevation_preprocess(run_params, data_dhms$elevation[[grid_id]])
-    avalanche$slope_proc[[grid_id]]           <- terrain(avalanche$elevation_proc[[grid_id]], "slope", "degrees")
-    avalanche$aspect_proc[[grid_id]]          <- terrain(avalanche$elevation_proc[[grid_id]], "aspect", "degrees")
+    
+    # Compute slope and aspect.
+    # We extend along the borders
+    # (nearest neighbor: we replicate
+    # the closest row/column)
+    # to avoid having dangerous NA values.
+    avalanche$slope_proc[[grid_id]]  <- terrain(avalanche$elevation_proc[[grid_id]], "slope", "degrees")
+    avalanche$slope_proc[[grid_id]][1:run_params$grid_ncol] <- avalanche$slope_proc[[grid_id]][run_params$grid_ncol + (1:run_params$grid_ncol)]
+    avalanche$slope_proc[[grid_id]][run_params$grid_ncells - run_params$grid_ncol + 1:run_params$grid_ncol] <- avalanche$slope_proc[[grid_id]][run_params$grid_ncells - (2*run_params$grid_ncol) + 1:run_params$grid_ncol]
+    avalanche$slope_proc[[grid_id]][seq(1,run_params$grid_ncells,run_params$grid_ncol)] <- avalanche$slope_proc[[grid_id]][seq(2,run_params$grid_ncells,run_params$grid_ncol)]
+    avalanche$slope_proc[[grid_id]][seq(run_params$grid_ncol,run_params$grid_ncells,run_params$grid_ncol)] <- avalanche$slope_proc[[grid_id]][seq(run_params$grid_ncol-1,run_params$grid_ncells,run_params$grid_ncol)]
+    
+    avalanche$aspect_proc[[grid_id]] <- terrain(avalanche$elevation_proc[[grid_id]], "aspect", "degrees")
+    avalanche$aspect_proc[[grid_id]][1:run_params$grid_ncol] <- avalanche$aspect_proc[[grid_id]][run_params$grid_ncol + (1:run_params$grid_ncol)]
+    avalanche$aspect_proc[[grid_id]][run_params$grid_ncells - run_params$grid_ncol + 1:run_params$grid_ncol] <- avalanche$aspect_proc[[grid_id]][run_params$grid_ncells - (2*run_params$grid_ncol) + 1:run_params$grid_ncol]
+    avalanche$aspect_proc[[grid_id]][seq(1,run_params$grid_ncells,run_params$grid_ncol)] <- avalanche$aspect_proc[[grid_id]][seq(2,run_params$grid_ncells,run_params$grid_ncol)]
+    avalanche$aspect_proc[[grid_id]][seq(run_params$grid_ncol,run_params$grid_ncells,run_params$grid_ncol)] <- avalanche$aspect_proc[[grid_id]][seq(run_params$grid_ncol-1,run_params$grid_ncells,run_params$grid_ncol)]
+    
+    
     
     # Movable fraction of the initial mass distribution
     # linearly increases from 0 to 1 between the lower

@@ -70,6 +70,8 @@ func_compute_initial_snow_cover <- function(run_params,
     # writeRaster(dist_cur, "5-dist-topo-snl-aval-red-probes.tif", overwrite = T)
     
   }
+  
+  dist_cur[is.na(getValues(dist_cur))] <- 0.0 # Possible residual NA values in the current distribution, along the border.
 
   return(dist_cur)
   

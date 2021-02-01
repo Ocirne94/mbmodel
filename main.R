@@ -13,7 +13,7 @@ params_file_name  <- "params_file.RData"  # Name of the .RData run parameters fi
 
 boot_file_write   <- FALSE                # Save .RData file with the input data, for faster reload.
 boot_file_read    <- TRUE                 # Load .RData file with the input data, instead of loading input files.
-boot_file_name    <- "boot_file.RData"    # Name of the .RData input data file.
+boot_file_name    <- "boot_file_gries.RData"    # Name of the .RData input data file.
 
 
 #### Include libraries ####
@@ -39,7 +39,7 @@ invisible(sapply(paste("functions/", list.files("functions/", pattern = "\\.R$")
 sourceCpp("functions/func_avalanche_gruber.cpp", cacheDir = "functions/") # Remove cacheDir option to force reload of the C++ code (useful after changing computer or editing the source file).
 
 
-#### Load or set run parameters ####
+#### Load or set fixed run parameters ####
 if (params_file_read) {
   load(params_file_name)
   } else {
@@ -107,7 +107,13 @@ invisible(gc())
   surftype_grid_id  <- data_surftype$grid_year_id[year_id]
   outline_id        <- data_outlines$outline_year_id[year_id]
   
+  # Extract pre-computed avalanche grids for this year.
   grids_avalanche_cur <- sapply(grids_avalanche, `[[`, elevation_grid_id)
+  
+  # Compute reduced-intensity base topographic distribution of solid precipitation.
+  dist_topographic_values      <- getValues(grids_snowdist_topographic[[elevation_grid_id]])
+  dist_topographic_values_mean <- mean(dist_topographic_values)
+  dist_topographic_values_red  <- dist_topographic_values_mean + run_params$accum_snow_dist_red_fac * (dist_topographic_values - dist_topographic_values_mean)
 
   # Select mass balance measurements of the current year.
   massbal_annual_ids <- func_select_year_measurements(data_massbalance_annual, year_cur)
@@ -117,7 +123,7 @@ invisible(gc())
   massbal_annual_meas_cur <- data_massbalance_annual[massbal_annual_ids,]
   massbal_winter_meas_cur <- data_massbalance_winter[massbal_winter_ids,] # Empty if we have no winter stakes for the year.
   
-  # Find (vectorized) the distance of each annual stake from the 4 surrounding cell centers.
+  # Find (vectorized) the distance of each annual (and then winter) stake from the 4 surrounding cell centers.
   # We will use this later to extract the modeled series for each stake.
   # dx1 = x distance from the two cells to the left,
   # dy2 = y distance from the two cells above.
@@ -125,6 +131,13 @@ invisible(gc())
   dx2_annual <- run_params$grid_cell_size - dx1_annual
   dy1_annual <- (massbal_annual_meas_cur$y - (extent(data_dhms$elevation[[elevation_grid_id]])[3] - (run_params$grid_cell_size / 2))) %% run_params$grid_cell_size
   dy2_annual <- run_params$grid_cell_size - dy1_annual
+  
+  dx1_winter <- (massbal_winter_meas_cur$x - (extent(data_dhms$elevation[[elevation_grid_id]])[1] - (run_params$grid_cell_size / 2))) %% run_params$grid_cell_size
+  dx2_winter <- run_params$grid_cell_size - dx1_winter
+  dy1_winter <- (massbal_winter_meas_cur$y - (extent(data_dhms$elevation[[elevation_grid_id]])[3] - (run_params$grid_cell_size / 2))) %% run_params$grid_cell_size
+  dy2_winter <- run_params$grid_cell_size - dy1_winter
+  
+  
   
   # Should we make a winter run to optimize the precipitation correction?
   # Only if we have some measurements of winter snow cover, else we can't.
@@ -139,7 +152,7 @@ invisible(gc())
     dist_probes_idw_norm      <- setValues(data_dhms$elevation[[1]], 1.0)
   }
   dist_probes_norm_values     <- getValues(dist_probes_idw_norm) # For the accumulation model.
-  dist_probes_norm_mean       <- mean(dist_probes_norm_values)
+  dist_probes_norm_mean       <- mean(dist_probes_norm_values, na.rm = T)
   dist_probes_norm_values_red <- dist_probes_norm_mean + run_params$accum_probes_red_fac * (dist_probes_norm_values - dist_probes_norm_mean)
   
   
@@ -165,17 +178,36 @@ invisible(gc())
                                                        year_cur_params)
   
   
-  #### .  WINTER MASS BALANCE ####
+  #### .  WINTER MASS BALANCE, to optimize the precipitation correction ####
   if (process_winter)  {
+    
+    winter_stakes_cells <- rowSort(fourCellsFromXY(data_dhms$elevation[[elevation_grid_id]], as.matrix(massbal_winter_meas_cur[,4:5])))
+    
     model_winter_bounds <- model_time_bounds[3:4]
-    # TODO:
-      # find grid cells of winter stakes
-      # run massbal_model (we have to run the whole model - not only on the stake grid cells - due to avalanches: we want the whole swe maps!)
+    
+    # Select weather series period.
+    # If the weather series time specification is
+    # wrong this step is where it all falls apart.
+    weather_series_cur <- data_weather[which(data_weather$timestamp == model_winter_bounds[1]):(which(data_weather$timestamp == model_winter_bounds[2])),]
+    model_days_n <- length(weather_series_cur[,1])
+    
+    # This leaves the result of the last optimization
+    # iteration in mod_output_annual_cur.
+    optim_corr_winter <- func_optimize_mb("winter",
+                                          run_params, year_cur_params, elevation_grid_id, surftype_grid_id,
+                                          data_dhms, data_dems, data_surftype, snowdist_init, data_radiation,
+                                          weather_series_cur, dist_topographic_values_red,
+                                          dist_probes_norm_values_red, grids_avalanche_cur,
+                                          dx1_winter, dx2_winter, dy1_winter, dy2_winter,
+                                          nstakes_winter, model_days_n, massbal_winter_meas_cur,
+                                          winter_stakes_cells)
+    # Free some memory after processing.
+    invisible(gc())
   }
     
   
   #### .  ANNUAL MASS BALANCE ####
-  # Here instead do the annual processing.
+  # Here do the annual processing.
   # Find grid cells corresponding to the annual stakes.
   # We sort them to enable vectorized bilinear filtering.
   annual_stakes_cells <- rowSort(fourCellsFromXY(data_dhms$elevation[[elevation_grid_id]], as.matrix(massbal_annual_meas_cur[,4:5])))
@@ -184,24 +216,21 @@ invisible(gc())
   model_annual_bounds <- model_time_bounds[1:2]
   
   # Select weather series period.
-  # If the weather series time specification is wrong
-  # this step is where it all falls apart.
+  # If the weather series time specification is
+  # wrong this step is where it all falls apart.
   weather_series_cur <- data_weather[which(data_weather$timestamp == model_annual_bounds[1]):(which(data_weather$timestamp == model_annual_bounds[2])),]
   model_days_n <- length(weather_series_cur[,1])
   
-  dist_topographic_values      <- getValues(grids_snowdist_topographic[[elevation_grid_id]])
-  dist_topographic_values_mean <- mean(dist_topographic_values)
-  dist_topographic_values_red  <- dist_topographic_values_mean + run_params$accum_snow_dist_red_fac * (dist_topographic_values - dist_topographic_values_mean)
-  
   # This leaves the result of the last optimization
   # iteration in mod_output_annual_cur.
-  optim_corr_annual <- func_optimize_mb_annual(run_params, year_cur_params, elevation_grid_id, surftype_grid_id,
-                                               data_dhms, data_dems, data_surftype, snowdist_init, data_radiation,
-                                               weather_series_cur, dist_topographic_values_red,
-                                               dist_probes_norm_values_red, grids_avalanche_cur,
-                                               dx1_annual, dx2_annual, dy1_annual, dy2_annual,
-                                               nstakes_annual, model_days_n, massbal_annual_meas_cur,
-                                               annual_stakes_cells)
+  optim_corr_annual <- func_optimize_mb("annual",
+                                        run_params, year_cur_params, elevation_grid_id, surftype_grid_id,
+                                        data_dhms, data_dems, data_surftype, snowdist_init, data_radiation,
+                                        weather_series_cur, dist_topographic_values_red,
+                                        dist_probes_norm_values_red, grids_avalanche_cur,
+                                        dx1_annual, dx2_annual, dy1_annual, dy2_annual,
+                                        nstakes_annual, model_days_n, massbal_annual_meas_cur,
+                                        annual_stakes_cells)
   # Free some memory after processing.
   invisible(gc())
   

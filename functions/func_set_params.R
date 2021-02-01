@@ -6,6 +6,8 @@
 #                 This file contains the fixed parameter definitions for the model run.           #
 ###################################################################################################
 
+dir_data_base                <-   "./input/data_gries/"                   # The base directory for all the data
+
 func_set_params <- function() {
 
   run_params <- list(
@@ -14,47 +16,47 @@ func_set_params <- function() {
     
     #### INPUT-related parameters ####
     # Set paths (don't forget the final / or \).
-    dir_data_weather             =   "./input/data/weather/",      # The weather series goes here
-    dir_data_dem                 =   "./input/data/dem/",          # Path to the DEM(s) = elevation grid(s) (masked to the glacier surface, nodata outside)
-    dir_data_dhm                 =   "./input/data/dhm/",          # Path to the DHM(s) = elevation grids(s) (rectangular, to compute slopes and curvatures)
-    dir_data_surftype            =   "./input/data/surftype/",     # Path to the grids of surface type (snow/ice/firn/rock/debris) go here
-    dir_data_outline             =   "./input/data/outline/",      # Path to the outlines
-    dir_data_radiation           =   "./input/data/radiation/",    # Path to the grids of potential direct radiation (daily sums)
-    dir_data_massbalance         =   "./input/data/massbalance/",  # The mass balance observations go here
-    dir_annual_params            =   "./input/params/",            # The annual model parameter files go here
+    dir_data_weather             =   paste0(dir_data_base, "weather/"),      # The weather series goes here
+    dir_data_dem                 =   paste0(dir_data_base, "dem/"),          # Path to the DEM(s) = elevation grid(s) (masked to the glacier surface, nodata outside)
+    dir_data_dhm                 =   paste0(dir_data_base, "dhm/"),          # Path to the DHM(s) = elevation grids(s) (rectangular, to compute slopes and curvatures)
+    dir_data_surftype            =   paste0(dir_data_base, "surftype/"),     # Path to the grids of surface type (snow/ice/firn/rock/debris) go here
+    dir_data_outline             =   paste0(dir_data_base, "outline/"),      # Path to the outlines
+    dir_data_radiation           =   paste0(dir_data_base, "radiation/"),    # Path to the grids of potential direct radiation (daily sums)
+    dir_data_massbalance         =   paste0(dir_data_base, "massbalance/"),  # The mass balance observations go here
+    dir_annual_params            =   "./input/params_gries/",            # The annual model parameter files go here
     
     # Set filenames and input file properties.
-    filename_weather             =   "barkrak_barkrak_d.dat",      # File name of the weather series
-    file_weather_nskip           =   4,                            # [-]: number of lines to skip in the weather file
-    weather_aws_elevation        =   3463,                         # [m a.s.l.]: AWS elevation
+    filename_weather             =   "gries_climap_d.dat",      # File name of the weather series
+    file_weather_nskip           =   2,                            # [-]: number of lines to skip in the weather file
+    weather_aws_elevation        =   2800,                         # [m a.s.l.]: AWS elevation
     weather_snowfall_temp        =   1.5,                          # [°C]: at this temperature precipitation is half rain, half snow. One degree above it is all rain, one degree below it is all snow (snow fraction is linearly interpolated).
     weather_max_precip_ele       =   4000,                         # [m a.s.l.]: above this altitude, precipitation does not increase any more but becomes constant (cutoff).
     
-    grids_crs                    =   CRS(SRS_string  ="EPSG:32642"), # Reference system of the grids, used in slope/aspect computations. Overrides any CRS info reported from the grid files.
+    grids_crs                    =   CRS(SRS_string  ="EPSG:21781"), # Reference system of the grids, used in slope/aspect computations. Overrides any CRS info reported from the grid files.
     
-    filename_dem_prefix          =   "dem_barkrak_",
-    filename_dem_suffix          =   ".tif",                       # DEM name is <prefix><year><suffix>
-    dem_years                    =   c(2015),                      # Years for which a DEM is available. These should be sorted in ascending order. Syntax is like this: c(2010, 2015, 2020)
+    filename_dem_prefix          =   "gl_gries",
+    filename_dem_suffix          =   ".grid",                       # DEM name is <prefix><year><suffix>
+    dem_years                    =   c(2012,2015),                      # Years for which a DEM is available. These should be sorted in ascending order. Syntax is like this: c(2010, 2015, 2020)
     dem_interpolate              =   FALSE,                        # Should we use linear interpolation to compute each year's DEM? (WARNING: if the glacier area changes, the interpolation between a NA cell and a non-NA one gives NA!)
     
-    filename_dhm_prefix          =   "dhm_barkrak_",
-    filename_dhm_suffix          =   ".tif",                       # DHM name is <prefix><year><suffix>
-    dhm_years                    =   c(2015),                      # Years for which a DHM is available. These should be sorted in ascending order.
+    filename_dhm_prefix          =   "dhm_gries",
+    filename_dhm_suffix          =   ".grid",                       # DHM name is <prefix><year><suffix>
+    dhm_years                    =   c(2012,2015),                      # Years for which a DHM is available. These should be sorted in ascending order.
     dhm_interpolate              =   FALSE,                        # Should we use linear interpolation to compute each year's DHM?
     
-    filename_surftype_prefix     =   "surf_type_barkrak",
+    filename_surftype_prefix     =   "firn_gries",
     filename_surftype_suffix     =   ".grid",                      # Surface type filename is <prefix><year><suffix>
-    surftype_years               =   c(2015),                      # Years for which a surface type file is available. These whould be sorted in ascending order.
+    surftype_years               =   c(2012,2015),                      # Years for which a surface type file is available. These whould be sorted in ascending order.
     
-    filename_outline_prefix      =   "barkrak",
+    filename_outline_prefix      =   "gries",
     filename_outline_suffix      =   "_gltot.xyzn",                # Outline name is <prefix><year><suffix>
-    outline_years                =   c(2015),                      # Years for which an outline is available.
+    outline_years                =   c(2012,2015),                      # Years for which an outline is available.
     
     filename_radiation_prefix    =   "dir",
     filename_radiation_suffix    =   "24.grid",                    # Radiation files are called <prefix><doy><suffix> where <doy> is the day of year, zero-padded to length 3 (e.g. 001).
 
-    filename_massbalance_annual  =   "peg_barkrak_orig.dat",       # File name of the annual mass balance observations
-    filename_massbalance_winter  =   "peg_barkrak_w.dat",          # File name of the winter mass balance observations
+    filename_massbalance_annual  =   "peg_gries.dat",       # File name of the annual mass balance observations
+    filename_massbalance_winter  =   "peg_gries_w.dat",          # File name of the winter mass balance observations
     
     filename_params_prefix       =   "param_",
     filename_params_suffix       =   ".dat",                       # Annual parameters filename is <prefix><year><suffix>
@@ -83,8 +85,8 @@ func_set_params <- function() {
     
     
     #### INITIAL SNOW COVER parameters ####
-    initial_snowline_elevation   =   3700,                         # [m]: initial snow line elevation, at the beginning of each simulated year. In the future it will be customizable for each year, and it will be possible to use as initial snow cover the result of the previous year (so that this elevation is only used for the first modeled year).
-    initial_snow_gradient        =   200,                          # [mm w.e. (100 m)-1]: increase of the initial snow amount for every 100 m elevation above the snow line
+    initial_snowline_elevation   =   2800,                         # [m]: initial snow line elevation, at the beginning of each simulated year. In the future it will be customizable for each year, and it will be possible to use as initial snow cover the result of the previous year (so that this elevation is only used for the first modeled year).
+    initial_snow_gradient        =   50,                          # [mm w.e. (100 m)-1]: increase of the initial snow amount for every 100 m elevation above the snow line
     initial_snow_dist_red_fac    =   0.5,                          # [-]: reduction factor to decrease the importance of the snow distribution variability (all components except winter snow probes), for the computed initial snow cover (of each year). 0 means uniform snow distribution, 1 means no reduction.
     
     
@@ -117,8 +119,8 @@ func_set_params <- function() {
     
     
     #### MODELED YEARS choice ####
-    first_year                   =   2017,                         # First modeled year (usually from October of the previous year to September of this year)
-    last_year                    =   2020                          # Last modeled year (same as previous comment)
+    first_year                   =   2019,                         # First modeled year (usually from October of the previous year to September of this year)
+    last_year                    =   2019                          # Last modeled year (same as previous comment)
     
   )
   

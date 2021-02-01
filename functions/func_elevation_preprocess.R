@@ -17,7 +17,7 @@ func_elevation_preprocess <- function(run_params, elevation) {
   #### REMOVE FLAT PATCHES ####
   # Find flat patches and replace them with smoothed DEM.
   # We iterate while we enlargen the smoothing window and amount,
-  # so that even large flat patches (rare!) will eventually disappear.
+  # so that even large flat patches (lakes!) will eventually disappear.
   elevation_unpatched <- elevation # elevation_unpatched will be the output.
   ids_patch_flat <- func_find_flat_patches(elevation, run_params)
   elevation_mean <- mean(getValues(elevation_unpatched), na.rm = T) # To add padding at the DEM borders with a value not too far from the DEM itself.
@@ -26,7 +26,7 @@ func_elevation_preprocess <- function(run_params, elevation) {
   while (length(ids_patch_flat) > 0) {
     
     smoothing_mat <- gaussian.kernel(sigma = n_flat_iter, n = max(5, 2 * n_flat_iter + 1))
-    elevation_smoothed <- focal(elevation_unpatched, w = smoothing_mat, fun = sum, na.rm = TRUE, pad = FALSE, padValue = elevation_mean)
+    elevation_smoothed <- focal(elevation_unpatched, w = smoothing_mat, fun = sum, na.rm = TRUE, pad = TRUE, padValue = elevation_mean)
     elevation_unpatched[ids_patch_flat] <- elevation_smoothed[ids_patch_flat]
     n_flat_iter <- n_flat_iter + 1
     ids_patch_flat <- func_find_flat_patches(elevation_unpatched, run_params) # Check again for any flat patches left.
@@ -34,7 +34,8 @@ func_elevation_preprocess <- function(run_params, elevation) {
   }
   
   cat("All flat patches gone after", n_flat_iter-1, "iteration(s).\n")
-
+  
+  # writeRaster(elevation_unpatched, "1-elevation-unpatched.tif", overwrite = T)
   
   
   #### FILL SINKS ####

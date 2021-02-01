@@ -38,6 +38,7 @@ func_compute_snowdist_topographic <- function(run_params, data_dhms, data_dems) 
     dhm_valid     <- setdiff(1:run_params$grid_ncells, dhm_na_border)
     dhm_smooth <- cover(dhm_smooth, data_dhms$elevation[[grid_id]]) # Fill NA edges of smoothed raster with original values.
     dhm_curvature <- curvature(dhm_smooth, "total")
+    dhm_curvature[is.na(getValues(dhm_curvature))] <- 0.0 # NAs can appear in curvature over flat regions.
     # Rescale curvature along the raster edges,
     # where we've just had to use the unsmoothed raster:
     # we don't want to have extreme curvature values here

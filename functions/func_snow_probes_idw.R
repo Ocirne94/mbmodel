@@ -21,8 +21,12 @@ func_snow_probes_idw <- function(run_params, snow_probes, data_dhms) {
   gs <- gstat(formula=swe~1, data=snow_probes_spdf, set=list(idp=run_params$snow_probes_idw_exp))
   snowdist_idw <- interpolate(data_dhms$elevation[[1]], gs)
   
+  # writeRaster(snowdist_idw, "snowdist_idw.tif", overwrite = T)
+  
   # Smooth as in the original IDL implementation.
-  snowdist_idw_smooth <- focal(snowdist_idw, w = matrix(1/9, 3, 3))
+  snowdist_idw_smooth <- focal(snowdist_idw, w = matrix(1, 3, 3), fun = mean, na.rm = TRUE, pad = TRUE, padValue = NA)
+  
+  # writeRaster(snowdist_idw_smooth, "snowdist_idw_smooth.tif", overwrite = T)
   
   return(snowdist_idw_smooth)
 }

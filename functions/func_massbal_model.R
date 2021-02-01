@@ -129,6 +129,9 @@ func_massbal_model <- function(run_params,
                                                       avalanche_input_values,
                                                       deposition_max_multiplier = 1.0,
                                                       preserve_edges = TRUE)
+
+      writeRaster(setValues(data_dhms$elevation[[1]], avalanche_output), "avalanche_output.tif", overwrite = T)
+      
       swe_post_previous_avalanche   <- avalanche_output + (vec_snow_swe[cells_prev] - avalanche_input_values)
       
       vec_massbal_cumul[cells_prev] <- vec_massbal_cumul[cells_prev] + swe_post_previous_avalanche - vec_snow_swe[cells_prev]

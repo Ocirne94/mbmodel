@@ -20,7 +20,9 @@ where\
 **D_curv_ele** is a normalized grid computed from surface curvature plus an elevation cutoff for accumulation,\
 **D_tsl_snowgrad** is the distribution from snow line elevation and a snow height gradient with altitude.
 
-By contrast, snow distribution following each precipitation event (during the actual model run) can be expressed as:
+Then a daily accumulation and melt model is run, computing a gridded time series of cumulative mass balance.
+Accumulation uses a temperature threshold to separate rain and snow; melt is computed with a radiation-enhanced temperature index model.
+Snow distribution following each precipitation event (during the actual model run) is expressed as:
 
 reduce(D_probes_norm) * reduce(D_curv_ele) * solid_fraction * distribute_precgrad_cutoff(correct(precipitation)), (2)\
 while the avalanche is simulated at user-defined fixed dates of the year (typically end-of-winter and sometime in summer).
@@ -33,3 +35,7 @@ In (2),\
 **distribute_precgrad_cutoff()** is a function which increases precipitation amount with altitude, up to a cutoff altitude,\
 **correct()** is a function to correct for precipitation under-catch at the rain gauge, with the option to reduce the correction in summer (differential under-catch of snow and rain),\
 **precipitation** is the rain gauge reading.
+
+The model is iteratively tuned to stake readings with an optimization procedure, which minimizes bias over the stakes. If winter accumulation measurements are available, the model is first run over the winter and the precipitation parameters are optimized (precipitation correction, precipitation gradient with altitude). Then the model is run over the whole period and the melt parameters are tuned to cancel the bias.
+
+The computed mass balance is then corrected in elevation bands to better match the stakes measurements.
