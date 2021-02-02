@@ -5,7 +5,7 @@
 #                 mass balance measurements.                                                      #
 #                 This file contains the routine to run the mass balance model over a period      #
 #                 (winter or year).                                                               #
-###################################################################################################  
+###################################################################################################
 
 # NOTE: this R implementation is actually quite fast.
 # The C++ implementation (under directory old/) is actually
@@ -14,16 +14,17 @@
 # year_cur_params are the melt/accumulation model parameters which we will optimize!
 # (For the first iteration we take the ones loaded from file).
 func_massbal_model <- function(run_params,
-                              year_cur_params,
-                              dhm_values,
-                              glacier_cell_ids,
-                              surftype_init_values,
-                              snowdist_init_values,
-                              radiation_values_list,
-                              weather_series_cur,
-                              snowdist_topographic_values_red,
-                              snowdist_probes_norm_values_red,
-                              grids_avalanche_cur) {
+                               year_cur_params,
+                               dhm_values,
+                               glacier_cell_ids,
+                               surftype_init_values,
+                               snowdist_init_values,
+                               radiation_values_list,
+                               weather_series_cur,
+                               snowdist_topographic_values_red,
+                               snowdist_probes_norm_values_red,
+                               grids_avalanche_cur,
+                               grid_ice_albedo_fact_cur_values) {
   
   # t1 <- Sys.time()
   
@@ -162,7 +163,7 @@ func_massbal_model <- function(run_params,
     
     
     # Compute melt amounts.
-    melt_cur[cells_ice]    <- (year_cur_params$melt_factor + 24 * year_cur_params$rad_fact_ice / 1000. * radiation_cur[cells_ice]) * temp_cur[cells_ice] # We use offset_prev in the temperature vector because it has one timestep less than the modeled grids (which also have the initial conditions as first timestep).
+    melt_cur[cells_ice]    <- (year_cur_params$melt_factor + 24 * year_cur_params$rad_fact_ice * grid_ice_albedo_fact_cur_values[cells_ice] / 1000. * radiation_cur[cells_ice]) * temp_cur[cells_ice] # We use offset_prev in the temperature vector because it has one timestep less than the modeled grids (which also have the initial conditions as first timestep).
     melt_cur[cells_firn]   <- (year_cur_params$melt_factor + 24 * year_cur_params$rad_fact_firn / 1000. * radiation_cur[cells_firn]) * temp_cur[cells_firn]
     melt_cur[cells_snow]   <- (year_cur_params$melt_factor + 24 * year_cur_params$rad_fact_snow / 1000. * radiation_cur[cells_snow]) * temp_cur[cells_snow]
     melt_cur[cells_debris] <- run_params$debris_red_fac * (year_cur_params$melt_factor + 24  * year_cur_params$rad_fact_ice / 1000. * radiation_cur[cells_debris]) * temp_cur[cells_debris]

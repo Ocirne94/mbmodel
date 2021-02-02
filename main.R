@@ -76,6 +76,7 @@ run_params$grid_ncells     <- run_params$grid_nrow * run_params$grid_ncol
 if (!boot_file_read) {
   grids_avalanche            <-   func_compute_avalanche_fixed_grids(run_params, data_dhms)
   grids_snowdist_topographic <-   func_compute_snowdist_topographic(run_params, data_dhms, data_dems)
+  grids_ice_albedo_fact      <-   func_compute_variable_ice_albedo(run_params, data_dhms)
 }
 
 # Save reboot file.
@@ -120,6 +121,9 @@ for (year_id in 1:run_params$n_years) {
   dist_topographic_values_mean <- mean(dist_topographic_values)
   dist_topographic_values_red  <- dist_topographic_values_mean + run_params$accum_snow_dist_red_fac * (dist_topographic_values - dist_topographic_values_mean)
 
+  # Extract ice albedo factor grid for this year.
+  grid_ice_albedo_fact_cur_values <- getValues(grids_ice_albedo_fact[[elevation_grid_id]])
+  
   # Select mass balance measurements of the current year.
   massbal_annual_ids <- func_select_year_measurements(data_massbalance_annual, year_cur)
   nstakes_annual <- length(massbal_annual_ids)
@@ -239,6 +243,7 @@ for (year_id in 1:run_params$n_years) {
                                           data_dhms, data_dems, data_surftype, snowdist_init_winter, data_radiation,
                                           weather_series_winter_cur, dist_topographic_values_red,
                                           dist_probes_norm_values_red, grids_avalanche_cur,
+                                          grid_ice_albedo_fact_cur_values,
                                           dx1_winter, dx2_winter, dy1_winter, dy2_winter,
                                           nstakes_winter, model_winter_days_n, massbal_winter_meas_cur,
                                           winter_stakes_cells)
@@ -279,6 +284,7 @@ for (year_id in 1:run_params$n_years) {
                                         data_dhms, data_dems, data_surftype, snowdist_init_annual, data_radiation,
                                         weather_series_annual_cur, dist_topographic_values_red,
                                         dist_probes_norm_values_red, grids_avalanche_cur,
+                                        grid_ice_albedo_fact_cur_values,
                                         dx1_annual, dx2_annual, dy1_annual, dy2_annual,
                                         nstakes_annual, model_annual_days_n, massbal_annual_meas_cur,
                                         annual_stakes_cells)

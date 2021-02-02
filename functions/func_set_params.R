@@ -86,7 +86,7 @@ func_set_params <- function() {
     
     #### INITIAL SNOW COVER parameters ####
     initial_snowline_elevation   =   2800,                         # [m]: initial snow line elevation, at the beginning of each simulated year. In the future it will be customizable for each year, and it will be possible to use as initial snow cover the result of the previous year (so that this elevation is only used for the first modeled year).
-    initial_snow_gradient        =   50,                          # [mm w.e. (100 m)-1]: increase of the initial snow amount for every 100 m elevation above the snow line
+    initial_snow_gradient        =   50,                           # [mm w.e. (100 m)-1]: increase of the initial snow amount for every 100 m elevation above the snow line
     initial_snow_dist_red_fac    =   0.5,                          # [-]: reduction factor to decrease the importance of the snow distribution variability (all components except winter snow probes), for the computed initial snow cover (of each year). 0 means uniform snow distribution, 1 means no reduction.
     initial_snow_dist_from_model =   TRUE,                         # [TRUE/FALSE]: if TRUE, use the simulated SWE of the previous year as starting condition for the simulation. If FALSE, compute initial SWE from topography and given parameters. The first simulated year always uses a computed initial SWE since there is no previous modeled year.
     
@@ -97,6 +97,9 @@ func_set_params <- function() {
     accum_snow_dist_red_fac      =   0.5,                          # [-]: reduction factor to decrease the importance of the topographic snow distribution variability (curvature and elevation cutoff) when distributing snowfall over the grid. 0 means uniform snow distribution, 1 means no reduction.
     model_avalanche_dates        =   c("1/31", "4/30", "6/30", "7/31", "8/31"),  # [month/day]: dates at which an avalanche is simulated. Usually one at the end of winter (but before winter stakes are measured), and one or more in summer to avoid overloading the slopes with summer snowfall.
     
+    albedo_ice_decrease_elev     =   2900.,                           # [m]: below this altitude, the ice albedo decreases linearly with altitude (darker ice).
+    albedo_ice_decrease_fact     =   0.0114,                       # [fraction m-1]: rate of increase above 1 (with decreasing altitude) of the ice albedo factor (multiplying ice melt).
+
     
     #### STAKES COMPARISON parameters ####
     stakes_unknown_latest_start  =   "2/28",                       # [month/day]: in the automatic search of the start date for snow pits and depth probings without a measured start date, we search no later than this day of year. The starting date will be set to the day of the minimum cumulative mass balance between the start of the simulation and the date set here. Something like end of February should be safe for all stakes. 
