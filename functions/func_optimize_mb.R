@@ -10,13 +10,15 @@
 #                 feedback). Then we can converge quickly to zero bias.                           #
 ################################################################################################### 
 
-# Annual optimization:
-# cancel the mean mass balance bias at the annual stakes by altering the melt factor
-# and radiation factor together, by the same amount.
-
 # Winter optimization:
 # cancel the mean mass balance bias at the winter stakes by altering the
 # precipitation correction.
+
+# Annual optimization:
+# cancel the mean mass balance bias at the annual stakes by altering the melt factor
+# and radiation factor together, by the same amount. Also set the precipitation
+# correction which we got from the winter optimization (set to no correction if we did no
+# winter optimization).
 
 # We have a list of additive corrections (see func_run_simulation_single)
 # which are applied to the year_cur_params before the
@@ -36,7 +38,10 @@
 
 
 #### CONVENIENCE FUNCTION TO RUN THE OPTIMIZATION ON ####
-func_optim_worker <- function(optimization_period, corr_fact_cur,
+# corr_fact_cur is the variable which gets optimized.
+# corr_fact_winter is only used in the annual optimization,
+# to use the previously optimized (constant) winter correction.
+func_optim_worker <- function(optimization_period, corr_fact_cur, corr_fact_winter,
                               run_params, year_cur_params, elevation_grid_id, surftype_grid_id,
                               data_dhms, data_dems, data_surftype,
                               snowdist_init, data_radiation, weather_series_cur, dist_topographic_values_red,
@@ -47,8 +52,9 @@ func_optim_worker <- function(optimization_period, corr_fact_cur,
   
   if (optimization_period == "annual") {
     
-    corrections_cur <- list(melt_factor  = corr_fact_cur * year_cur_params$melt_factor,
-                            rad_fact_ice = corr_fact_cur * year_cur_params$rad_fact_ice)
+    corrections_cur <- list(melt_factor  = corr_fact_cur    * year_cur_params$melt_factor,
+                            rad_fact_ice = corr_fact_cur    * year_cur_params$rad_fact_ice,
+                            prec_corr    = corr_fact_winter * year_cur_params$prec_corr)
   
   } else if (optimization_period == "winter") {
     
@@ -87,18 +93,19 @@ func_optim_worker <- function(optimization_period, corr_fact_cur,
 
 
 #### ACTUAL OPTIMIZATION FUNCTION ####
-func_optimize_mb <- function(optimization_period,
+# corr_fact_winter is considered only during the annual optimization,
+# to use the correction previously determined for winter precipitation.
+func_optimize_mb <- function(optimization_period, corr_fact_winter,
                              run_params, year_cur_params, elevation_grid_id, surftype_grid_id,
                              data_dhms, data_dems, data_surftype,
                              snowdist_init, data_radiation, weather_series_cur, dist_topographic_values_red,
                              dist_probes_norm_values_red, grids_avalanche_cur, dx1, dx2, dy1, dy2,
                              nstakes, model_days_n, massbal_meas_cur, stakes_cells) {
   
-  period_string <- ifelse(optimization_period == "annual", "Annual", "Winter")
-  cat(paste0("** ", period_string, " mass balance optimization **\n"))
+  cat("\n\n**", year_cur, optimization_period, "mass balance optimization **\n")
   cat("\n* Model run # 1\n")
   corr_fact_prev <- 0
-  bias_prev <- func_optim_worker(optimization_period, corr_fact_prev,
+  bias_prev <- func_optim_worker(optimization_period, corr_fact_prev, corr_fact_winter,
                                  run_params, year_cur_params, elevation_grid_id, surftype_grid_id,
                                  data_dhms, data_dems, data_surftype,
                                  snowdist_init, data_radiation, weather_series_cur, dist_topographic_values_red,
@@ -114,7 +121,7 @@ func_optimize_mb <- function(optimization_period,
   # value of the factors was very low
   # (we don't want to go to the negatives!).
   corr_fact_cur <- 0.01
-  bias_cur <- func_optim_worker(optimization_period, corr_fact_cur,
+  bias_cur <- func_optim_worker(optimization_period, corr_fact_cur, corr_fact_winter,
                                 run_params, year_cur_params, elevation_grid_id, surftype_grid_id,
                                 data_dhms, data_dems, data_surftype,
                                 snowdist_init, data_radiation, weather_series_cur, dist_topographic_values_red,
@@ -130,7 +137,7 @@ func_optimize_mb <- function(optimization_period,
     corr_fact_cur <- corr_fact_cur - (bias_cur / bias_slope) # Apply linear correction with the computed derivative.
     niter <- niter + 1
     cat("\n* Model run #", niter, "\n")
-    bias_cur <- func_optim_worker(optimization_period, corr_fact_cur,
+    bias_cur <- func_optim_worker(optimization_period, corr_fact_cur, corr_fact_winter,
                                   run_params, year_cur_params, elevation_grid_id, surftype_grid_id,
                                   data_dhms, data_dems, data_surftype,
                                   snowdist_init, data_radiation, weather_series_cur, dist_topographic_values_red,
@@ -141,10 +148,11 @@ func_optimize_mb <- function(optimization_period,
   
   
   if (optimization_period == "annual") {
-    corrections_best <- list(melt_factor  = corr_fact_cur * year_cur_params$melt_factor,
-                             rad_fact_ice = corr_fact_cur * year_cur_params$rad_fact_ice)
+    corrections_best <- list(melt_factor  = corr_fact_cur    * year_cur_params$melt_factor,
+                             rad_fact_ice = corr_fact_cur    * year_cur_params$rad_fact_ice,
+                             prec_corr    = corr_fact_winter * year_cur_params$prec_corr)
   } else if (optimization_period == "winter") {
-    corrections_best <- list(prec_corr    = corr_fact_cur * year_cur_params$prec_corr)
+    corrections_best <- list(prec_corr    = corr_fact_cur    * year_cur_params$prec_corr)
   }
   
   return(corrections_best)

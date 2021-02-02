@@ -4,7 +4,9 @@
 #                 resolution, optimizing model parameters towards the best fit with point         #
 #                 mass balance measurements.                                                      #
 #                 This file contains the annual parameter loading from file.                      #
-#                 For the moment it works with the same file formatting as the IDL model.         #
+#                 This loading routine can handle both the original parameter file formatting     #
+#                 (used by the IDL model) and the new version (which follows a more rigorous      #
+#                 delimiter-based formatting).                                                    #
 ###################################################################################################
 
 func_load_year_params <- function(run_params, year_cur) {
@@ -18,6 +20,9 @@ func_load_year_params <- function(run_params, year_cur) {
                            run_params$filename_params_suffix,
                            sep = "")
   
+  # Try reading new format of the parameter file.
+  # If the file uses the old format, the result
+  # will have only one column instead of four.
   params_raw <- read.delim(filepath_params,
                            header = FALSE,
                            sep = ";",
@@ -26,8 +31,29 @@ func_load_year_params <- function(run_params, year_cur) {
                            strip.white = TRUE
                            )
   
+  
+  # File uses the old format!
+  if (ncol(params_raw) == 1) {
+    params_raw <- read.delim(filepath_params,
+                             header = FALSE,
+                             sep = ":",
+                             comment.char = "*",
+                             stringsAsFactors = FALSE,
+                             strip.white = TRUE)
+    params_raw[,3] <- c("prec_corr",
+                        "prec_elegrad",
+                        "prec_summer_fact",
+                        "evaluate_snowdist",
+                        "year_snowdist",
+                        "temp_elegrad",
+                        "melt_factor",
+                        "rad_fact_ice",
+                        "rad_fact_snow",
+                        "mb_corr_ele_bands")
+  }
+  
   # Assemble output, already converting to numeric types.
-  for (param_id in 1:length(params_raw[,1])) {
+  for (param_id in 1:nrow(params_raw)) {
     year_params[[params_raw[param_id,3]]] <- type.convert(params_raw[param_id,1], as.is = TRUE)
   }
   
@@ -51,7 +77,10 @@ func_load_year_params <- function(run_params, year_cur) {
   year_params$hydro_end   <- as.Date(paste(year_cur, 9, 30), format = "%Y %m %d")
   
   year_params$fixed_annual_start <- as.Date(paste(year_cur-1, run_params$massbal_fixed_annual_start), format = "%Y %m/%d")
-  year_params$fixed_annual_end <- as.Date(paste(year_cur, run_params$massbal_fixed_annual_end), format = "%Y %m/%d")
+  year_params$fixed_annual_end   <- as.Date(paste(year_cur, run_params$massbal_fixed_annual_end), format = "%Y %m/%d")
+  
+  year_params$fixed_winter_start <- as.Date(paste(year_cur-1, run_params$massbal_fixed_winter_start), format = "%Y %m/%d")
+  year_params$fixed_winter_end   <- as.Date(paste(year_cur, run_params$massbal_fixed_winter_end), format = "%Y %m/%d")
   
   return(year_params)
   

@@ -34,7 +34,7 @@ func_massbal_model <- function(run_params,
   
   # This should be equal to the length of the selected weather series!
   # model_days_n <- as.integer(difftime(model_time_bounds[2], model_time_bounds[1], "days"))
-  model_days_n <- length(weather_series_cur[,1])
+  model_days_n <- nrow(weather_series_cur)
   
   
   #### CORRECT PRECIPITATION UNDERCATCH ####
@@ -48,7 +48,7 @@ func_massbal_model <- function(run_params,
   
   
   #### CREATE OUTPUT VECTORS ####
-  # Length of each modeled vector.
+  # vec_items_n is the length of each modeled vector.
   # NOTE: modeled vectors have one timestep more than weather vectors because
   # they also store the initial timestep.
   # We store each daily map in
@@ -130,7 +130,7 @@ func_massbal_model <- function(run_params,
                                                       deposition_max_multiplier = 1.0,
                                                       preserve_edges = TRUE)
 
-      writeRaster(setValues(data_dhms$elevation[[1]], avalanche_output), "avalanche_output.tif", overwrite = T)
+      # writeRaster(setValues(data_dhms$elevation[[1]], avalanche_output), "avalanche_output.tif", overwrite = T)
       
       swe_post_previous_avalanche   <- avalanche_output + (vec_snow_swe[cells_prev] - avalanche_input_values)
       

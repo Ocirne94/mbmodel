@@ -63,7 +63,7 @@ func_compute_initial_snow_cover <- function(run_params,
   # use them to correct the final distribution.
   # In fact just one of the two conditions in
   # the if() should be enough.
-  if((length(data_massbal_winter[,1]) > 0) & (!is.null(grid_probes_norm))) {
+  if((nrow(data_massbal_winter) > 0) & (!is.null(grid_probes_norm))) {
     
     dist_cur <- dist_cur * grid_probes_norm
     

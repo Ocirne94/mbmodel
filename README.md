@@ -3,6 +3,10 @@
 The idea is to run a mass balance model (accumulation and radiation-corrected degree-day melt), optimizing the model parameters towards the best fit with a set of point mass balance measurements.
 
 
+![Gries mass balance example](cover_image.png)
+
+
+
 ## Model description
 
 We model at daily scale, one year at a time (typically from September Y-1 to September Y).

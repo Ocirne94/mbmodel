@@ -4,15 +4,15 @@
 #                 resolution, optimizing model parameters towards the best fit with point         #
 #                 mass balance measurements.                                                      #
 #                 This file contains the routine to extract the maps of cumulative mass balance   #
-#                 at various dates.                                                               #
+#                 at various dates, for the annual period. We also determine and return the       #
+#                 "measurement period".                                                           #                                        #
 ###################################################################################################
 
-func_extract_year_massbal_maps <- function(run_params,
-                                           year_cur_params,
-                                           weather_series_cur,
-                                           mod_output_annual_cur,
-                                           data_dhms) {
-  
+func_extract_massbal_maps_annual <- function(run_params,
+                                             year_cur_params,
+                                             weather_series_cur,
+                                             mod_output_annual_cur,
+                                             data_dhms) {
   
   # Indices: in the weather series index 1 refers to the whole first day,
   # in the mass balance series index 1 refers to the instant mass balance at the *beginning* of that same first day,
@@ -32,6 +32,10 @@ func_extract_year_massbal_maps <- function(run_params,
   massbal_hydro_map <- setValues(data_dhms$elevation[[elevation_grid_id]], massbal_hydro_end_values - massbal_hydro_start_values)
   massbal_hydro_map_masked <- mask(massbal_hydro_map, data_dems$elevation[[elevation_grid_id]])
   
+  
+  # measperiod refers to the period
+  # between the earliest annual stake
+  # start and the latest annual stake end.
   id_measperiod_start <- min(mod_output_annual_cur$stakes_start_ids_corr)
   id_measperiod_end   <- max(mod_output_annual_cur$stakes_end_ids) + 1 # For the "+ 1": see comment above, about indices. We want the mass balance at the *end* of the last day.
   massbal_measperiod_start_values <- mod_output_annual_cur$vec_massbal_cumul[(id_measperiod_start - 1) * run_params$grid_ncells + 1:run_params$grid_ncells]
@@ -50,6 +54,9 @@ func_extract_year_massbal_maps <- function(run_params,
                        meas_period = massbal_measperiod_map_masked,
                        fixed = massbal_fixed_map_masked)
   
-  return(massbal_maps)
+  massbal_maps_out <- list(massbal_maps = massbal_maps,
+                           meas_period  = weather_series_cur$timestamp[c(id_measperiod_start, id_measperiod_end)])
+  
+  return(massbal_maps_out)
   
 }

@@ -32,9 +32,8 @@ func_run_simulation_single <- function(year_param_corrections,
   # fixed (initial) ratio of the radiation factors.
   year_cur_params_corr$rad_fact_snow <- year_cur_params_corr$rad_fact_ice * year_cur_params_corr$rad_fact_ratio_snow_ice
   
-  # cat("rad_fact_ratio_snow_ice =", year_cur_params_corr$rad_fact_ratio_snow_ice, "\n")
-  # cat("rad_fact_snow =", year_cur_params_corr$rad_fact_snow, "\n")
-  # cat("rad_fact_ice =", year_cur_params_corr$rad_fact_ice, "\n")
+  cat("melt_factor =", year_cur_params_corr$melt_factor, "\n")
+  cat("rad_fact_ice =", year_cur_params_corr$rad_fact_ice, "\n")
   cat("prec_corr =", year_cur_params_corr$prec_corr, "\n")
   
   #### . .  RUN MASS BALANCE MODEL ####

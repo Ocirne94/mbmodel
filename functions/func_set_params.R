@@ -12,7 +12,7 @@ func_set_params <- function() {
 
   run_params <- list(
     
-    # name_glacier                =    "barkrak",                    # Glacier name, currently unused
+    name_glacier                =    "gries",                    # Glacier name, used for output directory naming.
     
     #### INPUT-related parameters ####
     # Set paths (don't forget the final / or \).
@@ -37,12 +37,12 @@ func_set_params <- function() {
     filename_dem_prefix          =   "gl_gries",
     filename_dem_suffix          =   ".grid",                       # DEM name is <prefix><year><suffix>
     dem_years                    =   c(2012,2015),                      # Years for which a DEM is available. These should be sorted in ascending order. Syntax is like this: c(2010, 2015, 2020)
-    dem_interpolate              =   FALSE,                        # Should we use linear interpolation to compute each year's DEM? (WARNING: if the glacier area changes, the interpolation between a NA cell and a non-NA one gives NA!)
+    dem_interpolate              =   FALSE,                        # [TRUE/FALSE]: should we use linear interpolation to compute each year's DEM? (WARNING: if the glacier area changes, the interpolation between a NA cell and a non-NA one gives NA!)
     
     filename_dhm_prefix          =   "dhm_gries",
     filename_dhm_suffix          =   ".grid",                       # DHM name is <prefix><year><suffix>
     dhm_years                    =   c(2012,2015),                      # Years for which a DHM is available. These should be sorted in ascending order.
-    dhm_interpolate              =   FALSE,                        # Should we use linear interpolation to compute each year's DHM?
+    dhm_interpolate              =   FALSE,                        # [TRUE/FALSE]: should we use linear interpolation to compute each year's DHM?
     
     filename_surftype_prefix     =   "firn_gries",
     filename_surftype_suffix     =   ".grid",                      # Surface type filename is <prefix><year><suffix>
@@ -88,6 +88,7 @@ func_set_params <- function() {
     initial_snowline_elevation   =   2800,                         # [m]: initial snow line elevation, at the beginning of each simulated year. In the future it will be customizable for each year, and it will be possible to use as initial snow cover the result of the previous year (so that this elevation is only used for the first modeled year).
     initial_snow_gradient        =   50,                          # [mm w.e. (100 m)-1]: increase of the initial snow amount for every 100 m elevation above the snow line
     initial_snow_dist_red_fac    =   0.5,                          # [-]: reduction factor to decrease the importance of the snow distribution variability (all components except winter snow probes), for the computed initial snow cover (of each year). 0 means uniform snow distribution, 1 means no reduction.
+    initial_snow_dist_from_model =   TRUE,                         # [TRUE/FALSE]: if TRUE, use the simulated SWE of the previous year as starting condition for the simulation. If FALSE, compute initial SWE from topography and given parameters. The first simulated year always uses a computed initial SWE since there is no previous modeled year.
     
     
     #### ACCUMULATION and MELT MODEL fixed parameters ####
@@ -107,20 +108,20 @@ func_set_params <- function() {
     
     
     #### FIXED MASS BALANCE PERIODS choice ####
-    massbal_fixed_annual_start   =   "8/13",                       # [month/day]: start of the user-defined fixed period for annual mass balance evaluation. This is referred to (<year_cur> - 1).
+    massbal_fixed_annual_start   =   "10/1",                       # [month/day]: start of the user-defined fixed period for annual mass balance evaluation. This is referred to (<year_cur> - 1).
     massbal_fixed_annual_end     =   "8/12",                       # [month/day]: end of the user-defined fixed period for annual mass balance evaluation. This is referred to <year_cur>.
     massbal_fixed_winter_start   =   "10/1",                       # [month/day]: start of the user-defined fixed period for winter mass balance evaluation. This is referred to (<year_cur> - 1).
     massbal_fixed_winter_end     =   "4/30",                       # [month/day]: end of the user-defined fixed period for winter mass balance evaluation. This is referred to <year_cur>.
     
     
     #### MASS BALANCE PROCESSING choices ####
-    mb_optimization_skip         =   TRUE,                         # [-]: CURRENTLY NOT IMPLEMENTED, SHOULD WE SKIP THE OPTIMIZATION OF THE MASS BALANCE MODEL?
-    mb_corr_bands_skip           =   FALSE,                        # [-]: CURRENTLY NOT IMPLEMENTED, SHOULD WE SKIP THE CORRECTION OF MASS BALANCE BASED ON ELEVATION BANDS?
+    mb_optimization_skip         =   TRUE,                         # [TRUE/FALSE]: CURRENTLY NOT IMPLEMENTED, SHOULD WE SKIP THE OPTIMIZATION OF THE MASS BALANCE MODEL?
+    mb_corr_bands_skip           =   FALSE,                        # [TRUE/FALSE]: CURRENTLY NOT IMPLEMENTED, SHOULD WE SKIP THE CORRECTION OF MASS BALANCE BASED ON ELEVATION BANDS?
     
     
     #### MODELED YEARS choice ####
     first_year                   =   2019,                         # First modeled year (usually from October of the previous year to September of this year)
-    last_year                    =   2019                          # Last modeled year (same as previous comment)
+    last_year                    =   2020                          # Last modeled year (same as previous comment)
     
   )
   

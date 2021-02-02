@@ -33,7 +33,7 @@ func_compute_modeling_periods <- function(run_params, massbal_annual, massbal_wi
   
   winter_start <- NA
   winter_end   <- NA
-  if (length(massbal_winter[,1]) > 0) {
+  if (nrow(massbal_winter)) {
     winter_start <- min(massbal_winter$start_date)
     winter_end   <- max(massbal_winter$end_date)
   }

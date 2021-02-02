@@ -90,14 +90,19 @@ if (params_file_write) {
 # Cleanup memory (temporary variables during loading!)
 invisible(gc())
 
+# This will be set to TRUE after the first modeled year,
+# to enable re-using of the modeled SWE as starting condition.
+swe_prev_available <- FALSE
 
 #### Main loop ####
-# for (year_id in 1:run_params$n_years) {
-  year_id <- 1 # TESTING!!
+for (year_id in 1:run_params$n_years) {
+  # year_id <- 1 # TESTING!!
 
   # Select current year.
   year_cur <- run_params$years[year_id]
   year_cur_params <- func_load_year_params(run_params, year_cur)
+  
+  cat("\n\n\n\n============  STARTING NEW YEAR:", year_cur, " ============\n")
   
   # Select grids of the current year.
   # We may be using different ids for elevation and surface type
@@ -123,6 +128,7 @@ invisible(gc())
   massbal_annual_meas_cur <- data_massbalance_annual[massbal_annual_ids,]
   massbal_winter_meas_cur <- data_massbalance_winter[massbal_winter_ids,] # Empty if we have no winter stakes for the year.
   
+
   # Find (vectorized) the distance of each annual (and then winter) stake from the 4 surrounding cell centers.
   # We will use this later to extract the modeled series for each stake.
   # dx1 = x distance from the two cells to the left,
@@ -156,18 +162,6 @@ invisible(gc())
   dist_probes_norm_values_red <- dist_probes_norm_mean + run_params$accum_probes_red_fac * (dist_probes_norm_values - dist_probes_norm_mean)
   
   
-  
-  #### .  INITIAL SNOW COVER ####
-  snowdist_init <- func_compute_initial_snow_cover(run_params,
-                                                   data_dhms,
-                                                   data_dems,
-                                                   grids_snowdist_topographic,
-                                                   grids_avalanche_cur,
-                                                   dist_probes_idw_norm,
-                                                   elevation_grid_id,
-                                                   massbal_winter_meas_cur)
-  
-  
   #### .  MODELING PERIOD BOUNDS ####
   # Four Date objects: start and end of the annual
   # modeling period, and same for the winter modeling period.
@@ -178,7 +172,51 @@ invisible(gc())
                                                        year_cur_params)
   
   
+  #### .  INITIAL SNOW COVER ####
+  # We distinguish between initial snow cover for winter
+  # and for annual modeling since the two can have different
+  # dates, depending on the dates of the annual and winter stakes.
+  # In fact the *estimated* initial snow cover is the same for
+  # the two (it is determined by a single snow line elevation),
+  # but the *modeled* initial snow cover (from the previous
+  # modeled year) is taken from the exact day so it can
+  # be different.
+  # If we are to use a previously modeled SWE as initial condition,
+  # make it so (only if available, i.e. at least second modeled year).
+  if (run_params$initial_snow_dist_from_model && swe_prev_available) {
+    
+    # NOTE: weather_series_annual_cur and mod_output_annual_cur are
+    # still the weather series and modeled series of the PREVIOUS year!
+    swe_prev_annual_day_id <- which.min(abs(weather_series_annual_cur$timestamp - model_time_bounds[1]))
+    snowdist_init_annual <- setValues(data_dhms$elevation[[elevation_grid_id]], mod_output_annual_cur$vec_swe_all[(swe_prev_annual_day_id - 1) * run_params$grid_ncells + 1:run_params$grid_ncells])
+    
+    if (process_winter) {
+      swe_prev_winter_day_id <- which.min(abs(weather_series_annual_cur$timestamp - model_time_bounds[3]))
+      snowdist_init_winter <- setValues(data_dhms$elevation[[elevation_grid_id]], mod_output_annual_cur$vec_swe_all[(swe_prev_winter_day_id - 1) * run_params$grid_ncells + 1:run_params$grid_ncells])
+    }
+    
+  # Else estimate the initial snow cover from snow line elevation,
+  # topography, avalanches and snow probes if available.
+  } else {
+    snowdist_init_annual <- func_compute_initial_snow_cover(run_params,
+                                                            data_dhms,
+                                                            data_dems,
+                                                            grids_snowdist_topographic,
+                                                            grids_avalanche_cur,
+                                                            dist_probes_idw_norm,
+                                                            elevation_grid_id,
+                                                            massbal_winter_meas_cur)
+    snowdist_init_winter <- snowdist_init_annual
+  }
+  
+  
   #### .  WINTER MASS BALANCE, to optimize the precipitation correction ####
+  # We set this here so that there is no correction
+  # if we don't do the winter optimization.
+  corr_fact_winter      <- 0
+  # We set this to NULL to have it defined (for the
+  # extraction functions) in case we don't do winter processing.
+  mod_output_winter_cur <- NULL
   if (process_winter)  {
     
     winter_stakes_cells <- rowSort(fourCellsFromXY(data_dhms$elevation[[elevation_grid_id]], as.matrix(massbal_winter_meas_cur[,4:5])))
@@ -188,19 +226,31 @@ invisible(gc())
     # Select weather series period.
     # If the weather series time specification is
     # wrong this step is where it all falls apart.
-    weather_series_cur <- data_weather[which(data_weather$timestamp == model_winter_bounds[1]):(which(data_weather$timestamp == model_winter_bounds[2])),]
-    model_days_n <- length(weather_series_cur[,1])
+    weather_series_winter_cur <- data_weather[which(data_weather$timestamp == model_winter_bounds[1]):(which(data_weather$timestamp == model_winter_bounds[2])),]
+    model_winter_days_n <- nrow(weather_series_winter_cur)
     
     # This leaves the result of the last optimization
     # iteration in mod_output_annual_cur.
-    optim_corr_winter <- func_optimize_mb("winter",
+    # The NA is for the corr_fact_winter (which we are
+    # determining here, so we don't use a previous value:
+    # it is ignored).
+    optim_corr_winter <- func_optimize_mb("winter", NA,
                                           run_params, year_cur_params, elevation_grid_id, surftype_grid_id,
-                                          data_dhms, data_dems, data_surftype, snowdist_init, data_radiation,
-                                          weather_series_cur, dist_topographic_values_red,
+                                          data_dhms, data_dems, data_surftype, snowdist_init_winter, data_radiation,
+                                          weather_series_winter_cur, dist_topographic_values_red,
                                           dist_probes_norm_values_red, grids_avalanche_cur,
                                           dx1_winter, dx2_winter, dy1_winter, dy2_winter,
-                                          nstakes_winter, model_days_n, massbal_winter_meas_cur,
+                                          nstakes_winter, model_winter_days_n, massbal_winter_meas_cur,
                                           winter_stakes_cells)
+    
+    # Save the correction factor to re-use it
+    # during the annual optimization.
+    # We divide by the original prec_corr
+    # since the corr_fact is relative
+    # (it gets multiplied again during
+    # optimization, inside func_optim_worker()).
+    corr_fact_winter <- optim_corr_winter$prec_corr / year_cur_params$prec_corr
+    
     # Free some memory after processing.
     invisible(gc())
   }
@@ -218,43 +268,89 @@ invisible(gc())
   # Select weather series period.
   # If the weather series time specification is
   # wrong this step is where it all falls apart.
-  weather_series_cur <- data_weather[which(data_weather$timestamp == model_annual_bounds[1]):(which(data_weather$timestamp == model_annual_bounds[2])),]
-  model_days_n <- length(weather_series_cur[,1])
+  weather_series_annual_cur <- data_weather[which(data_weather$timestamp == model_annual_bounds[1]):(which(data_weather$timestamp == model_annual_bounds[2])),]
+  model_annual_days_n <- nrow(weather_series_annual_cur)
+  
   
   # This leaves the result of the last optimization
   # iteration in mod_output_annual_cur.
-  optim_corr_annual <- func_optimize_mb("annual",
+  optim_corr_annual <- func_optimize_mb("annual", corr_fact_winter,
                                         run_params, year_cur_params, elevation_grid_id, surftype_grid_id,
-                                        data_dhms, data_dems, data_surftype, snowdist_init, data_radiation,
-                                        weather_series_cur, dist_topographic_values_red,
+                                        data_dhms, data_dems, data_surftype, snowdist_init_annual, data_radiation,
+                                        weather_series_annual_cur, dist_topographic_values_red,
                                         dist_probes_norm_values_red, grids_avalanche_cur,
                                         dx1_annual, dx2_annual, dy1_annual, dy2_annual,
-                                        nstakes_annual, model_days_n, massbal_annual_meas_cur,
+                                        nstakes_annual, model_annual_days_n, massbal_annual_meas_cur,
                                         annual_stakes_cells)
   # Free some memory after processing.
   invisible(gc())
   
+  # After an annual model run we have SWE information
+  # suitable for use as starting condition of the next
+  # year, if the user decides to use it.
+  swe_prev_available <- TRUE
+  
   
   #### . EXTRACT CUMULATIVE MASS BALANCE AT DATES OF INTEREST ####
   # We extract three annual mass balances:
-  # (1) "hydro":      hydrological year
-  # (2) "measperiod": measurement period, defined as (latest stake end - earliest stake start)
-  # (3) "fixed":      user-defined fixed period.
-  massbal_maps <- func_extract_year_massbal_maps(run_params,
-                                                 year_cur_params,
-                                                 weather_series_cur,
-                                                 mod_output_annual_cur,
-                                                 data_dhms)
+  # (1) "hydro":       hydrological year
+  # (2) "meas_period": measurement period, defined as (latest stake end - earliest stake start)
+  # (3) "fixed":       user-defined fixed period.
+  massbal_annual_maps_data <- func_extract_massbal_maps_annual(run_params,
+                                                               year_cur_params,
+                                                               weather_series_annual_cur,
+                                                               mod_output_annual_cur,
+                                                               data_dhms)
+  massbal_annual_maps <- massbal_annual_maps_data$massbal_maps
+  massbal_annual_meas_period <- massbal_annual_maps_data$meas_period
   
-  
+  # We also extract two winter mass balances:
+  # (1) "fixed":       user-defined fixed period.
+  # (2) "meas_period": measurement period, defined as (latest winter stake end - earliest winter stake start
+  # If process_winter is FALSE, the list contains only (1).
+  massbal_winter_maps_data <- func_extract_massbal_maps_winter(run_params,
+                                                               year_cur_params,
+                                                               weather_series_annual_cur,
+                                                               mod_output_annual_cur,
+                                                               process_winter,
+                                                               mod_output_winter_cur,
+                                                               data_dhms)
+  massbal_winter_maps <- massbal_winter_maps_data$massbal_maps
+  if (process_winter) {
+    massbal_winter_meas_period <- massbal_winter_maps_data$meas_period
+  } else {
+    massbal_winter_meas_period <- NA
+  }
   
   
   #### . CORRECT ANNUAL MASS BALANCE IN ELEVATION BANDS ####
-  massbal_maps$meas_period_corr <- func_correct_massbal_elebands(year_cur_params,
-                                                                 data_dems,
-                                                                 massbal_annual_meas_cur,
-                                                                 mod_output_annual_cur,
-                                                                 massbal_maps)
+  massbal_annual_maps$meas_period_corr <- func_correct_massbal_elebands(year_cur_params,
+                                                                        data_dems,
+                                                                        massbal_annual_meas_cur,
+                                                                        mod_output_annual_cur,
+                                                                        massbal_annual_maps)
+  
+  massbal_annual_values <- sapply(massbal_annual_maps, cellStats, stat = "mean", na.rm = TRUE)
+  massbal_winter_values <- sapply(massbal_winter_maps, cellStats, stat = "mean", na.rm = TRUE)
+  
+  
+  
+  #### . PLOTS OF THE EXTRACTED MASS BALANCE MAPS ####
+  func_plot_year_mb_maps(run_params,
+                         year_cur,
+                         data_dems,
+                         data_outlines,
+                         elevation_grid_id,
+                         outline_id,
+                         massbal_annual_maps,
+                         massbal_winter_maps,
+                         massbal_annual_values,
+                         massbal_winter_values,
+                         massbal_annual_meas_period,
+                         massbal_winter_meas_period,
+                         process_winter)
+  
+  
     
   
   
@@ -263,18 +359,19 @@ invisible(gc())
   
   #### .  DAILY PLOTS (SLOW!) ####
   # Compute surface type image, to use as background for the daily SWE plots.
-  surf_r    <- subs(data_surftype$grids[[surftype_grid_id]], data.frame(from = c(0, 1, 4, 5), to = c(100, 170, 0, 70)))
-  surf_g    <- subs(data_surftype$grids[[surftype_grid_id]], data.frame(from = c(0, 1, 4, 5), to = c(150, 213, 0, 20)))
-  surf_b    <- subs(data_surftype$grids[[surftype_grid_id]], data.frame(from = c(0, 1, 4, 5), to = c(200, 255, 0, 20)))
-  surf_base <- ggRGB(stack(surf_r, surf_g, surf_b), r = 1, g = 2, b = 3, ggLayer = TRUE)
-  func_plot_daily_maps(run_params,
-                       weather_series_cur,
-                       data_dems,
-                       data_outlines,
-                       mod_output_annual_cur,
-                       surf_base,
-                       elevation_grid_id,
-                       outline_id)
+  # surf_r    <- subs(data_surftype$grids[[surftype_grid_id]], data.frame(from = c(0, 1, 4, 5), to = c(100, 170, 0, 70)))
+  # surf_g    <- subs(data_surftype$grids[[surftype_grid_id]], data.frame(from = c(0, 1, 4, 5), to = c(150, 213, 0, 20)))
+  # surf_b    <- subs(data_surftype$grids[[surftype_grid_id]], data.frame(from = c(0, 1, 4, 5), to = c(200, 255, 0, 20)))
+  # surf_base <- ggRGB(stack(surf_r, surf_g, surf_b), r = 1, g = 2, b = 3, ggLayer = TRUE)
+  # func_plot_daily_maps(run_params,
+  #                      year_cur,
+  #                      weather_series_annual_cur,
+  #                      data_dems,
+  #                      data_outlines,
+  #                      mod_output_annual_cur,
+  #                      surf_base,
+  #                      elevation_grid_id,
+  #                      outline_id)
   
   
-# }
+}
