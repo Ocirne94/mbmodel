@@ -3,7 +3,7 @@
 The idea is to run a mass balance model (accumulation and radiation-corrected degree-day melt), optimizing the model parameters towards the best fit with a set of point mass balance measurements.
 
 
-![Gries mass balance example](cover_image.png)
+![Gries mass balance example](cover_image.png | width=500)
 
 
 
@@ -11,7 +11,7 @@ The idea is to run a mass balance model (accumulation and radiation-corrected de
 
 We model at daily scale, one year at a time (typically from September Y-1 to September Y).
 
-First we compute an initial snow distribution for the year, from snowline elevation and snow elevation gradient, and a distribution grid (function of curvature and elevation, as well as a process-based avalanche model and a correction based on winter snow probes if available).
+First we compute an initial snow distribution for the year, from snowline elevation and snow elevation gradient, and a distribution grid (function of curvature and elevation, as well as a process-based avalanche model (Gruber, 2007) and a correction based on winter snow probes if available).
 
 Specifically, the initial snow distribution can be expressed as:
 
@@ -40,6 +40,6 @@ In (2),\
 **correct()** is a function to correct for precipitation under-catch at the rain gauge, with the option to reduce the correction in summer (differential under-catch of snow and rain),\
 **precipitation** is the rain gauge reading.
 
-The model is iteratively tuned to stake readings with an optimization procedure, which minimizes bias over the stakes. If winter accumulation measurements are available, the model is first run over the winter and the precipitation parameters are optimized (precipitation correction, precipitation gradient with altitude). Then the model is run over the whole period and the melt parameters are tuned to cancel the bias.
+The model is iteratively tuned to stake readings with an optimization procedure, which minimizes bias over the stakes. If winter accumulation measurements are available, the model is first run over the winter and the precipitation parameters are optimized (currently the precipitation correction). Then the model is run over the whole period and the melt parameters are tuned to cancel the bias.
 
-The computed mass balance is then corrected in elevation bands to better match the stakes measurements.
+Finally, the computed mass balance is corrected in elevation bands to better match the stakes measurements.

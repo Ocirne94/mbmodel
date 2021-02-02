@@ -146,7 +146,7 @@ func_plot_year_mb_maps <- function(run_params,
     geom_contour(data = elevation_df, aes(x = x, y = y, z = z), color = "#202020", size = 0.15) +
     geom_text_contour(data = elevation_df, aes(x = x, y = y, z = z), check_overlap = TRUE, stroke = 0.2, stroke.color = "#FFFFFF", size = 1.6, min.size = 10) +
     labs(title    = paste0("Fixed winter period ", year_cur, ": ", mb_fixed_period_winter_lab),
-         subtitle = bquote(b[n]*" = "*.(mb_fixed_winter_lab)*" m w.e.")) +
+         subtitle = bquote(b[w]*" = "*.(mb_fixed_winter_lab)*" m w.e.")) +
     scale_fill_stepsn(name = "SMB [m w.e.]", colors = palette_RdBu_ext,
                       limits = max_mb*c(-1,1),
                       breaks = c(-5000,-3000,-2000,-1000,-400,0,400,1000,2000,3000,5000)/1000) +
@@ -173,7 +173,7 @@ func_plot_year_mb_maps <- function(run_params,
       geom_contour(data = elevation_df, aes(x = x, y = y, z = z), color = "#202020", size = 0.15) +
       geom_text_contour(data = elevation_df, aes(x = x, y = y, z = z), check_overlap = TRUE, stroke = 0.2, stroke.color = "#FFFFFF", size = 1.6, min.size = 10) +
       labs(title    = paste0("Measurement period (winter) ", year_cur, ": ", mb_meas_period_winter_lab),
-           subtitle = bquote(b[n]*" = "*.(mb_meas_winter_lab)*" m w.e.")) +
+           subtitle = bquote(b[w]*" = "*.(mb_meas_winter_lab)*" m w.e.")) +
       scale_fill_stepsn(name = "SMB [m w.e.]", colors = palette_RdBu_ext,
                         limits = max_mb*c(-1,1),
                         breaks = c(-5000,-3000,-2000,-1000,-400,0,400,1000,2000,3000,5000)/1000) +
