@@ -97,8 +97,8 @@ func_set_params <- function() {
     accum_snow_dist_red_fac      =   0.5,                          # [-]: reduction factor to decrease the importance of the topographic snow distribution variability (curvature and elevation cutoff) when distributing snowfall over the grid. 0 means uniform snow distribution, 1 means no reduction.
     model_avalanche_dates        =   c("1/31", "4/30", "6/30", "7/31", "8/31"),  # [month/day]: dates at which an avalanche is simulated. Usually one at the end of winter (but before winter stakes are measured), and one or more in summer to avoid overloading the slopes with summer snowfall.
     
-    albedo_ice_decrease_elev     =   2900.,                           # [m]: below this altitude, the ice albedo decreases linearly with altitude (darker ice).
-    albedo_ice_decrease_fact     =   0.0114,                       # [fraction m-1]: rate of increase above 1 (with decreasing altitude) of the ice albedo factor (multiplying ice melt).
+    albedo_ice_decrease_elev     =   0.,                           # [m]: below this altitude, the ice albedo decreases linearly with altitude (darker ice).
+    albedo_ice_decrease_fact     =   0.014,                        # [fraction m-1]: rate of increase above 1 (with decreasing altitude) of the ice albedo factor (multiplying ice melt).
 
     
     #### STAKES COMPARISON parameters ####
