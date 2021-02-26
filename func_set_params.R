@@ -120,6 +120,7 @@ func_set_params <- function() {
     #### MASS BALANCE PROCESSING choices ####
     mb_optimization_skip         =   TRUE,                         # [TRUE/FALSE]: CURRENTLY NOT IMPLEMENTED, SHOULD WE SKIP THE OPTIMIZATION OF THE MASS BALANCE MODEL?
     mb_corr_bands_skip           =   FALSE,                        # [TRUE/FALSE]: CURRENTLY NOT IMPLEMENTED, SHOULD WE SKIP THE CORRECTION OF MASS BALANCE BASED ON ELEVATION BANDS?
+    ele_bands_size               =   10,                           # [m]: to compute the equilibrium line altitude, divide the glacier grid into elevation bands with this vertical extent.
     
     
     #### MODELED YEARS choice ####
@@ -144,6 +145,8 @@ func_set_params <- function() {
   run_params$massbal_fixed_annual_end <- format(as.Date(run_params$massbal_fixed_annual_end, format = "%m/%d"), format = "%m/%d")
   run_params$massbal_fixed_winter_start <- format(as.Date(run_params$massbal_fixed_winter_start, format = "%m/%d"), format = "%m/%d")
   run_params$massbal_fixed_winter_end <- format(as.Date(run_params$massbal_fixed_winter_end, format = "%m/%d"), format = "%m/%d")
+  
+  run_params$output_dirname <- file.path("output", run_params$name_glacier, "massbal")
   
   return(run_params)
 

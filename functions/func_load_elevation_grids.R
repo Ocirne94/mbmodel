@@ -137,16 +137,28 @@ func_load_elevation_grids <- function(run_params, load_which) {
   grids_out$n_grids <- length(grids_out$elevation)
   
   # If we have loaded the masked DEM, we also
-  # pre-compute the valid glaciated cells.
+  # pre-compute the valid glaciated cells,
+  # and also a re-classified raster with elevation
+  # classified in 10-m elevation bands (useful for
+  # the calculation of the equilibrium line altitude).
   if (load_which == "dem") {
     
+    # Valid glaciated cells.
     grids_out$glacier_cell_ids <- list()
-    
     for (grid_id in 1:grids_out$n_grids) {
       glacier_ids_logi                         <- is.na(getValues(grids_out$elevation[[grid_id]]))
       grids_out$glacier_cell_ids[[grid_id]]    <- which(!glacier_ids_logi)
       grids_out$no_glacier_cell_ids[[grid_id]] <- which(glacier_ids_logi)
     }
+    
+    # Elevation bands.
+    grids_out$elevation_bands <- list()
+    for (grid_id in 1:grids_out$n_grids) {
+      grids_out$elevation_bands[[grid_id]] <- round(grids_out$elevation[[grid_id]] / run_params$ela_bands_size) * run_params$ela_bands_size
+    }
+    
+    
+    
   }
   
   return(grids_out)

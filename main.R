@@ -13,7 +13,7 @@ params_file_name  <- "params_file.RData"  # Name of the .RData run parameters fi
 
 boot_file_write   <- FALSE                # Save .RData file with the input data, for faster reload.
 boot_file_read    <- FALSE                 # Load .RData file with the input data, instead of loading input files.
-boot_file_name    <- "boot_file_gries.RData"    # Name of the .RData input data file.
+boot_file_name    <- "boot_file_barkrak.RData"    # Name of the .RData input data file.
 
 
 #### Include libraries ####
@@ -52,14 +52,7 @@ if (params_file_read) {
 if (boot_file_read) {
   load(boot_file_name)
 } else {
-  data_weather               <-   func_load_weather(run_params)
-  data_dems                  <-   func_load_elevation_grids(run_params, "dem")
-  data_dhms                  <-   func_load_elevation_grids(run_params, "dhm")
-  data_surftype              <-   func_load_surftype_grids(run_params)
-  data_outlines              <-   func_load_outlines(run_params)
-  data_radiation             <-   func_load_radiation_grids(run_params)
-  data_massbalance_annual    <-   func_load_massbalance_measurements(run_params, "annual")
-  data_massbalance_winter    <-   func_load_massbalance_measurements(run_params, "winter")
+  func_load_data_all(run_params) # This calls all the data loading routines.
 }
 
 # Assign global grid parameters to run_params.
@@ -89,6 +82,9 @@ if (params_file_write) {
   save(list = "run_params", file = params_file_name)
 }
 
+# Create output directory.
+dir.create(run_params$output_dirname, recursive = TRUE)
+
 # Cleanup memory (temporary variables during loading!)
 invisible(gc())
 
@@ -98,23 +94,25 @@ swe_prev_available <- FALSE
 
 #### Main loop ####
 for (year_id in 1:run_params$n_years) {
-  # year_id <- 1 # TESTING!!
+  # year_id <- 1 # TESTING
 
-  # Select current year.
+  # Select current year and the corresponding parameters.
   year_cur <- run_params$years[year_id]
   year_cur_params <- func_load_year_params(run_params, year_cur)
   
   cat("\n\n\n\n============  STARTING NEW YEAR:", year_cur, " ============\n")
   
-  # Select grids of the current year.
-  # We may be using different ids for elevation and surface type
-  # since elevation grids could be interpolated (unlike surface type).
+  # Select grids of the current year from the list of available grids.
+  # We could be using different ids for elevation and surface type
+  # because the elevation grids can also be interpolated annually (unlike surface type).
+  # So we have different _id variables.
   # The fixed avalanche grids use the same indices as the elevation ones.
   elevation_grid_id <- data_dhms$grid_year_id[year_id]
   surftype_grid_id  <- data_surftype$grid_year_id[year_id]
   outline_id        <- data_outlines$outline_year_id[year_id]
   
-  # Extract pre-computed avalanche grids for this year.
+  # Extract avalanche grids for this year
+  # (pre-computed before the start of the loop).
   grids_avalanche_cur <- sapply(grids_avalanche, `[[`, elevation_grid_id)
   
   # Compute reduced-intensity base topographic distribution of solid precipitation.
@@ -271,14 +269,14 @@ for (year_id in 1:run_params$n_years) {
   model_annual_bounds <- model_time_bounds[1:2]
   
   # Select weather series period.
-  # If the weather series time specification is
-  # wrong this step is where it all falls apart.
   weather_series_annual_cur <- data_weather[which(data_weather$timestamp == model_annual_bounds[1]):(which(data_weather$timestamp == model_annual_bounds[2])),]
   model_annual_days_n <- nrow(weather_series_annual_cur)
   
   
-  # This leaves the result of the last optimization
-  # iteration in mod_output_annual_cur.
+  # This returns the optimized parameters
+  # and also leaves the result of the
+  # last optimization iteration in
+  # a variable called mod_output_annual_cur.
   optim_corr_annual <- func_optimize_mb("annual", corr_fact_winter,
                                         run_params, year_cur_params, elevation_grid_id, surftype_grid_id,
                                         data_dhms, data_dems, data_surftype, snowdist_init_annual, data_radiation,
@@ -340,8 +338,11 @@ for (year_id in 1:run_params$n_years) {
   massbal_winter_values <- sapply(massbal_winter_maps, cellStats, stat = "mean", na.rm = TRUE)
   
   
+  #### . COMPUTE ELA and AAR ####
+  ela_aar <- func_compute_ela_aar(run_params, massbal_annual_maps, data_dems)
   
-  #### . PLOTS OF THE EXTRACTED MASS BALANCE MAPS ####
+  
+  #### . PLOT THE MASS BALANCE MAPS ####
   func_plot_year_mb_maps(run_params,
                          year_cur,
                          data_dems,
