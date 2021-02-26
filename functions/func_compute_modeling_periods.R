@@ -20,7 +20,7 @@
 # It is extended to include te dates of fixed mass balance evaluation set by the user.
 func_compute_modeling_periods <- function(run_params, massbal_annual, massbal_winter, year_cur, year_cur_params) {
   
-  # na.rm because we support NA as start date, meaning
+  # na.rm because we also support NA as start date, meaning
   # "end of previous ablation season" i.e. mass balance minimum.
   # NOTE: we don't change the modeling period to include stakes
   # which start at NA. So if the mass balance minimum happens

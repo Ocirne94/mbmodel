@@ -12,7 +12,7 @@ params_file_read  <- FALSE                # Load .RData file with run parameters
 params_file_name  <- "params_file.RData"  # Name of the .RData run parameters file.
 
 boot_file_write   <- FALSE                # Save .RData file with the input data, for faster reload.
-boot_file_read    <- TRUE                 # Load .RData file with the input data, instead of loading input files.
+boot_file_read    <- FALSE                 # Load .RData file with the input data, instead of loading input files.
 boot_file_name    <- "boot_file_gries.RData"    # Name of the .RData input data file.
 
 
@@ -36,6 +36,7 @@ library(RStoolbox)    # For the surface type basemap under the SWE plots.
 
 #### Load function definitions ####
 invisible(sapply(paste("functions/", list.files("functions/", pattern = "\\.R$"), sep=""), source))
+source("func_set_params.R")
 sourceCpp("functions/func_avalanche_gruber.cpp", cacheDir = "functions/") # Remove cacheDir option to force reload of the C++ code (useful after changing computer or editing the source file).
 
 
@@ -167,7 +168,7 @@ for (year_id in 1:run_params$n_years) {
   
   
   #### .  MODELING PERIOD BOUNDS ####
-  # Four Date objects: start and end of the annual
+  # Vector of four Date objects: start and end of the annual
   # modeling period, and same for the winter modeling period.
   model_time_bounds   <- func_compute_modeling_periods(run_params,
                                                        massbal_annual_meas_cur,
@@ -177,19 +178,18 @@ for (year_id in 1:run_params$n_years) {
   
   
   #### .  INITIAL SNOW COVER ####
-  # We distinguish between initial snow cover for winter
-  # and for annual modeling since the two can have different
+  # The initial snow cover can be either (1) a single, constant estimated map
+  # (from topography, avalanches and user-defined snow line elevation)
+  # or (2) the result of the previous year of modeling at the starting date
+  # of the simulation.
+  # In case (2), we distinguish between initial snow cover for winter
+  # and for annual modeling, since the two can have different
   # dates, depending on the dates of the annual and winter stakes.
-  # In fact the *estimated* initial snow cover is the same for
-  # the two (it is determined by a single snow line elevation),
-  # but the *modeled* initial snow cover (from the previous
-  # modeled year) is taken from the exact day so it can
-  # be different.
-  # If we are to use a previously modeled SWE as initial condition,
-  # make it so (only if available, i.e. at least second modeled year).
+  # Case (2) is obviously not applicable to the first year of modeling
+  # (there is no previous result for it).
   if (run_params$initial_snow_dist_from_model && swe_prev_available) {
     
-    # NOTE: weather_series_annual_cur and mod_output_annual_cur are
+    # NOTE: here weather_series_annual_cur and mod_output_annual_cur are
     # still the weather series and modeled series of the PREVIOUS year!
     swe_prev_annual_day_id <- which.min(abs(weather_series_annual_cur$timestamp - model_time_bounds[1]))
     snowdist_init_annual <- setValues(data_dhms$elevation[[elevation_grid_id]], mod_output_annual_cur$vec_swe_all[(swe_prev_annual_day_id - 1) * run_params$grid_ncells + 1:run_params$grid_ncells])
@@ -199,7 +199,7 @@ for (year_id in 1:run_params$n_years) {
       snowdist_init_winter <- setValues(data_dhms$elevation[[elevation_grid_id]], mod_output_annual_cur$vec_swe_all[(swe_prev_winter_day_id - 1) * run_params$grid_ncells + 1:run_params$grid_ncells])
     }
     
-  # Else estimate the initial snow cover from snow line elevation,
+  # Here instead estimate the initial snow cover from snow line elevation,
   # topography, avalanches and snow probes if available.
   } else {
     snowdist_init_annual <- func_compute_initial_snow_cover(run_params,
@@ -298,9 +298,9 @@ for (year_id in 1:run_params$n_years) {
   
   
   #### . EXTRACT CUMULATIVE MASS BALANCE AT DATES OF INTEREST ####
-  # We extract three annual mass balances:
-  # (1) "hydro":       hydrological year
-  # (2) "meas_period": measurement period, defined as (latest stake end - earliest stake start)
+  # We extract three maps of cumulative annual mass balances:
+  # (1) "hydro":       hydrological year (1 October <Year-1> - 30 September <Year>)
+  # (2) "meas_period": measurement period, defined as (earliest annnual stake start - latest annual stake end)
   # (3) "fixed":       user-defined fixed period.
   massbal_annual_maps_data <- func_extract_massbal_maps_annual(run_params,
                                                                year_cur_params,
@@ -312,7 +312,7 @@ for (year_id in 1:run_params$n_years) {
   
   # We also extract two winter mass balances:
   # (1) "fixed":       user-defined fixed period.
-  # (2) "meas_period": measurement period, defined as (latest winter stake end - earliest winter stake start
+  # (2) "meas_period": measurement period, defined as (earliest winter stake start - latest winter stake end).
   # If process_winter is FALSE, the list contains only (1).
   massbal_winter_maps_data <- func_extract_massbal_maps_winter(run_params,
                                                                year_cur_params,
