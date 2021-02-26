@@ -88,7 +88,7 @@ func_set_params <- function() {
     initial_snowline_elevation   =   3700,                         # [m]: initial snow line elevation, at the beginning of each simulated year. In the future it will be customizable for each year, and it will be possible to use as initial snow cover the result of the previous year (so that this elevation is only used for the first modeled year).
     initial_snow_gradient        =   200,                           # [mm w.e. (100 m)-1]: increase of the initial snow amount for every 100 m elevation above the snow line
     initial_snow_dist_red_fac    =   0.5,                          # [-]: reduction factor to decrease the importance of the snow distribution variability (all components except winter snow probes), for the computed initial snow cover (of each year). 0 means uniform snow distribution, 1 means no reduction.
-    initial_snow_dist_from_model =   TRUE,                         # [TRUE/FALSE]: if TRUE, use the simulated SWE of the previous year as starting condition for the simulation. If FALSE, compute initial SWE from topography and given parameters. The first simulated year always uses a computed initial SWE since there is no previous modeled year.
+    initial_snow_dist_from_model =   FALSE,                         # [TRUE/FALSE]: if TRUE, use the simulated SWE of the previous year as starting condition for the simulation. If FALSE, compute initial SWE from topography and given parameters. The first simulated year always uses a computed initial SWE since there is no previous modeled year.
     
     
     #### ACCUMULATION and MELT MODEL fixed parameters ####

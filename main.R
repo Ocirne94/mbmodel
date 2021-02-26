@@ -12,7 +12,7 @@ params_file_read  <- FALSE                # Load .RData file with run parameters
 params_file_name  <- "params_file.RData"  # Name of the .RData run parameters file.
 
 boot_file_write   <- FALSE                # Save .RData file with the input data, for faster reload.
-boot_file_read    <- FALSE                 # Load .RData file with the input data, instead of loading input files.
+boot_file_read    <- TRUE                 # Load .RData file with the input data, instead of loading input files.
 boot_file_name    <- "boot_file_barkrak.RData"    # Name of the .RData input data file.
 
 
@@ -26,8 +26,11 @@ library(Rfast)        # rowSort() of the stake cells indices
 library(stats)        # uniroot()
 library(sf)           # geom_sf(), to plot the glacier outline in the maps
 library(metR)         # geom_text_contour()
-library(ggplot2)
-library(RStoolbox)    # For the surface type basemap under the SWE plots.
+library(ggplot2)      # Base plotting library
+library(ggpubr)       # Additional plotting functions
+library(grid)         # Additional plotting functions
+library(RStoolbox)    # For the surface type basemap under the SWE plots
+
 
 # library(profvis) # profiling.
 # library(bitops)  # cksum(), for debugging.
@@ -91,6 +94,26 @@ invisible(gc())
 # This will be set to TRUE after the first modeled year,
 # to enable re-using of the modeled SWE as starting condition.
 swe_prev_available <- FALSE
+
+# In this data frame we put all the annual results
+# for the overview document: glacier-wide mass balance
+# (annual and winter, all versions), ELA, AAR, RMSE,
+# optimized parameters, cumulative mass balance.
+df_overview <- data.frame(year = run_params$years,
+                          mb_annual_meas_corr = NA,
+                          mb_annual_meas      = NA,
+                          mb_annual_hydro     = NA,
+                          mb_annual_fixed     = NA,
+                          mb_winter_meas      = NA, # This stays NA unless winter measurements are available.
+                          mb_winter_fixed     = NA,
+                          ela                 = NA,
+                          aar                 = NA,
+                          rmse                = NA,
+                          melt_factor         = NA,
+                          rad_fact_ice        = NA,
+                          rad_fact_snow       = NA,
+                          prec_corr           = NA,
+                          mb_cumul            = NA)
 
 #### Main loop ####
 for (year_id in 1:run_params$n_years) {
@@ -226,16 +249,13 @@ for (year_id in 1:run_params$n_years) {
     model_winter_bounds <- model_time_bounds[3:4]
     
     # Select weather series period.
-    # If the weather series time specification is
-    # wrong this step is where it all falls apart.
     weather_series_winter_cur <- data_weather[which(data_weather$timestamp == model_winter_bounds[1]):(which(data_weather$timestamp == model_winter_bounds[2])),]
     model_winter_days_n <- nrow(weather_series_winter_cur)
     
     # This leaves the result of the last optimization
     # iteration in mod_output_annual_cur.
-    # The NA is for the corr_fact_winter (which we are
-    # determining here, so we don't use a previous value:
-    # it is ignored).
+    # The NA is for the optimized corr_fact_winter (which we are
+    # determining here, so we don't use a previous value: it is ignored).
     optim_corr_winter <- func_optimize_mb("winter", NA,
                                           run_params, year_cur_params, elevation_grid_id, surftype_grid_id,
                                           data_dhms, data_dems, data_surftype, snowdist_init_winter, data_radiation,
@@ -246,12 +266,9 @@ for (year_id in 1:run_params$n_years) {
                                           nstakes_winter, model_winter_days_n, massbal_winter_meas_cur,
                                           winter_stakes_cells)
     
-    # Save the correction factor to re-use it
-    # during the annual optimization.
-    # We divide by the original prec_corr
-    # since the corr_fact is relative
-    # (it gets multiplied again during
-    # optimization, inside func_optim_worker()).
+    # Save the correction factor to re-use it during the annual optimization.
+    # We divide by the original prec_corr since the corr_fact is relative
+    # (it gets multiplied again during optimization, inside func_optim_worker()).
     corr_fact_winter <- optim_corr_winter$prec_corr / year_cur_params$prec_corr
     
     # Free some memory after processing.
@@ -342,6 +359,22 @@ for (year_id in 1:run_params$n_years) {
   ela_aar <- func_compute_ela_aar(run_params, massbal_annual_maps, data_dems)
   
   
+  #### . SAVE OVERVIEW VALUES for the year ####
+  df_overview$mb_annual_meas_corr[year_id] <- massbal_annual_values[["meas_period_corr"]] / 1e3
+  df_overview$mb_annual_meas[year_id]      <- massbal_annual_values[["meas_period"]] / 1e3
+  df_overview$mb_annual_hydro[year_id]     <- massbal_annual_values[["hydro"]] / 1e3
+  df_overview$mb_annual_fixed[year_id]     <- massbal_annual_values[["fixed"]] / 1e3
+  if (process_winter) {df_overview$mb_winter_meas[year_id] <- massbal_winter_values[["meas"]] / 1e3}
+  df_overview$mb_winter_fixed[year_id]     <- massbal_winter_values [["fixed"]] / 1e3
+  df_overview$ela[year_id]                 <- ela_aar[["ela"]]
+  df_overview$aar[year_id]                 <- ela_aar[["aar"]] * 100
+  df_overview$rmse[year_id]                <- mod_output_annual_cur$global_rms / 1e3
+  df_overview$melt_factor[year_id]         <- year_cur_params$melt_factor + optim_corr_annual$melt_factor
+  df_overview$rad_fact_ice[year_id]        <- year_cur_params$rad_fact_ice + optim_corr_annual$rad_fact_ice
+  df_overview$rad_fact_snow[year_id]       <- year_cur_params$rad_fact_snow + optim_corr_annual$rad_fact_ice * year_cur_params$rad_fact_ratio_snow_ice
+  df_overview$prec_corr[year_id]           <- year_cur_params$prec_corr + optim_corr_annual$prec_corr
+  
+  
   #### . PLOT THE MASS BALANCE MAPS ####
   func_plot_year_mb_maps(run_params,
                          year_cur,
@@ -382,3 +415,10 @@ for (year_id in 1:run_params$n_years) {
   
   
 }
+
+save.image("zz.RData")
+load("zz.RData")
+
+#### Overview plots ####
+df_overview$mb_cumul <- cumsum(df_overview$mb_annual_meas_corr)
+func_plot_overview(df_overview)

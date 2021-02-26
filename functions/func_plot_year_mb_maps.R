@@ -31,7 +31,7 @@ func_plot_year_mb_maps <- function(run_params,
                                    massbal_winter_meas_period,
                                    process_winter) {
   
-  
+  base_size <- 6 # For the plots.
   theme_map_massbal <- theme_void(base_size = base_size) +
                        theme(legend.position = "bottom",
                              legend.key.width = unit(30, "pt"),
@@ -40,8 +40,6 @@ func_plot_year_mb_maps <- function(run_params,
                              legend.title = element_text(vjust = 1, face = "bold"),
                              legend.text = element_text(face = "bold"),
                              plot.margin = margin(0,0,0,0))
-  
-  base_size <- 6
   
   plot_df_base <- data.frame(coordinates(data_dems$elevation[[elevation_grid_id]]))
   elevation_df <- data.frame(plot_df_base, z = getValues(data_dems$elevation[[elevation_grid_id]]))

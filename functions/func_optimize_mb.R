@@ -4,7 +4,7 @@
 #                 resolution, optimizing model parameters towards the best fit with point         #
 #                 mass balance measurements.                                                      #
 #                 This file contains the routines to optimize the mass balance (either winter     #
-#                 or annual, with a switch: code is almost the same.
+#                 or annual, with a switch: code is almost the same.                              #
 #                 Optimization is performed by computing the bias derivative w.r.t. the           #
 #                 correction factor, since the bias is actually quasi-linear (weak albedo         #
 #                 feedback). Then we can converge quickly to zero bias.                           #
@@ -153,6 +153,9 @@ func_optimize_mb <- function(optimization_period, corr_fact_winter,
   }
   
   
+  # These are the absolute additive corrections.
+  # The final value of the parameter is given by
+  # year_cur_params$<param_name> + corrections_best$<param_name>.
   if (optimization_period == "annual") {
     corrections_best <- list(melt_factor  = corr_fact_cur    * year_cur_params$melt_factor,
                              rad_fact_ice = corr_fact_cur    * year_cur_params$rad_fact_ice,

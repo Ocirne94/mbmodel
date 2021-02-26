@@ -7,6 +7,11 @@
 #                 the accumulation-area ratio (ELA and AAR) after modeling one year.              #
 ################################################################################################### 
 
+
+# The equilibrium line altitude is computed by classifying
+# the glacier grid into elevation bands (with user-defined
+# vertical extent) and then taking the band whose mean mass
+# balance over the corrected measured period is closest to 0.
 func_compute_ela_aar <- function(run_params,
                                  massbal_annual_maps,
                                  data_dems) {

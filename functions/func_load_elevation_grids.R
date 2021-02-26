@@ -154,10 +154,8 @@ func_load_elevation_grids <- function(run_params, load_which) {
     # Elevation bands.
     grids_out$elevation_bands <- list()
     for (grid_id in 1:grids_out$n_grids) {
-      grids_out$elevation_bands[[grid_id]] <- round(grids_out$elevation[[grid_id]] / run_params$ela_bands_size) * run_params$ela_bands_size
+      grids_out$elevation_bands[[grid_id]] <- round(grids_out$elevation[[grid_id]] / run_params$ele_bands_size) * run_params$ele_bands_size
     }
-    
-    
     
   }
   
