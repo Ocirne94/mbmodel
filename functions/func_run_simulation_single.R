@@ -33,9 +33,9 @@ func_run_simulation_single <- function(year_param_corrections,
   # fixed (initial) ratio of the radiation factors.
   year_cur_params_corr$rad_fact_snow <- year_cur_params_corr$rad_fact_ice * year_cur_params_corr$rad_fact_ratio_snow_ice
   
-  cat("melt_factor =", year_cur_params_corr$melt_factor, "\n")
-  cat("rad_fact_ice =", year_cur_params_corr$rad_fact_ice, "\n")
-  cat("prec_corr =", year_cur_params_corr$prec_corr, "\n")
+  cat("melt_factor =",  round(year_cur_params_corr$melt_factor, 3),  "\n")
+  cat("rad_fact_ice =", round(year_cur_params_corr$rad_fact_ice, 3), "\n")
+  cat("prec_corr =",    round(year_cur_params_corr$prec_corr, 3),    "\n")
   
   #### . .  RUN MASS BALANCE MODEL ####
   mb_model_output <- func_massbal_model(run_params,
@@ -93,8 +93,8 @@ func_run_simulation_single <- function(year_param_corrections,
   global_bias <- mean(stakes_bias)
   global_rms  <- sqrt(mean(stakes_bias^2))
   
-  cat("BIAS:", global_bias, "mm w.e.\n")
-  cat("RMS:", global_rms, "mm w.e.\n")
+  cat("BIAS:", round(global_bias, 2), "mm w.e.\n")
+  cat("RMS:",  round(global_rms, 2),  "mm w.e.\n")
   
   # Compile output with everything we may need
   # for either plots or optimization.

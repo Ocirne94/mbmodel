@@ -105,8 +105,8 @@ func_optimize_mb <- function(optimization_period, corr_fact_winter,
                              grid_ice_albedo_fact_cur_values, dx1, dx2, dy1, dy2,
                              nstakes, model_days_n, massbal_meas_cur, stakes_cells) {
   
-  cat("\n\n**", year_cur, optimization_period, "mass balance optimization **\n")
-  cat("\n* Model run # 1\n")
+  cat("\n**", year_cur, optimization_period, "mass balance optimization **\n")
+  cat("\n* Optimization run # 1\n")
   corr_fact_prev <- 0
   bias_prev <- func_optim_worker(optimization_period, corr_fact_prev, corr_fact_winter,
                                  run_params, year_cur_params, elevation_grid_id, surftype_grid_id,
@@ -141,7 +141,7 @@ func_optimize_mb <- function(optimization_period, corr_fact_winter,
     corr_fact_prev <- corr_fact_cur
     corr_fact_cur <- corr_fact_cur - (bias_cur / bias_slope) # Apply linear correction with the computed derivative.
     niter <- niter + 1
-    cat("\n* Model run #", niter, "\n")
+    cat("\n* Optimization run #", niter, "\n")
     bias_cur <- func_optim_worker(optimization_period, corr_fact_cur, corr_fact_winter,
                                   run_params, year_cur_params, elevation_grid_id, surftype_grid_id,
                                   data_dhms, data_dems, data_surftype,
