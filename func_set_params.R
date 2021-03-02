@@ -148,6 +148,8 @@ func_set_params <- function() {
   
   run_params$output_dirname <- file.path("output", run_params$name_glacier, "massbal")
   
+  run_params$size_mult <- 1.183267/3 # To get A4 PDF pages.
+  
   return(run_params)
 
 }

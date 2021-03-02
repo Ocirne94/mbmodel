@@ -8,7 +8,7 @@
 
 func_plot_overview <- function(df_overview) {
   
-  base_size <- 12
+  base_size <- 16 # For the plots
   
   theme_overview_plots <- theme_bw(base_size = base_size) +
                           theme(axis.title.x = element_blank(),
@@ -21,9 +21,10 @@ func_plot_overview <- function(df_overview) {
   # period, corrected within elevation bands.
   # Also horizontal line with mean over the period.
   plots[[1]] <- ggplot(df_overview) +
-    geom_line(aes(x = year, y = mb_annual_meas_corr)) +
-    geom_segment(x = df_overview$year[1], xend = df_overview$year[length(df_overview$year)], y = mean(df_overview$mb_annual_meas_corr), yend = mean(df_overview$mb_annual_meas_corr),
-                 linetype = "dashed") +
+    geom_line(aes(x = year, y = mb_annual_meas_corr), size = 1) +
+    geom_segment(x = df_overview$year[1], xend = df_overview$year[length(df_overview$year)],
+                 y = mean(df_overview$mb_annual_meas_corr), yend = mean(df_overview$mb_annual_meas_corr),
+                 linetype = "dashed", size = 1) +
     ylab("Mass balance [m w.e.]") +
     ggtitle("Final mass balance") +
     theme_overview_plots
@@ -34,9 +35,9 @@ func_plot_overview <- function(df_overview) {
   # over the hydrological year,
   # over a fixed (user-defined) period.
   plots[[2]] <- ggplot(df_overview) +
-    geom_line(aes(x = year, y = mb_annual_meas), color = "#FF00FF") +
-    geom_line(aes(x = year, y = mb_annual_hydro), color = "#0000FF") +
-    geom_line(aes(x = year, y = mb_annual_fixed), color = "#00FFFF") +
+    geom_line(aes(x = year, y = mb_annual_meas), color = "#FF00FF", size = 1) +
+    geom_line(aes(x = year, y = mb_annual_hydro), color = "#0000FF", size = 1) +
+    geom_line(aes(x = year, y = mb_annual_fixed), color = "#00FFFF", size = 1) +
     ylab("Mass balance [m w.e.]") +
     scale_y_continuous(expand = expansion(0.3, 0)) +
     ggtitle("Annual mass balance") +
@@ -53,8 +54,8 @@ func_plot_overview <- function(df_overview) {
   # over a fixed (user-defined) winter period,
   # over the measurement period (only if winter measurements are available)
   plots[[3]] <- ggplot(df_overview) +
-    {if(any(!is.na(df_overview$mb_winter_meas))) geom_line(aes(x = year, y = mb_winter_meas), color = "#FF00FF")} +
-    geom_line(aes(x = year, y = mb_winter_fixed), color = "#00FFFF") +
+    {if(any(!is.na(df_overview$mb_winter_meas))) geom_line(aes(x = year, y = mb_winter_meas), color = "#FF00FF", size = 1)} +
+    geom_line(aes(x = year, y = mb_winter_fixed), color = "#00FFFF", size = 1) +
     ylab("Mass balance [m w.e.]") +
     scale_y_continuous(expand = expansion(0.3, 0)) +
     ggtitle("Winter mass balance") +
@@ -67,7 +68,7 @@ func_plot_overview <- function(df_overview) {
   
   # Time series of ELA.
   plots[[4]] <- ggplot(df_overview) +
-    geom_line(aes(x = year, y = ela)) +
+    geom_line(aes(x = year, y = ela), size = 1) +
     ylab("Equilibrium Line Altitude [m a.s.l.]") +
     scale_y_continuous(expand = expansion(0.5, 0)) +
     ggtitle("Equilibrium Line Altitude") +
@@ -76,7 +77,7 @@ func_plot_overview <- function(df_overview) {
   
   # Time series of AAR.
   plots[[5]] <- ggplot(df_overview) +
-    geom_line(aes(x = year, y = aar)) +
+    geom_line(aes(x = year, y = aar), size = 1) +
     ylab("Accumulation-Area Ratio [%]") +
     scale_y_continuous(expand = expansion(0.5, 0)) +
     ggtitle("Accumulation-Area Ratio") +
@@ -85,18 +86,18 @@ func_plot_overview <- function(df_overview) {
   
   # Time series of RMSE.
   plots[[6]] <- ggplot(df_overview) +
-    geom_line(aes(x = year, y = rmse)) +
+    geom_line(aes(x = year, y = rmse), size = 1) +
     ylab("RMSE [m w.e.]") +
-    scale_y_continuous(expand = expansion(0.5, 0)) +
+    scale_y_continuous(limits = c(0,NA), expand = expansion(mult = c(0, 0.2))) +
     ggtitle("Root-Mean-Square Error") +
     theme_overview_plots
   
   
   # Time series of the melt parameters.
   plots[[7]] <- ggplot(df_overview) +
-    geom_line(aes(x = year, y = melt_factor), color = "#FF00FF") +
-    geom_line(aes(x = year, y = rad_fact_snow), color = "#0000FF") +
-    geom_line(aes(x = year, y = rad_fact_ice), color = "#00FFFF") +
+    geom_line(aes(x = year, y = rad_fact_snow), color = "#0000FF", size = 1) +
+    geom_line(aes(x = year, y = rad_fact_ice), color = "#00FFFF", size = 1) +
+    geom_line(aes(x = year, y = melt_factor), color = "#FF00FF", size = 1) +
     ylab("Parameter value [different units]") +
     scale_y_continuous(expand = expansion(0.5, 0)) +
     ggtitle("Melt parameters") +
@@ -114,7 +115,7 @@ func_plot_overview <- function(df_overview) {
   # y-axis limits so that when we have a single value
   # the limits still make sense.
   plots[[8]] <- ggplot(df_overview) +
-    geom_line(aes(x = year, y = prec_corr), color = "#0000FF") +
+    geom_line(aes(x = year, y = prec_corr), color = "#0000FF", size = 1) +
     ylab("Precipitation correction [%]") +
     scale_y_continuous(limits = c(min(min(df_overview$prec_corr), mean(df_overview$prec_corr) - 0.1 * mean(df_overview$prec_corr)), max(max(df_overview$prec_corr), mean(df_overview$prec_corr + 0.1 * df_overview$prec_corr)))) +
     ggtitle("Precipitation correction factor") +
@@ -124,14 +125,16 @@ func_plot_overview <- function(df_overview) {
   # Time series of cumulative mass balance.
   plots[[9]] <- ggplot(data.frame(year = c(df_overview$year[1]-1, df_overview$year),
                           mb_cumul = c(0, df_overview$mb_cumul))) +
-    geom_line(aes(x = year, y = mb_cumul), color = "#FF0000") +
-    geom_point(aes(x = year, y = mb_cumul), color = "#FF0000", shape = 2) +
-    geom_hline(yintercept = 0, linetype = "dashed") +
+    geom_hline(yintercept = 0, linetype = "dashed", size = 1) +
+    geom_line(aes(x = year, y = mb_cumul), color = "#FF0000", size = 1) +
+    geom_point(aes(x = year, y = mb_cumul), color = "#FF0000", shape = 2, size = 3, stroke = 1.2) +
+    scale_y_continuous(breaks = pretty(c(0, df_overview$mb_cumul))) +
     ylab("Cumulative mass balance [m w.e.]") +
     ggtitle("Cumulative mass balance") +
     theme_overview_plots
   
-  multi.page <- ggarrange(plotlist = plots, ncol = 1, nrow = 3, align = "hv")
-  ggexport(multi.page, filename = file.path(run_params$output_dirname, "overview.pdf"), width = 21 * 0.3, height = 29.7 * 0.3)
+  overview <- ggarrange(plotlist = plots, ncol = 1, nrow = 3, align = "hv")
+
+  ggexport(overview, filename = file.path(run_params$output_dirname, "overview.pdf"), width = 21 * run_params$size_mult, height = 29.7 * run_params$size_mult)
   
 }

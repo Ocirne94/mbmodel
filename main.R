@@ -6,6 +6,8 @@
 #                 This file contains the main loop and instructions.                              #
 ###################################################################################################
 
+Sys.setlocale(category = "LC_TIME", locale = "en_US.UTF-8") # Set English language for dates (in the plots).
+
 #### Load from files or reboot file ####
 params_file_write <- FALSE                # Save .RData file with run parameters, for faster reload. The file is saved AFTER data loading since some parameters depend on the loaded grids (e.g. cell size).
 params_file_read  <- FALSE                # Load .RData file with run parameters, instead of setting new run parametrs.
@@ -114,6 +116,10 @@ df_overview <- data.frame(year = run_params$years,
                           rad_fact_snow       = NA,
                           prec_corr           = NA,
                           mb_cumul            = NA)
+
+# Here we will put just the final mass balance for each
+# year, to produce the overview_areaplot multi-page PDF file.
+overview_areaplots <- list()
 
 #### Main loop ####
 for (year_id in 1:run_params$n_years) {
@@ -376,24 +382,45 @@ for (year_id in 1:run_params$n_years) {
   
   
   #### . PLOT THE MASS BALANCE MAPS ####
-  func_plot_year_mb_maps(run_params,
-                         year_cur,
-                         data_dems,
-                         data_outlines,
-                         elevation_grid_id,
-                         outline_id,
-                         massbal_annual_maps,
-                         massbal_winter_maps,
-                         massbal_annual_values,
-                         massbal_winter_values,
-                         massbal_annual_meas_period,
-                         massbal_winter_meas_period,
-                         process_winter)
+  # This returns a list with the (5 or 6, depending on whether we have winter measurements)
+  # mass balance maps for the current year.
+  # Then we will append to this list also the
+  # other plots of the year (time series,
+  # vertical distributions and so on).
+  plots_year <- func_plot_year_mb_maps(run_params,
+                                       year_cur,
+                                       data_dems,
+                                       data_outlines,
+                                       elevation_grid_id,
+                                       outline_id,
+                                       massbal_annual_maps,
+                                       massbal_winter_maps,
+                                       massbal_annual_values,
+                                       massbal_winter_values,
+                                       massbal_annual_meas_period,
+                                       massbal_winter_meas_period,
+                                       process_winter)
   
   
+  #### . PLOT THE DAILY TIME SERIES OF GLACIER-WIDE MASS BALANCE ####
+  plots_mb_cumul <- func_plot_massbal_cumul(run_params, mod_output_annual_cur, model_annual_bounds)
     
   
   
+  
+  
+  plots_year <- append(plots_year, plots_mb_cumul)
+  
+  plots_year_out <- ggarrange(plotlist = plots_year, ncol = 1, nrow = 1, align = "hv")
+  ggexport(plots_year_out, filename = file.path(run_params$output_dirname, paste0(year_cur, ".pdf")), width = 21 * run_params$size_mult, height = 29.7 * run_params$size_mult)
+  
+  
+  
+  # Save the plot of the final mass balance of the year,
+  # to be put in a PDF file with 1 plot per year.
+  overview_areaplots[[year_id]] <- plots_year[[3]]
+  
+
   
   
   
@@ -416,9 +443,13 @@ for (year_id in 1:run_params$n_years) {
   
 }
 
-save.image("zz.RData")
-load("zz.RData")
+# save.image("zz.RData")
+# load("zz.RData")
 
 #### Overview plots ####
 df_overview$mb_cumul <- cumsum(df_overview$mb_annual_meas_corr)
 func_plot_overview(df_overview)
+
+# Save to file the maps of final annual mass balance.
+overview_areaplot <- ggarrange(plotlist = overview_areaplots, ncol = 1, nrow = 1, align = "hv")
+ggexport(overview_areaplot, filename = file.path(run_params$output_dirname, "overview_areaplot.pdf"), width = 21 * run_params$size_mult, height = 29.7 * run_params$size_mult)
