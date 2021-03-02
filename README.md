@@ -43,3 +43,5 @@ In (2),\
 The model is iteratively tuned to stake readings with an optimization procedure, which minimizes bias over the stakes. If winter accumulation measurements are available, the model is first run over the winter and the precipitation parameters are optimized (currently the precipitation correction). Then the model is run over the whole period and the melt parameters are tuned to cancel the annual bias.
 
 Finally, the computed mass balance is corrected in elevation bands to better match the stakes measurements.
+
+NOTE in the mass balance plots: the effect of avalanches is included in the time series of accumulation, so that accumulation can theoretically be negative in case an avalanche takes snow away from the glacier (unlikely!)

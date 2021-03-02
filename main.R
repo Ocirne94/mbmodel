@@ -31,6 +31,8 @@ library(metR)         # geom_text_contour()
 library(ggplot2)      # Base plotting library
 library(ggpubr)       # Additional plotting functions
 library(grid)         # Additional plotting functions
+library(cowplot)      # Additional plotting functions
+library(ggplotify)    # Additional plotting functions
 library(RStoolbox)    # For the surface type basemap under the SWE plots
 
 
@@ -403,13 +405,18 @@ for (year_id in 1:run_params$n_years) {
   
   
   #### . PLOT THE DAILY TIME SERIES OF GLACIER-WIDE MASS BALANCE ####
-  plots_mb_cumul <- func_plot_massbal_cumul(run_params, mod_output_annual_cur, model_annual_bounds)
+  plots_mb_cumul <- as.ggplot(func_plot_massbal_cumul(run_params,
+                                                      process_winter,
+                                                      massbal_annual_meas_cur,
+                                                      massbal_winter_meas_cur,
+                                                      mod_output_annual_cur,
+                                                      model_annual_bounds))
     
   
   
   
   
-  plots_year <- append(plots_year, plots_mb_cumul)
+  plots_year <- append(plots_year, list(plots_mb_cumul))
   
   plots_year_out <- ggarrange(plotlist = plots_year, ncol = 1, nrow = 1, align = "hv")
   ggexport(plots_year_out, filename = file.path(run_params$output_dirname, paste0(year_cur, ".pdf")), width = 21 * run_params$size_mult, height = 29.7 * run_params$size_mult)
