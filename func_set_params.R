@@ -120,8 +120,11 @@ func_set_params <- function() {
     #### MASS BALANCE PROCESSING choices ####
     mb_optimization_skip         =   TRUE,                         # [TRUE/FALSE]: CURRENTLY NOT IMPLEMENTED, SHOULD WE SKIP THE OPTIMIZATION OF THE MASS BALANCE MODEL?
     mb_corr_bands_skip           =   FALSE,                        # [TRUE/FALSE]: CURRENTLY NOT IMPLEMENTED, SHOULD WE SKIP THE CORRECTION OF MASS BALANCE BASED ON ELEVATION BANDS?
-    ele_bands_size               =   10,                           # [m]: to compute the equilibrium line altitude, divide the glacier grid into elevation bands with this vertical extent.
+    ele_bands_ela_size           =   10,                           # [m]: to compute the equilibrium line altitude, divide the glacier grid into elevation bands with this vertical extent.
     
+    
+    #### PLOT choices ####
+    ele_bands_plot_size          =   50,                           # [m]: plot the annual mass balance as function of elevation, using elevation bands with this vertical extent.
     
     #### MODELED YEARS choice ####
     first_year                   =   2017,                         # First modeled year (usually from October of the previous year to September of this year)

@@ -139,7 +139,7 @@ func_load_elevation_grids <- function(run_params, load_which) {
   # If we have loaded the masked DEM, we also
   # pre-compute the valid glaciated cells,
   # and also a re-classified raster with elevation
-  # classified in 10-m elevation bands (useful for
+  # classified in user-defined elevation bands (useful for
   # the calculation of the equilibrium line altitude).
   if (load_which == "dem") {
     
@@ -151,10 +151,18 @@ func_load_elevation_grids <- function(run_params, load_which) {
       grids_out$no_glacier_cell_ids[[grid_id]] <- which(glacier_ids_logi)
     }
     
-    # Elevation bands.
-    grids_out$elevation_bands <- list()
+    # Elevation bands for the ELA estimation (user-defined vertical extent, typically 10 m).
+    grids_out$elevation_bands_ela <- list()
     for (grid_id in 1:grids_out$n_grids) {
-      grids_out$elevation_bands[[grid_id]] <- round(grids_out$elevation[[grid_id]] / run_params$ele_bands_size) * run_params$ele_bands_size
+      grids_out$elevation_bands_ela[[grid_id]] <- round(grids_out$elevation[[grid_id]] / run_params$ele_bands_ela_size) * run_params$ele_bands_ela_size
+    }
+    
+    # Elevation bands for the plot of modeled mass balance vs
+    # elevation bands (user-defined vertical extent, typically 50 m).
+    # We center them at extent/2 so that the band limits are nice.
+    grids_out$elevation_bands_plot <- list()
+    for (grid_id in 1:grids_out$n_grids) {
+      grids_out$elevation_bands_plot[[grid_id]] <- round((grids_out$elevation[[grid_id]] - run_params$ele_bands_plot_size/2) / run_params$ele_bands_plot_size) * run_params$ele_bands_plot_size + run_params$ele_bands_plot_size/2
     }
     
   }
