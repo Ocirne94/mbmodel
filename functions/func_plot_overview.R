@@ -96,8 +96,8 @@ func_plot_overview <- function(df_overview) {
   # Time series of the melt parameters.
   plots[[7]] <- ggplot(df_overview) +
     geom_line(aes(x = year, y = rad_fact_snow), color = "#0000FF", size = 1) +
-    geom_line(aes(x = year, y = rad_fact_ice), color = "#00FFFF", size = 1.1) +
-    geom_line(aes(x = year, y = melt_factor), color = "#FF00FF", size = 0.9) + # Different size since the melt factor is sometimes the same as the rad_fact_ice.
+    geom_line(aes(x = year, y = melt_factor), color = "#FF00FF", size = 1.25) + # Different size since the melt factor is sometimes the same as the rad_fact_ice.
+    geom_line(aes(x = year, y = rad_fact_ice), color = "#00FFFF", size = 0.5) +
     ylab("Parameter value [different units]") +
     scale_y_continuous(expand = expansion(0.5, 0)) +
     ggtitle("Melt parameters") +

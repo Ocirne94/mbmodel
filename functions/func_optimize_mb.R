@@ -117,7 +117,7 @@ func_optimize_mb <- function(optimization_period, corr_fact_winter,
                                  dx1, dx2, dy1, dy2,
                                  nstakes, model_days_n, massbal_meas_cur, stakes_cells)
   
-  cat("\n* Model run # 2\n")
+  cat("\n* Optimization run # 2\n")
   # This 0.01 increment is arbitrary, we just need
   # a small interval to approximate the bias
   # derivative with a finite difference.
