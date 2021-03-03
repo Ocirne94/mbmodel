@@ -13,8 +13,8 @@ params_file_write <- FALSE                # Save .RData file with run parameters
 params_file_read  <- FALSE                # Load .RData file with run parameters, instead of setting new run parametrs.
 params_file_name  <- "params_file.RData"  # Name of the .RData run parameters file.
 
-boot_file_write   <- TRUE                # Save .RData file with the input data, for faster reload.
-boot_file_read    <- FALSE                 # Load .RData file with the input data, instead of loading input files.
+boot_file_write   <- FALSE                # Save .RData file with the input data, for faster reload.
+boot_file_read    <- TRUE                 # Load .RData file with the input data, instead of loading input files.
 boot_file_name    <- "boot_file_barkrak.RData"    # Name of the .RData input data file.
 
 
@@ -32,7 +32,6 @@ library(ggplot2)      # Base plotting library
 library(ggpubr)       # Additional plotting functions
 library(grid)         # Additional plotting functions
 library(cowplot)      # Additional plotting functions
-library(ggplotify)    # Additional plotting functions
 library(ggpattern)    # Additional plotting functions (install with remotes::install_github("coolbutuseless/ggpattern"))
 library(reshape2)     # melt()
 library(RStoolbox)    # For the surface type basemap under the SWE plots
@@ -322,7 +321,7 @@ for (year_id in 1:run_params$n_years) {
   swe_prev_available <- TRUE
   
   
-  #### . EXTRACT CUMULATIVE MASS BALANCE AT DATES OF INTEREST ####
+  #### . EXTRACT MAPS OF CUMULATIVE MASS BALANCE AT DATES OF INTEREST ####
   # We extract three maps of cumulative annual mass balances:
   # (1) "hydro":       hydrological year (1 October <Year-1> - 30 September <Year>)
   # (2) "meas_period": measurement period, defined as (earliest annnual stake start - latest annual stake end)
@@ -373,6 +372,7 @@ for (year_id in 1:run_params$n_years) {
   
   
   #### . SAVE OVERVIEW VALUES for the year ####
+  # After the loop we show them in the multi-year plots.
   df_overview$mb_annual_meas_corr[year_id] <- massbal_annual_values[["meas_period_corr"]] / 1e3
   df_overview$mb_annual_meas[year_id]      <- massbal_annual_values[["meas_period"]] / 1e3
   df_overview$mb_annual_hydro[year_id]     <- massbal_annual_values[["hydro"]] / 1e3
@@ -410,82 +410,35 @@ for (year_id in 1:run_params$n_years) {
   
   
   #### . PLOT THE DAILY TIME SERIES OF GLACIER-WIDE MASS BALANCE ####
-  plots_mb_cumul <- as.ggplot(func_plot_massbal_cumul(run_params,
-                                                      process_winter,
-                                                      massbal_annual_meas_cur,
-                                                      massbal_winter_meas_cur,
-                                                      mod_output_annual_cur,
-                                                      model_annual_bounds))
+  plots_mb_cumul <- func_plot_massbal_cumul(run_params,
+                                            process_winter,
+                                            massbal_annual_meas_cur,
+                                            massbal_winter_meas_cur,
+                                            mod_output_annual_cur,
+                                            model_annual_bounds)
   plots_year <- append(plots_year, list(plots_mb_cumul))
-    
   
-  #### . PLOT MASS BALANCE VERSUS ELEVATION BANDS ####
-  ele_bands_plot_values <- getValues(data_dems$elevation_bands_plot[[elevation_grid_id]])
-  ele_bands_plot_min <- min(ele_bands_plot_values, na.rm = T)
-  ele_bands_plot_max <- max(ele_bands_plot_values, na.rm = T)
-  ele_bands_plot_df <- data.frame(ele                 = seq(ele_bands_plot_min, ele_bands_plot_max, run_params$ele_bands_plot_size),
-                                  ncells              = NA,
-                                  mb_annual_meas_corr = NA,
-                                  mb_annual_meas      = NA,
-                                  mb_annual_hydro     = NA,
-                                  mb_annual_fixed     = NA,
-                                  mb_winter_fixed     = NA,
-                                  mb_winter_meas      = NA)
-  for (band_id in 1:length(ele_bands_plot_df[,1])) {
-    band_cell_ids <- which(ele_bands_plot_values == ele_bands_plot_df$ele[band_id])
-    ele_bands_plot_df$ncells[band_id] <- length(band_cell_ids)
-    ele_bands_plot_df$mb_annual_meas_corr[band_id] <- mean(mb_meas_period_corr_values[band_cell_ids])
-    ele_bands_plot_df$mb_annual_meas[band_id]      <- mean(getValues(massbal_annual_maps$meas_period)[band_cell_ids])
-    ele_bands_plot_df$mb_annual_hydro[band_id]     <- mean(getValues(massbal_annual_maps$hydro)[band_cell_ids])
-    ele_bands_plot_df$mb_annual_fixed[band_id]     <- mean(getValues(massbal_annual_maps$fixed)[band_cell_ids])
-    ele_bands_plot_df$mb_winter_fixed[band_id]     <- mean(getValues(massbal_winter_maps$fixed)[band_cell_ids])
-    if (process_winter) {
-      ele_bands_plot_df$mb_winter_meas[band_id]     <- mean(getValues(massbal_winter_maps$meas_period)[band_cell_ids])
-    }
+  
+  #### . PLOT MASS BALANCE VERSUS ELEVATION ####
+  plots_mb_vs_ele <- func_plot_massbal_vs_elevation(run_params,
+                                                    data_dems,
+                                                    massbal_annual_maps,
+                                                    massbal_winter_maps,
+                                                    elevation_grid_id,
+                                                    massbal_annual_meas_cur)
+  plots_year <- append(plots_year, list(plots_mb_vs_ele))
+  
+  
+  
+  #### . PLOT MODELED SERIES OF EACH STAKE ####
+  plots_stakes <- func_plot_stakes(model_annual_days_n,
+                                   model_annual_bounds,
+                                   nstakes_annual,
+                                   mod_output_annual_cur,
+                                   massbal_annual_meas_cur)
+  for (stakes_page_id in 1:length(plots_stakes)) {
+    plots_year <- append(plots_year, list(plots_stakes[[stakes_page_id]]))
   }
-  
-  ele_bands_plot_df_melt <- na.omit(melt(ele_bands_plot_df, id.vars = c("ele", "ncells"))) # This also removes the empty mb_winter_meas values if we don't have winter measurements.
-  ele_bands_plot_df_melt$variable <- factor(ele_bands_plot_df_melt$variable, levels = c("mb_annual_fixed", "mb_annual_meas", "mb_annual_hydro",
-                                                                                        "mb_winter_fixed", "mb_winter_meas",
-                                                                                        "mb_annual_meas_corr"))
-  
-  base_size <- 16 # For the plot
-  theme_elebands_plot <- theme_bw(base_size = base_size) +
-    theme(plot.title = element_text(hjust = 0.5),
-          text = element_text(face = "bold"),
-          panel.grid = element_blank(),
-          legend.position = c(0.4,0.85),
-          legend.background = element_blank(),
-          legend.box.background = element_blank(),
-          legend.title = element_blank())
-  
-  dat_ncells <- data.frame(ele    = c(ele_bands_plot_df$ele[1] - rep(25,2), rep(ele_bands_plot_df$ele, each = 2) + 25),
-                           ncells = c(0, rep(ele_bands_plot_df$ncells, each = 2), 0))
-  
-  # Below: use geom_rect() instead of geom_polygon_pattern()
-  # if there is a problem with package ggpattern.
-  plot_elebands <-  ggplot(ele_bands_plot_df_melt) +
-    # geom_rect(data = ele_bands_plot_df, aes(xmin = ele - run_params$ele_bands_plot_size/2, xmax = ele + run_params$ele_bands_plot_size/2, ymin = min(ele_bands_plot_df_melt$value) / 1e3, ymax = ncells * (max(ele_bands_plot_df_melt$value) - min(ele_bands_plot_df_melt$value)) / (1e3 * 4 * max(ncells)) + min(ele_bands_plot_df_melt$value) / 1e3)) +
-    geom_polygon_pattern(data = dat_ncells,
-                         aes(x = ele, y = ncells * (max(ele_bands_plot_df_melt$value) - min(ele_bands_plot_df_melt$value)) / (1e3 * 4 * max(ncells)) + min(ele_bands_plot_df_melt$value) / 1e3),
-                         fill = "#FFFFFF", color = "#000000",
-                         pattern_fill = "#000000", pattern_colour = "#000000",
-                         pattern_angle = 35, pattern_size = 0.1, pattern_spacing = 0.02, pattern_density = 0.05) +
-    geom_hline(yintercept = 0) +
-    geom_line(aes(x = ele, y = value / 1e3, color = variable), size = 1) +
-    scale_color_manual(breaks = c("mb_annual_fixed", "mb_annual_meas", "mb_annual_hydro", "mb_winter_fixed", "mb_winter_meas", "mb_annual_meas_corr"),
-                       values = c("#8C00D4", "#FF0000", "#FF9000", "#0000FF", "#8080FF", "#000000"),
-                       labels = c("Annual, fixed dates", "Annual, measurement period", "Annual, hydrological year",
-                                  "Winter, fixed dates", "Winter, measurement period", "Annual, final")) +
-    scale_y_continuous(breaks = pretty(ele_bands_plot_df_melt$value / 1e3), expand = expansion(0,0),
-                       sec.axis = sec_axis(~ (. - min(ele_bands_plot_df_melt$value/1e3)) * 4 * max(ele_bands_plot_df$ncells) / ((max(ele_bands_plot_df_melt$value) - min(ele_bands_plot_df_melt$value))/1e3)  )) +
-    scale_x_continuous(expand = expansion(0,0)) +
-    coord_flip() +
-    xlab("Elevation [m a.s.l.]") +
-    ylab("Mass balance [m w.e.]") +
-    theme_elebands_plot
-  plots_year <- append(plots_year, list(plot_elebands))
-  
   
   
   # Write multi-page PDF for the current year.

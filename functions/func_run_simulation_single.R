@@ -65,7 +65,7 @@ func_run_simulation_single <- function(year_param_corrections,
   # Find indices of the days corresponding to the stake measurements.
   # We match w.r.t. weather_series_cur whose index is off by ~0.5 with the
   # mass balance (mb_model_out$gl_massbal_cumul[1] is the initial condition
-  # (i.e. 0.0) at 00:00 of the first day, then the index of the weather series
+  # (i.e. value 0.0) at 00:00 of the first day, then the index of the weather series
   # corresponds to the full following 24 hours, then gl_massbal_cumul[2] is the
   # cumulative mass balance by the end of that same day.
   # So it would be equally correct to also shift all the day indices by one (little to no change).
