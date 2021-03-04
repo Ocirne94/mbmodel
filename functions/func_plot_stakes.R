@@ -33,7 +33,12 @@ func_plot_stakes <- function(model_annual_days_n,
   }
   
   # Compute plot ranges. Same for all plots.
-  stakes_mb_lims <- (range(c(mod_output_annual_cur$stakes_mb_meas, range(mod_output_annual_cur$stakes_series_mod_all) + c(min(stake_offset), max(stake_offset))))) / 1e3
+  # We have to extend the range to include all
+  # measured values as well as all modeled values,
+  # accounting for the stake_offset which is used
+  # to set the modeled stake series to 0 at the date
+  # of stake measurement.
+  stakes_mb_lims <- (range(c(mod_output_annual_cur$stakes_mb_meas, range(mod_output_annual_cur$stakes_series_mod_all) + c(min(0,-max(stake_offset)), max(0,-min(stake_offset)))))) / 1e3
   
   
   # Setup month labels.
@@ -76,7 +81,8 @@ func_plot_stakes <- function(model_annual_days_n,
             panel.grid = element_blank(),
             plot.margin = margin(0.2,0.2,0.2,0.2,"cm"))
     
-    plots_stakes[[annual_stake_id]] <- ggplot(stake_mod_df) +
+    plots_stakes[[annual_stake_id]] <-
+      ggplot(stake_mod_df) +
       geom_hline(yintercept = 0, linetype = "longdash", size = 0.3) +
       geom_vline(xintercept = c(stake_start_id, stake_end_id) - day_id_offset, linetype = "longdash", color = "#FF00FF", size = 0.4) +
       geom_vline(xintercept = month_start_ids, linetype = "dashed", color = "#C0C0C0", size = 0.2) +

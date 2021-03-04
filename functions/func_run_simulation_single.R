@@ -80,7 +80,7 @@ func_run_simulation_single <- function(year_param_corrections,
   
   
   # Cumulative mass balance of each stake
-  # over the measurement period (numeric vector).
+  # over its individual measurement period (numeric vector).
   stakes_mb_mod  <- as.numeric(stakes_series_mod_all)[((1:nstakes)-1)*(model_days_n+1) + stakes_end_ids] -
                     as.numeric(stakes_series_mod_all)[((1:nstakes)-1)*(model_days_n+1) + stakes_start_ids_corr]
   

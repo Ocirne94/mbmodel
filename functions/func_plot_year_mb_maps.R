@@ -29,6 +29,7 @@ func_plot_year_mb_maps <- function(run_params,
                                    massbal_winter_values,
                                    massbal_annual_meas_period,
                                    massbal_winter_meas_period,
+                                   massbal_annual_meas_cur,
                                    process_winter) {
   
   base_size <- 16 # For the plots.
@@ -75,7 +76,7 @@ func_plot_year_mb_maps <- function(run_params,
          subtitle = " ") +
     scale_fill_stepsn(name = "SMB [m w.e.]", colors = palette_RdBu_ext,
                       limits = max_mb*c(-1,1),
-                      breaks = c(-5000,-3000,-2000,-1000,-400,0,400,1000,2000,3000,5000)/1000) +
+                      breaks = run_params$mb_colorscale_breaks) +
     theme_map_massbal
   # ggsave(file.path(run_params$output_dirname, paste0(year_cur, "_hydro.pdf")), width = 3, height = 3)
 
@@ -103,7 +104,7 @@ func_plot_year_mb_maps <- function(run_params,
          subtitle = " ") +
     scale_fill_stepsn(name = "SMB [m w.e.]", colors = palette_RdBu_ext,
                       limits = max_mb*c(-1,1),
-                      breaks = c(-5000,-3000,-2000,-1000,-400,0,400,1000,2000,3000,5000)/1000) +
+                      breaks = run_params$mb_colorscale_breaks) +
     theme_map_massbal
   # ggsave(file.path(run_params$output_dirname, paste0(year_cur, "_meas_annual.pdf")), width = 3, height = 3)
 
@@ -130,10 +131,41 @@ func_plot_year_mb_maps <- function(run_params,
          subtitle = " ") +
     scale_fill_stepsn(name = "SMB [m w.e.]", colors = palette_RdBu_ext,
                       limits = max_mb*c(-1,1),
-                      breaks = c(-5000,-3000,-2000,-1000,-400,0,400,1000,2000,3000,5000)/1000) +
+                      breaks = run_params$mb_colorscale_breaks) +
     theme_map_massbal
   # ggsave(file.path(run_params$output_dirname, paste0(year_cur, "_meas_annual_corr.pdf")), width = 3, height = 3)
 
+  
+  
+  #### MEASUREMENT PERIOD CORRECTED - ANNUAL, WITH STAKES ####
+  mb_meas_corr_annual_lab <- sprintf("%.3f",massbal_annual_values[["meas_period_corr"]] / 1000.)
+  plot_df <- plot_df_base
+  max_mb <- 6.0
+  plot_df$massbal <- getValues(massbal_annual_maps$meas_period_corr)
+  # extent_map <- extent(data_dems$elevation[[elevation_grid_id]])
+  # text_dx <- max(extent_map@xmax - extent_map@xmin, extent_map@ymax - extent_map@ymin) * 1e-2
+  plots[[4]] <- ggplot(plot_df[data_dems$glacier_cell_ids[[elevation_grid_id]],]) +
+    geom_raster(aes(x = x, y = y, fill = massbal/1000)) +
+    geom_sf(data = as(data_outlines$outlines[[outline_id]], "sf"), fill = NA, color = "#202020", size = outline_linesize) +
+    coord_sf(clip = "off") +
+    geom_contour(data = elevation_df, aes(x = x, y = y, z = z), color = "#202020", size = contour_linesize) +
+    geom_text_contour(data = elevation_df, aes(x = x, y = y, z = z), check_overlap = TRUE, stroke = 0.1, stroke.color = "#FFFFFF", size = contour_label_textsize, min.size = 10, fontface = "bold") +
+    geom_point(data = massbal_annual_meas_cur, aes(x = x, y = y), shape = 3, stroke = 1.5, size = 0) +
+    geom_text(data = massbal_annual_meas_cur, aes(x = x, y = y, label = sprintf("%.2f", dh_cm*density/1e2)), size = 3, fontface = "bold", hjust = -0.12, vjust = -0.12) +
+    annotation_custom(grobTree(textGrob(paste0(year_cur-1, "/", year_cur),
+                                        x=0.05,  y=1.15, hjust=0, gp = gpar(fontsize = 2 * base_size, fontface = "bold")))) +
+    annotation_custom(grobTree(textGrob(paste0("Measurement period (annual, corrected): ", mb_meas_period_annual_lab),
+                                        x=0.05,  y=1.06, hjust=0, gp = gpar(fontsize = 1 * base_size, fontface = "bold")))) +
+    annotation_custom(grobTree(textGrob(bquote(bold(b[n]*" = "*.(mb_meas_corr_annual_lab)*" m w.e.")),
+                                        x = 0.05, y = 1.0, hjust = 0, gp = gpar(fontsize = 1 * base_size)))) +
+    labs(title    = " ", # Empty title to preserve spacing. We add the real title just above, with annotation_custom().
+         subtitle = " ") +
+    scale_fill_stepsn(name = "SMB [m w.e.]", colors = palette_RdBu_ext,
+                      limits = max_mb*c(-1,1),
+                      breaks = run_params$mb_colorscale_breaks) +
+    theme_map_massbal
+  # ggsave(file.path(run_params$output_dirname, paste0(year_cur, "_meas_annual_corr_with_stakes.pdf")), width = 3, height = 3)
+  
   
   
   #### USER-DEFINED FIXED PERIOD - ANNUAL ####
@@ -142,7 +174,7 @@ func_plot_year_mb_maps <- function(run_params,
   plot_df <- plot_df_base
   max_mb <- 6.0
   plot_df$massbal <- getValues(massbal_annual_maps$fixed)
-  plots[[4]] <- ggplot(plot_df[data_dems$glacier_cell_ids[[elevation_grid_id]],]) +
+  plots[[5]] <- ggplot(plot_df[data_dems$glacier_cell_ids[[elevation_grid_id]],]) +
     geom_raster(aes(x = x, y = y, fill = massbal/1000)) +
     geom_sf(data = as(data_outlines$outlines[[outline_id]], "sf"), fill = NA, color = "#202020", size = outline_linesize) +
     coord_sf(clip = "off") +
@@ -158,7 +190,7 @@ func_plot_year_mb_maps <- function(run_params,
          subtitle = " ") +
     scale_fill_stepsn(name = "SMB [m w.e.]", colors = palette_RdBu_ext,
                       limits = max_mb*c(-1,1),
-                      breaks = c(-5000,-3000,-2000,-1000,-400,0,400,1000,2000,3000,5000)/1000) +
+                      breaks = run_params$mb_colorscale_breaks) +
     theme_map_massbal
   # ggsave(file.path(run_params$output_dirname, paste0(year_cur, "_fixed_annual.pdf")), width = 3, height = 3)
 
@@ -170,7 +202,7 @@ func_plot_year_mb_maps <- function(run_params,
   plot_df <- plot_df_base
   max_mb <- 6.0
   plot_df$massbal <- getValues(massbal_winter_maps$fixed)
-  plots[[5]] <- ggplot(plot_df[data_dems$glacier_cell_ids[[elevation_grid_id]],]) +
+  plots[[6]] <- ggplot(plot_df[data_dems$glacier_cell_ids[[elevation_grid_id]],]) +
     geom_raster(aes(x = x, y = y, fill = massbal/1000)) +
     geom_sf(data = as(data_outlines$outlines[[outline_id]], "sf"), fill = NA, color = "#202020", size = outline_linesize) +
     coord_sf(clip = "off") +
@@ -186,7 +218,7 @@ func_plot_year_mb_maps <- function(run_params,
          subtitle = " ") +
     scale_fill_stepsn(name = "SMB [m w.e.]", colors = palette_RdBu_ext,
                       limits = max_mb*c(-1,1),
-                      breaks = c(-5000,-3000,-2000,-1000,-400,0,400,1000,2000,3000,5000)/1000) +
+                      breaks = run_params$mb_colorscale_breaks) +
     theme_map_massbal
   # ggsave(file.path(run_params$output_dirname, paste0(year_cur, "_fixed_winter.pdf")), width = 3, height = 3)
   
@@ -198,7 +230,7 @@ func_plot_year_mb_maps <- function(run_params,
     plot_df <- plot_df_base
     max_mb <- 6.0
     plot_df$massbal <- getValues(massbal_winter_maps$meas_period)
-    plots[[6]] <- ggplot(plot_df[data_dems$glacier_cell_ids[[elevation_grid_id]],]) +
+    plots[[7]] <- ggplot(plot_df[data_dems$glacier_cell_ids[[elevation_grid_id]],]) +
       geom_raster(aes(x = x, y = y, fill = massbal/1000)) +
       geom_sf(data = as(data_outlines$outlines[[outline_id]], "sf"), fill = NA, color = "#202020", size = outline_linesize) +
       coord_sf(clip = "off") +
@@ -214,7 +246,7 @@ func_plot_year_mb_maps <- function(run_params,
            subtitle = " ") +
       scale_fill_stepsn(name = "SMB [m w.e.]", colors = palette_RdBu_ext,
                         limits = max_mb*c(-1,1),
-                        breaks = c(-5000,-3000,-2000,-1000,-400,0,400,1000,2000,3000,5000)/1000) +
+                        breaks = run_params$mb_colorscale_breaks) +
       theme_map_massbal
     # ggsave(file.path(run_params$output_dirname, paste0(year_cur, "_meas_winter.pdf")), width = 3, height = 3)
   }
