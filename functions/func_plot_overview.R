@@ -135,6 +135,9 @@ func_plot_overview <- function(df_overview) {
   
   overview <- ggarrange(plotlist = plots, ncol = 1, nrow = 3, align = "hv")
 
-  ggexport(overview, filename = file.path(run_params$output_dirname, "overview.pdf"), width = 21 * run_params$size_mult, height = 29.7 * run_params$size_mult)
+  suppressMessages(ggexport(overview,
+                            filename = file.path(run_params$output_dirname, "overview.pdf"),
+                            width = 21 * run_params$size_mult,
+                            height = 29.7 * run_params$size_mult))
   
 }

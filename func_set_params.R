@@ -28,9 +28,6 @@ func_set_params <- function() {
     # Set filenames and input file properties.
     filename_weather             =   "barkrak_barkrak_d.dat",      # File name of the weather series
     file_weather_nskip           =   4,                            # [-]: number of lines to skip in the weather file
-    weather_aws_elevation        =   2800,                         # [m a.s.l.]: AWS elevation
-    weather_snowfall_temp        =   1.5,                          # [°C]: at this temperature precipitation is half rain, half snow. One degree above it is all rain, one degree below it is all snow (snow fraction is linearly interpolated).
-    weather_max_precip_ele       =   4000,                         # [m a.s.l.]: above this altitude, precipitation does not increase any more but becomes constant (cutoff).
     
     grids_crs                    =   CRS(SRS_string  ="EPSG:32642"), # Reference system of the grids, used in slope/aspect computations. Overrides any CRS info reported from the grid files.
     
@@ -62,31 +59,34 @@ func_set_params <- function() {
     filename_params_suffix       =   ".dat",                       # Annual parameters filename is <prefix><year><suffix>
     
     
+    #### WEATHER INPUT parameters ####
+    weather_aws_elevation        =   2800,                         # [m a.s.l.]: AWS elevation
+    weather_snowfall_temp        =   1.5,                          # [°C]: at this temperature precipitation is half rain, half snow. One degree above it is all rain, one degree below it is all snow (snow fraction is linearly interpolated).
+    weather_max_precip_ele       =   4000,                         # [m a.s.l.]: above this altitude, precipitation does not increase any more but becomes constant (cutoff).
+    
+    
     #### TOPOGRAPHICAL SNOW DISTRIBUTION-related parameters ####
     curvature_dhm_smooth         =   1.0,                          # [cells]: amount of gaussian smoothing applied before computing curvature (which is very sensitive to DEM noise, unlike slope). Can be non-integer. 1.0 is good for a normal 20 m DEM.
     curvature_cutoff_fact        =   1.2,                          # [-]: multiplier for the curvature cutoff threshold at which the snow distribution is not further changed. The threshold is given by the smaller of the two curvature extremes (positive and negative) divided by this factor. Only values >  = 1 make sense.
     curvature_effect_limit       =   0.5,                          # [-]: maximum effect of curvature, i.e. the curvature multiplier will be within [1 ± curvature_effect_limit]. Only values between 0 and 1 make sense.
     
-    elevation_effect_threshold   =   3700,                         # [m]: elevation above which snow accumulation decreases (wind effect)
+    elevation_effect_threshold   =   3800,                         # [m]: elevation above which snow accumulation decreases (wind effect)
     elevation_effect_fact        =   1.0,                          # [-]: strength of snow accumulation decrease at very high altitude. Only values between 0 and 1 make sense. At 0 accumulation does not decrease, at 1 accumulation decreases to 0 at the highest point in the DHM.
     
     
     #### AVALANCHE model parameters ####
     elevation_equal_threshold    =   1e-3,                         # [m]: threshold for considering two elevation values equal when we look for problematic flat patches
     deposition_slope_lim         =   40,                           # [°]: at or above this slope value snow will not be deposited during an avalanche. A lower value makes avalanches travel farther. Called beta_lim in Gruber (2007).
-    deposition_mass_lim          =   2000,                         # [kg m-2]: maximum deposition during an avalanche. A lower value makes avalanches travel farther. Called D_lim in Gruber (2007).
+    deposition_mass_lim          =   1200,                         # [kg m-2]: maximum deposition during an avalanche. A lower value makes avalanches travel farther. Called D_lim in Gruber (2007).
     movable_slope_lim_lower      =   30,                           # [°]: above this slope value, there is a linearly increasing movable fraction in the initial mass distribution, for avalanches. A lower value makes avalanches start also on more gentle slopes.
     movable_slope_lim_upper      =   60,                           # [°]: above this slope value, all input snow is movable in the avalanche routine.
     deposition_max_ratio_init    =   12,                           # [-]: ONLY for the initial snow distribution grid, how much accumulation can locally result from an avalanche relative to the mean snow distribution before the avalanche? This controls how far avalanches travel, it should be set to a value low enough that avalanches don't bring snow below the marked snow line elevation, and high enough that avalanche deposits look plausible. An exploratory value of 10 can make sense.
-    
-    
-    #### WINTER SNOW PROBES interpolation parameters ####
-    snow_probes_idw_exp          =   0.75,                         # [-]: exponent for the IDW interpolation of winter snow measurements
+    model_avalanche_dates        =   c("4/30", "6/30", "7/31", "8/31"),  # [month/day]: dates at which an avalanche is simulated. Usually one at the end of winter (but before winter stakes are measured), and one or more in summer to avoid overloading the slopes with summer snowfall.
     
     
     #### INITIAL SNOW COVER parameters ####
-    initial_snowline_elevation   =   3700,                         # [m]: initial snow line elevation, at the beginning of each simulated year. In the future it will be customizable for each year, and it will be possible to use as initial snow cover the result of the previous year (so that this elevation is only used for the first modeled year).
-    initial_snow_gradient        =   200,                           # [mm w.e. (100 m)-1]: increase of the initial snow amount for every 100 m elevation above the snow line
+    initial_snowline_elevation   =   3720,                         # [m]: initial snow line elevation, at the beginning of each simulated year.
+    initial_snow_gradient        =   200,                           # [mm w.e. (100 m)-1]: increase of the initial snow amount for every 100 m elevation above the snow line.
     initial_snow_dist_red_fac    =   0.5,                          # [-]: reduction factor to decrease the importance of the snow distribution variability (all components except winter snow probes), for the computed initial snow cover (of each year). 0 means uniform snow distribution, 1 means no reduction.
     initial_snow_dist_from_model =   FALSE,                         # [TRUE/FALSE]: if TRUE, use the simulated SWE of the previous year as starting condition for the simulation. If FALSE, compute initial SWE from topography and given parameters. The first simulated year always uses a computed initial SWE since there is no previous modeled year.
     
@@ -95,14 +95,14 @@ func_set_params <- function() {
     debris_red_fac               =   0.6,                          # [-]: reduction factor of melt over debris-covered ice.
     accum_probes_red_fac         =   0.5,                          # [-]: reduction factor to decrease the importance of the snow probes distribution when distributing snowfall over the grid, in case those are measured also over avalanche deposits (else we would be accounting twice for avalanche redistribution, since we run a process-based avalanche model). 0 means uniform distribution, 1 means no redution in variability.
     accum_snow_dist_red_fac      =   0.5,                          # [-]: reduction factor to decrease the importance of the topographic snow distribution variability (curvature and elevation cutoff) when distributing snowfall over the grid. 0 means uniform snow distribution, 1 means no reduction.
-    model_avalanche_dates        =   c("1/31", "4/30", "6/30", "7/31", "8/31"),  # [month/day]: dates at which an avalanche is simulated. Usually one at the end of winter (but before winter stakes are measured), and one or more in summer to avoid overloading the slopes with summer snowfall.
-    
     albedo_ice_decrease_elev     =   0.,                           # [m]: below this altitude, the ice albedo decreases linearly with altitude (darker ice).
     albedo_ice_decrease_fact     =   0.014,                        # [fraction m-1]: rate of increase above 1 (with decreasing altitude) of the ice albedo factor (multiplying ice melt).
 
     
-    #### STAKES COMPARISON parameters ####
+    #### STAKES parameters ####
     stakes_unknown_latest_start  =   "2/28",                       # [month/day]: in the automatic search of the start date for snow pits and depth probings without a measured start date, we search no later than this day of year. The starting date will be set to the day of the minimum cumulative mass balance between the start of the simulation and the date set here. Something like end of February should be safe for all stakes. 
+    stake_cluster_distance       =   80,                           # [m]: threshold distance for clustering stakes together. This is used to ensure a more uniform distribution of the stakes: if measurements are very dense in one place they can induce a bias in the optimization, so we average stakes in clusters. This can reduce the total number of stakes. Only stakes measured on the same days can be clustered. A value of 0 corresponds to no clustering.
+    snow_probes_idw_exp          =   0.75,                         # [-]: exponent for the IDW interpolation of winter snow measurements
     
     
     #### MODEL OPTIMIZATION parameters ####
@@ -117,14 +117,20 @@ func_set_params <- function() {
     massbal_fixed_winter_end     =   "4/30",                       # [month/day]: end of the user-defined fixed period for winter mass balance evaluation. This is referred to <year_cur>.
     
     
-    #### MASS BALANCE PROCESSING choices ####
+    #### MASS BALANCE PROCESSING parameters ####
     mb_optimization_skip         =   TRUE,                         # [TRUE/FALSE]: CURRENTLY NOT IMPLEMENTED, SHOULD WE SKIP THE OPTIMIZATION OF THE MASS BALANCE MODEL?
     mb_corr_bands_skip           =   FALSE,                        # [TRUE/FALSE]: CURRENTLY NOT IMPLEMENTED, SHOULD WE SKIP THE CORRECTION OF MASS BALANCE BASED ON ELEVATION BANDS?
     ele_bands_ela_size           =   10,                           # [m]: to compute the equilibrium line altitude, divide the glacier grid into elevation bands with this vertical extent.
     
     
-    #### PLOT choices ####
-    ele_bands_plot_size          =   50,                           # [m]: plot the annual mass balance as function of elevation, using elevation bands with this vertical extent.
+    #### PLOT parameters ####
+    mb_colorscale_breaks         =   c(-2,-1.5,-1,-0.5,-0.2,0,0.2,0.5,1,1.5,2), # [m w.e.]: use these breaks in the color scale for mass balance maps. NOTE: these have to be exactly 11 at the moment.
+    ele_bands_plot_size          =   50,                           # [m]: plot the annual mass balance profile as function of elevation, using elevation bands with this vertical extent.
+    
+    
+    #### OUTPUT parameters ####
+    output_grid_ext           =      ".tif",                       # extension of the output mass balance grids. Use ?writeFormats to check what is available. Common choices are ".tif" for GeoTiff, and ".asc" for ASCII grid.
+    
     
     #### MODELED YEARS choice ####
     first_year                   =   2017,                         # First modeled year (usually from October of the previous year to September of this year)
@@ -133,7 +139,7 @@ func_set_params <- function() {
   )
   
   
-  #### DERIVED parameters, automatically computed: don't change anything below this line ####
+  #### DERIVED parameters, automatically computed: DON'T CHANGE anything below this line ####
   run_params$years                       <- run_params$first_year:run_params$last_year
   run_params$n_years                     <- length(run_params$years)
   

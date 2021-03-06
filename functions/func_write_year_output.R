@@ -13,19 +13,20 @@ func_write_year_output <- function(run_params,
                                    mod_output_annual_cur,
                                    massbal_annual_meas_cur,
                                    model_time_bounds,
+                                   ele_bands_plot_df,
                                    process_winter) {
   
   
 
   # Write mass balance maps (rasters).
-  writeRaster(massbal_annual_maps$hydro, file.path(run_params$output_dirname, "annual_results", paste0("mb_annual_hydro_", year_cur, run_params$output_grid_ext)))
-  writeRaster(massbal_annual_maps$meas_period, file.path(run_params$output_dirname, "annual_results", paste0("mb_annual_measperiod_", year_cur, run_params$output_grid_ext)))
-  writeRaster(massbal_annual_maps$meas_period_corr, file.path(run_params$output_dirname, "annual_results", paste0("mb_annual_final_", year_cur, run_params$output_grid_ext)))
-  writeRaster(massbal_annual_maps$fixed, file.path(run_params$output_dirname, "annual_results", paste0("mb_annual_fixedperiod_", year_cur, run_params$output_grid_ext)))
+  writeRaster(massbal_annual_maps$hydro, file.path(run_params$output_dirname, "annual_results", paste0("mb_annual_hydro_", year_cur, run_params$output_grid_ext)), overwrite = TRUE)
+  writeRaster(massbal_annual_maps$meas_period, file.path(run_params$output_dirname, "annual_results", paste0("mb_annual_measperiod_", year_cur, run_params$output_grid_ext)), overwrite = TRUE)
+  writeRaster(massbal_annual_maps$meas_period_corr, file.path(run_params$output_dirname, "annual_results", paste0("mb_annual_final_", year_cur, run_params$output_grid_ext)), overwrite = TRUE)
+  writeRaster(massbal_annual_maps$fixed, file.path(run_params$output_dirname, "annual_results", paste0("mb_annual_fixedperiod_", year_cur, run_params$output_grid_ext)), overwrite = TRUE)
   
-  writeRaster(massbal_winter_maps$fixed, file.path(run_params$output_dirname, "annual_results", paste0("mb_winter_fixedperiod_", year_cur, run_params$output_grid_ext)))
+  writeRaster(massbal_winter_maps$fixed, file.path(run_params$output_dirname, "annual_results", paste0("mb_winter_fixedperiod_", year_cur, run_params$output_grid_ext)), overwrite = TRUE)
   if (process_winter) {
-    writeRaster(massbal_winter_maps$meas_period, file.path(run_params$output_dirname, "annual_results", paste0("mb_winter_measperiod_", year_cur, run_params$output_grid_ext)))
+    writeRaster(massbal_winter_maps$meas_period, file.path(run_params$output_dirname, "annual_results", paste0("mb_winter_measperiod_", year_cur, run_params$output_grid_ext)), overwrite = TRUE)
   }
   
   
@@ -34,25 +35,36 @@ func_write_year_output <- function(run_params,
   day_id_offset <- (length(model_annual_dates) - as.integer(format(model_annual_dates[length(model_annual_dates)], "%j"))) + 1
   df_annual_daily <- data.frame(date   = model_annual_dates,
                                 day_id = seq_along(model_annual_dates) - day_id_offset,
-                                gl_massbal_bandcorr = mod_output_annual_cur$gl_massbal_cumul_bandcorr,
-                                gl_massbal = mod_output_annual_cur$gl_massbal_cumul,
-                                gl_accum = mod_output_annual_cur$gl_accum_cumul,
-                                gl_melt = mod_output_annual_cur$gl_melt_cumul,
-                                gl_melt_bandcorr = mod_output_annual_cur$gl_melt_cumul_bandcorr)
-  write.table(df_annual_daily,
-              file.path(run_params$output_dirname, "annual_results", paste0("mb_daily_series_glacier_", year_cur, ".dat")))
+                                gl_massbal_bandcorr = sprintf("%.1f", mod_output_annual_cur$gl_massbal_cumul_bandcorr),
+                                gl_massbal = sprintf("%.1f", mod_output_annual_cur$gl_massbal_cumul),
+                                gl_accum = sprintf("%.1f", mod_output_annual_cur$gl_accum_cumul),
+                                gl_melt = sprintf("%.1f", mod_output_annual_cur$gl_melt_cumul),
+                                gl_melt_bandcorr = sprintf("%.1f", mod_output_annual_cur$gl_melt_cumul_bandcorr))
+  write.csv(df_annual_daily,
+            file.path(run_params$output_dirname, "annual_results", paste0("mb_daily_series_glacier_", year_cur, ".csv")),
+            quote = FALSE,
+            row.names = FALSE)
   
   
   # Write modeled daily mass balance series at the stakes.
   df_stakes_daily <- data.frame(date = model_annual_dates,
-                                stakes = mod_output_annual_cur$stakes_series_mod_all)
+                                stakes = apply(mod_output_annual_cur$stakes_series_mod_all, 2, sprintf, fmt="%.1f"))
+
   names(df_stakes_daily) <- c("date", massbal_annual_meas_cur$id)
-  write.table(df_stakes_daily,
-              file.path(run_params$output_dirname, "annual_results", paste0("mb_daily_series_stakes_", year_cur, ".dat")))
+  write.csv(df_stakes_daily,
+            file.path(run_params$output_dirname, "annual_results", paste0("mb_daily_series_stakes_", year_cur, ".csv")),
+            quote = FALSE,
+            row.names = FALSE)
   
   
-  # Write mass balance in vertical bands (TODO).
-  
-  
+  # Write mass balance in vertical bands.
+  df_ele_bands_out <- data.frame(ele_bands_plot_df$ele,
+                                 ele_bands_plot_df$ncells,
+                                 apply(ele_bands_plot_df[,3:8], 2, sprintf, fmt="%.1f"))
+  names(df_ele_bands_out) <- names(ele_bands_plot_df)
+  write.csv(df_ele_bands_out,
+            file.path(run_params$output_dirname, "annual_results", paste0("mb_ele_bands_", year_cur, ".csv")),
+            quote = FALSE,
+            row.names = FALSE)
   
 }

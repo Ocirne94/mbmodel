@@ -43,9 +43,10 @@ func_massbal_model <- function(run_params,
   # (lower correction in summer).
   # We have to do it here since the correction factor
   # is subject to optimization!
-  weather_series_cur$precip_corr <- weather_series_cur$precip * (1 + (year_cur_params$prec_corr / 100.))
+  # A prec_corr = 100 means no correction (100 % of the original precipitation.)
+  weather_series_cur$precip_corr <- weather_series_cur$precip * (year_cur_params$prec_corr / 100.)
   ids_summer_logi <- (as.integer(format(weather_series_cur$timestamp, "%m")) %in% 5:9) # Logical indices: TRUE in May to September, FALSE elsewhere.
-  weather_series_cur$precip_corr[ids_summer_logi] <- weather_series_cur$precip[ids_summer_logi] * (1 + (year_cur_params$prec_summer_fact * year_cur_params$prec_corr / 100.))
+  weather_series_cur$precip_corr[ids_summer_logi] <- weather_series_cur$precip[ids_summer_logi] * (year_cur_params$prec_summer_fact * year_cur_params$prec_corr / 100.)
   
   
   #### CREATE OUTPUT VECTORS ####

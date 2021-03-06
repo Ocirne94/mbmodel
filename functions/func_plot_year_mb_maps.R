@@ -106,6 +106,7 @@ func_plot_year_mb_maps <- function(run_params,
   
   
   #### MEASUREMENT PERIOD - ANNUAL, WITH STAKES ####
+  # Also RMS.
   plots[[3]] <- ggplot(plot_df[data_dems$glacier_cell_ids[[elevation_grid_id]],]) +
     geom_raster(aes(x = x, y = y, fill = massbal/1000)) +
     geom_sf(data = as(data_outlines$outlines[[outline_id]], "sf"), fill = NA, color = "#202020", size = outline_linesize) +
@@ -120,6 +121,8 @@ func_plot_year_mb_maps <- function(run_params,
                                         x=0.05,  y=1.06, hjust=0, gp = gpar(fontsize = 1 * base_size, fontface = "bold")))) +
     annotation_custom(grobTree(textGrob(bquote(bold(b[n]*" = "*.(mb_meas_annual_lab)*" m w.e.")),
                                         x = 0.05, y = 1.0, hjust = 0, gp = gpar(fontsize = 1 * base_size)))) +
+    annotation_custom(grobTree(textGrob(paste0("RMS: ", sprintf("%.3f", mod_output_annual_cur$global_rms/1e3), " m w.e."),
+                                        x = 0.05, y = 0.94, hjust = 0, gp = gpar(fontsize = 1 * base_size, fontface = "bold")))) +
     labs(title    = " ", # Empty title to preserve spacing. We add the real title just above, with annotation_custom().
          subtitle = " ") +
     scale_fill_stepsn(name = "SMB [m w.e.]", colors = palette_RdBu_ext,
@@ -156,6 +159,7 @@ func_plot_year_mb_maps <- function(run_params,
   
   
   #### MEASUREMENT PERIOD - ANNUAL CORRECTED, WITH STAKES ####
+  rmse_bandcorr <- sqrt(mean((massbal_annual_meas_cur$massbal_standardized - extract(massbal_annual_maps$meas_period_corr, cbind(massbal_annual_meas_cur$x, massbal_annual_meas_cur$y), method = "bilinear"))^2))
   plots[[5]] <- ggplot(plot_df[data_dems$glacier_cell_ids[[elevation_grid_id]],]) +
     geom_raster(aes(x = x, y = y, fill = massbal/1000)) +
     geom_sf(data = as(data_outlines$outlines[[outline_id]], "sf"), fill = NA, color = "#202020", size = outline_linesize) +
@@ -170,6 +174,8 @@ func_plot_year_mb_maps <- function(run_params,
                                         x=0.05,  y=1.06, hjust=0, gp = gpar(fontsize = 1 * base_size, fontface = "bold")))) +
     annotation_custom(grobTree(textGrob(bquote(bold(b[n]*" = "*.(mb_meas_corr_annual_lab)*" m w.e.")),
                                         x = 0.05, y = 1.0, hjust = 0, gp = gpar(fontsize = 1 * base_size)))) +
+    annotation_custom(grobTree(textGrob(paste0("RMS: ", sprintf("%.3f", rmse_bandcorr/1e3), " m w.e."),
+                                        x = 0.05, y = 0.94, hjust = 0, gp = gpar(fontsize = 1 * base_size, fontface = "bold")))) +
     labs(title    = " ", # Empty title to preserve spacing. We add the real title just above, with annotation_custom().
          subtitle = " ") +
     scale_fill_stepsn(name = "SMB [m w.e.]", colors = palette_RdBu_ext,

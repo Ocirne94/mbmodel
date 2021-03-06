@@ -27,7 +27,7 @@ func_compute_stake_mb_standardized <- function(mod_output_annual_cur,
                                                nstakes_annual) {
   
   id_measperiod_start <- min(mod_output_annual_cur$stakes_start_ids_corr)
-  id_measperiod_end   <- max(mod_output_annual_cur$stakes_end_ids) # Not + 1, because (assuming the measurement is taken at e.g. 12:00 of the reported day) the 
+  id_measperiod_end   <- max(mod_output_annual_cur$stakes_end_ids)
   
   massbal_standardized <- rep(NA, nstakes_annual)
   for (stake_id in 1:nstakes_annual) {
