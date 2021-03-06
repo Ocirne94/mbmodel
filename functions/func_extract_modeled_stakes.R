@@ -29,7 +29,10 @@ func_extract_modeled_stakes <- function(run_params, dx1, dx2, dy1, dy2, vec_mass
     # 3 4
     # with the stake somewhere in the middle.
     # Repeated cells (i.e. if the stake lies at
-    # the same x and/or y as a cell) work fine.
+    # the same x and/or y as a cell center) CAUSE A BUG!!!!
+    # Observed if dy1 is 0: we have just two cells (1 and 2 in the square above),
+    # stakes_cells is sorted; only cell_series3 and cell_series4 contribute due to dy1 = 0,
+    # but these are derived from a same cell (weighted with two different weights).
     cell_series1 <- vec_massbal_cumul[stakes_cells[stake_id, 1] + seq(0,nval-1,run_params$grid_ncells)]
     cell_series2 <- vec_massbal_cumul[stakes_cells[stake_id, 2] + seq(0,nval-1,run_params$grid_ncells)]
     cell_series3 <- vec_massbal_cumul[stakes_cells[stake_id, 3] + seq(0,nval-1,run_params$grid_ncells)]

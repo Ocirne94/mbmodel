@@ -27,9 +27,9 @@ func_compute_stake_mb_standardized <- function(mod_output_annual_cur,
                                                nstakes_annual) {
   
   id_measperiod_start <- min(mod_output_annual_cur$stakes_start_ids_corr)
-  id_measperiod_end   <- max(mod_output_annual_cur$stakes_end_ids) + 1
+  id_measperiod_end   <- max(mod_output_annual_cur$stakes_end_ids) # Not + 1, because (assuming the measurement is taken at e.g. 12:00 of the reported day) the 
   
-  massbal_standardized <- NA
+  massbal_standardized <- rep(NA, nstakes_annual)
   for (stake_id in 1:nstakes_annual) {
     stake_mod_mb_measperiod_start <- mod_output_annual_cur$stakes_series_mod_all[id_measperiod_start,stake_id]
     stake_mod_mb_stake_start <- mod_output_annual_cur$stakes_series_mod_all[mod_output_annual_cur$stakes_start_ids_corr[stake_id],stake_id]
@@ -37,7 +37,7 @@ func_compute_stake_mb_standardized <- function(mod_output_annual_cur,
     stake_mod_mb_measperiod_end <- mod_output_annual_cur$stakes_series_mod_all[id_measperiod_end,stake_id]
     
     stake_standard_corr <- (stake_mod_mb_stake_start - stake_mod_mb_measperiod_start) + (stake_mod_mb_measperiod_end - stake_mod_mb_stake_end)
-    massbal_standardized[stake_id] <- massbal_annual_meas_cur$dh_cm[stake_id] * massbal_annual_meas_cur$density[stake_id] * 10 + stake_standard_corr # 10: cm w.e. to mm w.e.
+    massbal_standardized[stake_id] <- massbal_annual_meas_cur$massbal[stake_id] + stake_standard_corr
   }
   
   return(massbal_standardized)

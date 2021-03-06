@@ -85,7 +85,7 @@ func_run_simulation_single <- function(year_param_corrections,
                     as.numeric(stakes_series_mod_all)[((1:nstakes)-1)*(model_days_n+1) + stakes_start_ids_corr]
   
   # Corresponding measurement.
-  stakes_mb_meas <- massbal_meas_cur$dh_cm * massbal_meas_cur$density * 10 # 10: cm w.e. to mm w.e.
+  stakes_mb_meas <- massbal_meas_cur$massbal
   
   # Bias of each stake (numeric vector, one element per stake).
   stakes_bias <- stakes_mb_mod - stakes_mb_meas

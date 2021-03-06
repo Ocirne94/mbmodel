@@ -24,7 +24,8 @@ func_extract_massbal_maps_annual <- function(run_params,
   # which include the initial conditions as first element).
   # The "-1)) + 1" is there because the weather series ends
   # on Sep 30 (whose weather values are valid for the whole day),
-  # but the hydrological year ends on Oct 1 at 00:00.
+  # but the hydrological year ends on Oct 1 at 00:00 (the which() would
+  # not find anything without the -1).
   id_hydro_start <- which(weather_series_cur$timestamp == year_cur_params$hydro_start)
   id_hydro_end   <- which(weather_series_cur$timestamp == (year_cur_params$hydro_end - 1)) + 1
   massbal_hydro_start_values <- mod_output_annual_cur$vec_massbal_cumul[(id_hydro_start - 1) * run_params$grid_ncells + 1:run_params$grid_ncells]
@@ -37,7 +38,7 @@ func_extract_massbal_maps_annual <- function(run_params,
   # between the earliest annual stake
   # start and the latest annual stake end.
   id_measperiod_start <- min(mod_output_annual_cur$stakes_start_ids_corr)
-  id_measperiod_end   <- max(mod_output_annual_cur$stakes_end_ids) + 1 # For the "+ 1": see comment above, about indices. We want the mass balance at the *end* of the last day.
+  id_measperiod_end   <- max(mod_output_annual_cur$stakes_end_ids)
   massbal_measperiod_start_values <- mod_output_annual_cur$vec_massbal_cumul[(id_measperiod_start - 1) * run_params$grid_ncells + 1:run_params$grid_ncells]
   massbal_measperiod_end_values   <- mod_output_annual_cur$vec_massbal_cumul[(id_measperiod_end - 1) * run_params$grid_ncells + 1:run_params$grid_ncells]
   massbal_measperiod_map <- setValues(data_dhms$elevation[[elevation_grid_id]], massbal_measperiod_end_values - massbal_measperiod_start_values)
