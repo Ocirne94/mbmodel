@@ -7,6 +7,8 @@
 #                 the winter period and the annual model.                                         #
 ################################################################################################### 
 
+# The output is a vector of four Date objects: start and end of the annual
+# modeling period, and same for the winter modeling period.
 
 # ANNUAL modeling period starts at the beginning of the observation
 # period with the earliest start (i.e. the annual stake which was surveyed first

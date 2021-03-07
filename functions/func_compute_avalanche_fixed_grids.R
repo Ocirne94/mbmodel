@@ -72,9 +72,9 @@ func_compute_avalanche_fixed_grids <- function(run_params, data_dhms) {
     # linearly increases from 0 to 1 between the lower
     # and upper slope thresholds.
     avalanche$movable_frac[[grid_id]]         <- setValues(avalanche$slope_proc[[grid_id]],
-                                                                     pmax(0, pmin(1, rescale(getValues(avalanche$slope_proc[[grid_id]]),
-                                                                                             to = c(0, 1),
-                                                                                             from = c(run_params$movable_slope_lim_lower, run_params$movable_slope_lim_upper)))))
+                                                           pmax(0, pmin(1, scales::rescale(getValues(avalanche$slope_proc[[grid_id]]),
+                                                                                           to = c(0, 1),
+                                                                                           from = c(run_params$movable_slope_lim_lower, run_params$movable_slope_lim_upper)))))
     # Compute flow widths to 4-neighbors (Eqs. 3-6 of Gruber, 2007).
     # Indices: 1 top, 2 left, 3 right, 4 bottom (as in Gruber, 2007, Fig. 1).
     avalanche$flow_width[[grid_id]][[1]] <- cos(conv_deg2rad * avalanche$aspect_proc[[grid_id]]) * run_params$grid_cell_size
