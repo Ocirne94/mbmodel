@@ -15,15 +15,14 @@ params_file_write <- FALSE                # Save .RData file with run parameters
 params_file_read  <- FALSE                # Load .RData file with run parameters, instead of setting new run parametrs.
 params_file_name  <- "params_file.RData"  # Name of the .RData run parameters file.
 
-boot_file_write   <- TRUE                # Save .RData file with the input data, for faster reload.
-boot_file_read    <- FALSE                 # Load .RData file with the input data, instead of loading input files.
+boot_file_write   <- FALSE                # Save .RData file with the input data, for faster reload.
+boot_file_read    <- TRUE                 # Load .RData file with the input data, instead of loading input files.
 boot_file_name    <- "boot_file_barkrak.RData"    # Name of the .RData input data file.
 
 
 #### Load function definitions and R modules ####
 source(file.path("procedures", "pro_load_libraries.R"))
 invisible(sapply(file.path("functions", list.files("functions", pattern = "\\.R$")), source))
-# source("func_set_params.R")
 sourceCpp(file.path("functions", "func_avalanche_gruber.cpp"), cacheDir = "functions")   # Remove cacheDir option to force recompilation of the C++ code (useful after changing computer or editing the source file).
 
 

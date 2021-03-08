@@ -10,6 +10,8 @@
 ###################################################################################################
 
 
+# Surface type codes: 0 bare ice, 1 firn, 4 rock, 5 debris-covered ice.
+
 func_load_surftype_grids <- function(run_params) {
   
   # Here we will put the output.
