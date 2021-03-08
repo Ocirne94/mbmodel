@@ -15,7 +15,7 @@ params_file_write <- FALSE                # Save .RData file with run parameters
 params_file_read  <- FALSE                # Load .RData file with run parameters, instead of setting new run parametrs.
 params_file_name  <- "params_file.RData"  # Name of the .RData run parameters file.
 
-boot_file_write   <- FALSE                # Save .RData file with the input data, for faster reload.
+boot_file_write   <- TRUE                # Save .RData file with the input data, for faster reload.
 boot_file_read    <- FALSE                 # Load .RData file with the input data, instead of loading input files.
 boot_file_name    <- "boot_file_barkrak.RData"    # Name of the .RData input data file.
 
