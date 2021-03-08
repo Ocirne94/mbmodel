@@ -21,18 +21,19 @@ func_compute_initial_snow_cover <- function(run_params,
                                             grids_snowdist_topographic,
                                             grids_avalanche_cur,
                                             grid_probes_norm,
-                                            elevation_grid_id,
+                                            dhm_grid_id,
+                                            dem_grid_id,
                                             data_massbal_winter) {
   
   # We start with the elevation/curvature effect.
-  dist_cur <- grids_snowdist_topographic[[elevation_grid_id]]
+  dist_cur <- grids_snowdist_topographic[[dhm_grid_id]]
   
   # writeRaster(dist_cur, "1-dist-topo.tif", overwrite = T)
   
   # Distribution from snow line elevation and snow gradient.
   dist_snl <- setValues(dist_cur,
                         pmax(0,
-                             getValues(data_dhms$elevation[[elevation_grid_id]] - run_params$initial_snowline_elevation) * run_params$initial_snow_gradient / 100))
+                             getValues(data_dhms$elevation[[dhm_grid_id]] - run_params$initial_snowline_elevation) * run_params$initial_snow_gradient / 100))
 
   dist_cur <- dist_cur * dist_snl
 
@@ -44,7 +45,7 @@ func_compute_initial_snow_cover <- function(run_params,
                         func_avalanche(run_params,
                                        grids_avalanche_cur,
                                        getValues(dist_cur),
-                                       run_params$deposition_max_ratio_init / mean(dist_cur[data_dems$glacier_cell_ids[[elevation_grid_id]]]),
+                                       run_params$deposition_max_ratio_init / mean(dist_cur[data_dems$glacier_cell_ids[[dem_grid_id]]]),
                                        TRUE))
 
   # writeRaster(dist_cur, "3-dist-topo-snl-aval.tif", overwrite = T)

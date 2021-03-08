@@ -16,11 +16,10 @@ func_load_surftype_grids <- function(run_params) {
   grids_out <- list(grids = list(),
                     grid_year_id = rep(NA, run_params$n_years))
   
-  grid_paths <- paste(run_params$dir_data_surftype,
-                      run_params$filename_surftype_prefix,
-                      run_params$surftype_years,
-                      run_params$filename_surftype_suffix,
-                      sep = "")
+  grid_paths <- file.path(run_params$dir_data_surftype,
+                          paste0(run_params$filename_surftype_prefix,
+                                 run_params$surftype_years,
+                                 run_params$filename_surftype_suffix))
   
   grid_years <- run_params$surftype_years
   

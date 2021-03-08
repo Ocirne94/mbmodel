@@ -40,4 +40,7 @@ swe_prev_available <- FALSE
 
 # Here we will put just the final mass balance for each
 # year, to produce the overview_areaplot multi-page PDF file.
-overview_areaplots <- list() 
+overview_areaplots <- list()
+
+# Create output directory.
+dir.create(file.path(run_params$output_dirname, "annual_results"), recursive = TRUE)

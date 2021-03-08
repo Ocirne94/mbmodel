@@ -12,7 +12,9 @@ func_extract_massbal_maps_annual <- function(run_params,
                                              year_cur_params,
                                              weather_series_cur,
                                              mod_output_annual_cur,
-                                             data_dhms) {
+                                             data_dhms,
+                                             dhm_grid_id,
+                                             dem_grid_id) {
   
   # Indices: in the weather series index 1 refers to the whole first day,
   # in the mass balance series index 1 refers to the instant mass balance at the *beginning* of that same first day,
@@ -30,8 +32,8 @@ func_extract_massbal_maps_annual <- function(run_params,
   id_hydro_end   <- which(weather_series_cur$timestamp == (year_cur_params$hydro_end - 1)) + 1
   massbal_hydro_start_values <- mod_output_annual_cur$vec_massbal_cumul[(id_hydro_start - 1) * run_params$grid_ncells + 1:run_params$grid_ncells]
   massbal_hydro_end_values   <- mod_output_annual_cur$vec_massbal_cumul[(id_hydro_end - 1) * run_params$grid_ncells + 1:run_params$grid_ncells]
-  massbal_hydro_map <- setValues(data_dhms$elevation[[elevation_grid_id]], massbal_hydro_end_values - massbal_hydro_start_values)
-  massbal_hydro_map_masked <- mask(massbal_hydro_map, data_dems$elevation[[elevation_grid_id]])
+  massbal_hydro_map <- setValues(data_dhms$elevation[[dhm_grid_id]], massbal_hydro_end_values - massbal_hydro_start_values)
+  massbal_hydro_map_masked <- mask(massbal_hydro_map, data_dems$elevation[[dem_grid_id]])
   
   
   # measperiod refers to the period
@@ -41,15 +43,15 @@ func_extract_massbal_maps_annual <- function(run_params,
   id_measperiod_end   <- max(mod_output_annual_cur$stakes_end_ids)
   massbal_measperiod_start_values <- mod_output_annual_cur$vec_massbal_cumul[(id_measperiod_start - 1) * run_params$grid_ncells + 1:run_params$grid_ncells]
   massbal_measperiod_end_values   <- mod_output_annual_cur$vec_massbal_cumul[(id_measperiod_end - 1) * run_params$grid_ncells + 1:run_params$grid_ncells]
-  massbal_measperiod_map <- setValues(data_dhms$elevation[[elevation_grid_id]], massbal_measperiod_end_values - massbal_measperiod_start_values)
-  massbal_measperiod_map_masked <- mask(massbal_measperiod_map, data_dems$elevation[[elevation_grid_id]])
+  massbal_measperiod_map <- setValues(data_dhms$elevation[[dhm_grid_id]], massbal_measperiod_end_values - massbal_measperiod_start_values)
+  massbal_measperiod_map_masked <- mask(massbal_measperiod_map, data_dems$elevation[[dem_grid_id]])
   
   id_fixed_start <- which(weather_series_cur$timestamp == year_cur_params$fixed_annual_start)
   id_fixed_end <- which(weather_series_cur$timestamp == year_cur_params$fixed_annual_end)
   massbal_fixed_start_values <- mod_output_annual_cur$vec_massbal_cumul[(id_fixed_start - 1) * run_params$grid_ncells + 1:run_params$grid_ncells]
   massbal_fixed_end_values   <- mod_output_annual_cur$vec_massbal_cumul[(id_fixed_end - 1) * run_params$grid_ncells + 1:run_params$grid_ncells]
-  massbal_fixed_map <- setValues(data_dhms$elevation[[elevation_grid_id]], massbal_fixed_end_values - massbal_fixed_start_values)
-  massbal_fixed_map_masked <- mask(massbal_fixed_map, data_dems$elevation[[elevation_grid_id]])
+  massbal_fixed_map <- setValues(data_dhms$elevation[[dhm_grid_id]], massbal_fixed_end_values - massbal_fixed_start_values)
+  massbal_fixed_map_masked <- mask(massbal_fixed_map, data_dems$elevation[[dem_grid_id]])
   
   massbal_maps <- list(hydro = massbal_hydro_map_masked,
                        meas_period = massbal_measperiod_map_masked,

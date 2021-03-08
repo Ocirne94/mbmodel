@@ -15,7 +15,7 @@ func_plot_daily_maps <- function(run_params,
                                  data_outlines,
                                  mb_model_output,
                                  surf_base,
-                                 elevation_grid_id,
+                                 dem_grid_id,
                                  outline_id) {
   
   dir.create(file.path("output", run_params$name_glacier, "daily", year_cur, "massbal"), recursive = TRUE)
@@ -23,10 +23,10 @@ func_plot_daily_maps <- function(run_params,
   
   n_days <- nrow(weather_series_cur)
   
-  plot_df <- data.frame(coordinates(data_dems$elevation[[elevation_grid_id]]))
+  plot_df <- data.frame(coordinates(data_dems$elevation[[dem_grid_id]]))
   
   # elevation_df is to plot the contours.
-  elevation_df <- data.frame(plot_df, z = getValues(data_dems$elevation[[elevation_grid_id]]))
+  elevation_df <- data.frame(plot_df, z = getValues(data_dems$elevation[[dem_grid_id]]))
   
   # Plot of daily SWE evolution.
   for (day_id in 1:(n_days + 1)) {
@@ -50,7 +50,7 @@ func_plot_daily_maps <- function(run_params,
                            breaks = c(100,200,400,800,1400,2000,2800,3600)) +
       guides(alpha = "none") +
       theme_void()
-    ggsave(paste0("output/", run_params$name_glacier, "/daily/", year_cur, "/swe_surftype/", sprintf("%03d", day_id), ".png"), width = 5, height = 3)
+    ggsave(file.path("output", run_params$name_glacier, "daily", year_cur, "swe_surftype", paste0(sprintf("%03d", day_id), ".png")), width = 5, height = 3)
   }
   
   cat("\n")
@@ -74,7 +74,7 @@ func_plot_daily_maps <- function(run_params,
                            direction = 1, limits = c(-max_mb,max_mb),
                            breaks = c(-3000,-1600,-800,-300,0,300,800,1600,3000)) +
       theme_void()
-    ggsave(paste0("output/", run_params$name_glacier, "/daily/", year_cur, "/massbal/", sprintf("%03d", day_id), ".png"), width = 5, height = 3)
+    ggsave(file.path("output", run_params$name_glacier, "daily", year_cur, "massbal", paste0(sprintf("%03d", day_id), ".png")), width = 5, height = 3)
   }
   
   cat("\n")

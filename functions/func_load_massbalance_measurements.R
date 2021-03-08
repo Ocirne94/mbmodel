@@ -15,15 +15,13 @@ func_load_massbalance_measurements <- function(run_params, load_what) {
   
   if (load_what == "annual") {
     
-    massbalance_path <- paste(run_params$dir_data_massbalance,
-                              run_params$filename_massbalance_annual,
-                              sep = "")
+    massbalance_path <- file.path(run_params$dir_data_massbalance,
+                                  run_params$filename_massbalance_annual)
     
   } else if (load_what == "winter") {
     
-    massbalance_path <- paste(run_params$dir_data_massbalance,
-                              run_params$filename_massbalance_winter,
-                              sep = "")
+    massbalance_path <- file.path(run_params$dir_data_massbalance,
+                                  run_params$filename_massbalance_winter)
   }
 
   # Read file, assign column names.

@@ -20,13 +20,13 @@
 # This is important for the bilinear filtering since we use fourCellsFromXY(..., duplicates = FALSE),
 # else the filtering would fail (duplicates = FALSE returns (if needed) additional cells which have higher index,
 # i.e. which are lower in the raster matrix, i.e. which would be the lower row of the 4 neighbors).
-dx1_annual <- (massbal_annual_meas_cur$x - (extent(data_dhms$elevation[[elevation_grid_id]])[1] - (run_params$grid_cell_size / 2))) %% run_params$grid_cell_size
+dx1_annual <- (massbal_annual_meas_cur$x - (extent(data_dhms$elevation[[dhm_grid_id]])[1] - (run_params$grid_cell_size / 2))) %% run_params$grid_cell_size
 dx2_annual <- run_params$grid_cell_size - dx1_annual
-dy2_annual <- ((extent(data_dhms$elevation[[elevation_grid_id]])[3] - (run_params$grid_cell_size / 2)) - massbal_annual_meas_cur$y) %% run_params$grid_cell_size
+dy2_annual <- ((extent(data_dhms$elevation[[dhm_grid_id]])[3] - (run_params$grid_cell_size / 2)) - massbal_annual_meas_cur$y) %% run_params$grid_cell_size
 dy1_annual <- run_params$grid_cell_size - dy2_annual
 
-dx1_winter <- (massbal_winter_meas_cur$x - (extent(data_dhms$elevation[[elevation_grid_id]])[1] - (run_params$grid_cell_size / 2))) %% run_params$grid_cell_size
+dx1_winter <- (massbal_winter_meas_cur$x - (extent(data_dhms$elevation[[dhm_grid_id]])[1] - (run_params$grid_cell_size / 2))) %% run_params$grid_cell_size
 dx2_winter <- run_params$grid_cell_size - dx1_winter
-dy2_winter <- ((extent(data_dhms$elevation[[elevation_grid_id]])[3] - (run_params$grid_cell_size / 2)) - massbal_winter_meas_cur$y) %% run_params$grid_cell_size
+dy2_winter <- ((extent(data_dhms$elevation[[dhm_grid_id]])[3] - (run_params$grid_cell_size / 2)) - massbal_winter_meas_cur$y) %% run_params$grid_cell_size
 dy1_winter <- run_params$grid_cell_size - dy2_winter
 

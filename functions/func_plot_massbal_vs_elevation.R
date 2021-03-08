@@ -11,7 +11,7 @@ func_plot_massbal_vs_elevation <- function(run_params,
                                            data_dems,
                                            massbal_annual_maps,
                                            massbal_winter_maps,
-                                           elevation_grid_id,
+                                           dem_grid_id,
                                            massbal_annual_meas_cur) {
   
   mb_meas_period_corr_values <- getValues(massbal_annual_maps$meas_period_corr)
@@ -22,7 +22,7 @@ func_plot_massbal_vs_elevation <- function(run_params,
   # Also the number of cells in each elevation band.
   # We put the ele_bands_plot_df in the global environment (<<-)
   # so that we can later write its values to a .csv file.
-  ele_bands_plot_values <- getValues(data_dems$elevation_bands_plot[[elevation_grid_id]])
+  ele_bands_plot_values <- getValues(data_dems$elevation_bands_plot[[dem_grid_id]])
   ele_bands_plot_min <- min(ele_bands_plot_values, na.rm = T)
   ele_bands_plot_max <- max(ele_bands_plot_values, na.rm = T)
   ele_bands_plot_df <<- data.frame(ele                 = seq(ele_bands_plot_min, ele_bands_plot_max, run_params$ele_bands_plot_size),
@@ -113,8 +113,8 @@ func_plot_massbal_vs_elevation <- function(run_params,
   stakes_mod_massbal_meas_period <- mod_output_annual_cur$stakes_series_mod_all[id_measperiod_end,] - mod_output_annual_cur$stakes_series_mod_all[id_measperiod_start,]
   
   # This data.frame contains only the mass balance values on glaciated cells.
-  df_scatterplot <- data.frame(ele = data_dems$elevation[[elevation_grid_id]][data_dems$glacier_cell_ids[[elevation_grid_id]]],
-                               mb = getValues(massbal_annual_maps$meas_period)[data_dems$glacier_cell_ids[[elevation_grid_id]]])
+  df_scatterplot <- data.frame(ele = data_dems$elevation[[dem_grid_id]][data_dems$glacier_cell_ids[[dem_grid_id]]],
+                               mb = getValues(massbal_annual_maps$meas_period)[data_dems$glacier_cell_ids[[dem_grid_id]]])
 
   df_stakes <- data.frame(z = massbal_annual_meas_cur$z,
                           meas = massbal_annual_meas_cur$massbal_standardized,

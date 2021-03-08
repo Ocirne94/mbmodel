@@ -144,7 +144,7 @@ func_compute_avalanche_fixed_grids <- function(run_params, data_dhms) {
       }
     }
     
-    cat("Residual sinks fixed.")
+    cat("Residual sinks fixed.\n")
     
     # Compute normalized draining fractions for the 4 directions (Eq. 9 in Gruber, 2007).
     for (dir_id in 1:4) {

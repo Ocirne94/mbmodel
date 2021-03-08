@@ -13,12 +13,12 @@
 if (params_file_read) {
   load(params_file_name)
 } else {
-  run_params <- func_set_params()
+  source("set_params.R")
 }
 
 #### Load input data from sources or reboot file ####
 if (boot_file_read) {
   load(boot_file_name)
 } else {
-  func_load_data_all(run_params) # This calls all the data loading routines.
+  source(file.path("procedures", "pro_load_data_all.R")) # This calls all the data loading routines.
 }

@@ -9,6 +9,7 @@
 # NOTE: this code is source()'d as part of main.R.
 # We put code here just to make it more organized.
 
+cat("** Producing year plots... **\n")
 
 #### . PLOT THE MASS BALANCE MAPS ####
 # This returns a list with the (5 or 6, depending on whether we have winter measurements)
@@ -20,7 +21,7 @@ plots_year <- func_plot_year_mb_maps(run_params,
                                      year_cur,
                                      data_dems,
                                      data_outlines,
-                                     elevation_grid_id,
+                                     dem_grid_id,
                                      outline_id,
                                      massbal_annual_maps,
                                      massbal_winter_maps,
@@ -47,7 +48,7 @@ plots_mb_vs_ele <- func_plot_massbal_vs_elevation(run_params,
                                                   data_dems,
                                                   massbal_annual_maps,
                                                   massbal_winter_maps,
-                                                  elevation_grid_id,
+                                                  dem_grid_id,
                                                   massbal_annual_meas_cur)
 plots_year <- append(plots_year, list(plots_mb_vs_ele))
 

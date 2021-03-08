@@ -8,7 +8,7 @@
 
 func_load_weather <- function(run_params) {
   
-  filepath_weather <- paste(run_params$dir_data_weather, run_params$filename_weather, sep = "")
+  filepath_weather <- file.path(run_params$dir_data_weather, run_params$filename_weather)
   
   data_raw <- read.table(filepath_weather, header = FALSE, skip = run_params$file_weather_nskip)
   names(data_raw) <- c("year", "doy", "hour", "t2m_mean", "precip")

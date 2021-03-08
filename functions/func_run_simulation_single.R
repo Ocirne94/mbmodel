@@ -10,7 +10,8 @@
 ###################################################################################################
 
 func_run_simulation_single <- function(year_param_corrections,
-                                       run_params, year_cur_params, elevation_grid_id, surftype_grid_id,
+                                       run_params, year_cur_params,
+                                       dhm_grid_id, dem_grid_id, surftype_grid_id,
                                        data_dhms, data_dems, data_surftype,
                                        snowdist_init, data_radiation, weather_series_cur, dist_topographic_values_red,
                                        dist_probes_norm_values_red, grids_avalanche_cur,
@@ -40,8 +41,8 @@ func_run_simulation_single <- function(year_param_corrections,
   #### . .  RUN MASS BALANCE MODEL ####
   mb_model_output <- func_massbal_model(run_params,
                                         year_cur_params_corr,
-                                        getValues(data_dhms$elevation[[elevation_grid_id]]),
-                                        data_dems$glacier_cell_ids[[elevation_grid_id]],
+                                        getValues(data_dhms$elevation[[dhm_grid_id]]),
+                                        data_dems$glacier_cell_ids[[dem_grid_id]],
                                         getValues(data_surftype$grids[[surftype_grid_id]]),
                                         getValues(snowdist_init),
                                         data_radiation,

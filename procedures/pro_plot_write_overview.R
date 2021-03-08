@@ -9,6 +9,7 @@
 # NOTE: this code is source()'d as part of main.R.
 # We put code here just to make it more organized.
 
+cat("** Drawing overview plots... **\n")
 
 df_overview$mb_cumul <- cumsum(df_overview$mb_annual_meas_corr)
 func_plot_overview(df_overview)

@@ -16,7 +16,7 @@ df_overview$mb_annual_meas_corr[year_id] <- massbal_annual_values[["meas_period_
 df_overview$mb_annual_meas[year_id]      <- massbal_annual_values[["meas_period"]] / 1e3
 df_overview$mb_annual_hydro[year_id]     <- massbal_annual_values[["hydro"]] / 1e3
 df_overview$mb_annual_fixed[year_id]     <- massbal_annual_values[["fixed"]] / 1e3
-if (process_winter) {df_overview$mb_winter_meas[year_id] <- massbal_winter_values[["meas"]] / 1e3}
+if (process_winter) {df_overview$mb_winter_meas[year_id] <- massbal_winter_values[["meas_period"]] / 1e3}
 df_overview$mb_winter_fixed[year_id]     <- massbal_winter_values [["fixed"]] / 1e3
 df_overview$ela[year_id]                 <- ela_aar[["ela"]]
 df_overview$aar[year_id]                 <- ela_aar[["aar"]] * 100

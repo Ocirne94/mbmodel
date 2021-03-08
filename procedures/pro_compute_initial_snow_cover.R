@@ -24,11 +24,11 @@ if (run_params$initial_snow_dist_from_model && swe_prev_available) {
   # NOTE: here weather_series_annual_cur and mod_output_annual_cur are
   # still the weather series and modeled series of the PREVIOUS year!
   swe_prev_annual_day_id <- which.min(abs(weather_series_annual_cur$timestamp - model_time_bounds[1]))
-  snowdist_init_annual <- setValues(data_dhms$elevation[[elevation_grid_id]], mod_output_annual_cur$vec_swe_all[(swe_prev_annual_day_id - 1) * run_params$grid_ncells + 1:run_params$grid_ncells])
+  snowdist_init_annual <- setValues(data_dhms$elevation[[dhm_grid_id]], mod_output_annual_cur$vec_swe_all[(swe_prev_annual_day_id - 1) * run_params$grid_ncells + 1:run_params$grid_ncells])
   
   if (process_winter) {
     swe_prev_winter_day_id <- which.min(abs(weather_series_annual_cur$timestamp - model_time_bounds[3]))
-    snowdist_init_winter <- setValues(data_dhms$elevation[[elevation_grid_id]], mod_output_annual_cur$vec_swe_all[(swe_prev_winter_day_id - 1) * run_params$grid_ncells + 1:run_params$grid_ncells])
+    snowdist_init_winter <- setValues(data_dhms$elevation[[dhm_grid_id]], mod_output_annual_cur$vec_swe_all[(swe_prev_winter_day_id - 1) * run_params$grid_ncells + 1:run_params$grid_ncells])
   }
   
   # Here instead estimate the initial snow cover from snow line elevation,
@@ -40,7 +40,8 @@ if (run_params$initial_snow_dist_from_model && swe_prev_available) {
                                                           grids_snowdist_topographic,
                                                           grids_avalanche_cur,
                                                           dist_probes_idw_norm,
-                                                          elevation_grid_id,
+                                                          dhm_grid_id,
+                                                          dem_grid_id,
                                                           massbal_winter_meas_cur)
   snowdist_init_winter <- snowdist_init_annual
 } 

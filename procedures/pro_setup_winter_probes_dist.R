@@ -18,7 +18,7 @@ process_winter <- (nstakes_winter > 0)
 if (process_winter) {
   dist_probes_idw           <- func_snow_probes_idw(run_params, massbal_winter_meas_cur, data_dhms)
   dist_probes_idw           <- clamp(dist_probes_idw, lower = 0, upper = Inf)
-  dist_probes_idw_norm      <- dist_probes_idw / mean(dist_probes_idw[data_dems$glacier_cell_ids[[elevation_grid_id]]])
+  dist_probes_idw_norm      <- dist_probes_idw / mean(dist_probes_idw[data_dems$glacier_cell_ids[[dem_grid_id]]])
 } else {
   # No winter probes to work with, so uniform distribution for the probes component.
   dist_probes_idw_norm      <- setValues(data_dhms$elevation[[1]], 1.0)

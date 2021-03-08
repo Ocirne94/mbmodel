@@ -12,18 +12,32 @@
 
 func_load_outlines <- function(run_params) {
   
+  ext_str_raw <- str_split(run_params$filename_outline_suffix, fixed("."))[[1]]
+  ext_str <- ext_str_raw[length(ext_str_raw)]
+  if (ext_str == "xyzn") {
+    outline_filetype <- "xyzn"
+  } else if (ext_str == "shp") {
+    outline_filetype <- "shapefile"
+  } else {
+    stop("Outline file is not either XYZN or shapefile (.shp). Please convert to the correct format and run the model again.")
+  }
+  
   outlines_out <- list(outlines = list(),
                        outline_year_id = rep(NA, run_params$n_years)) # Here we put all the loaded outlines.
   
-  outline_paths <- paste(run_params$dir_data_outline,
-                      run_params$filename_outline_prefix,
-                      run_params$outline_years,
-                      run_params$filename_outline_suffix,
-                      sep = "")
+  outline_paths <- file.path(run_params$dir_data_outline,
+                             paste0(run_params$filename_outline_prefix,
+                                    run_params$outline_years,
+                                    run_params$filename_outline_suffix))
+                      
   
   # Load outlines
   for (outline_id in 1:length(outline_paths)) {
-    outlines_out$outlines[[outline_id]] <- func_load_xyzn(outline_paths[outline_id], run_params$grids_crs)
+    if (outline_filetype == "xyzn") {
+      outlines_out$outlines[[outline_id]] <- func_load_xyzn(outline_paths[outline_id], run_params$grids_crs)
+    } else if (outline_filetype == "shapefile") {
+      invisible(capture.output(outlines_out$outlines[[outline_id]] <- as(as_Spatial(st_read(outline_paths[outline_id])), "SpatialPolygons")))
+    }
   }
   
   # For each modeled year find the closest grid year and use its grid.

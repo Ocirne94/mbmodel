@@ -21,7 +21,7 @@ func_plot_year_mb_maps <- function(run_params,
                                    year_cur,
                                    data_dems,
                                    data_outlines,
-                                   elevation_grid_id,
+                                   dem_grid_id,
                                    outline_id,
                                    massbal_annual_maps,
                                    massbal_winter_maps,
@@ -49,8 +49,8 @@ func_plot_year_mb_maps <- function(run_params,
   palette_RdBu_ext <- c("#33000F", RColorBrewer::brewer.pal(11, "RdBu")[c(1:4,6,8:11)], "#011830")
   max_mb <- abs(2*run_params$mb_colorscale_breaks[1] - run_params$mb_colorscale_breaks[2]) # Values exceeding +/- max_mb will be clamped.
   
-  plot_df_base <- data.frame(coordinates(data_dems$elevation[[elevation_grid_id]]))
-  elevation_df <- data.frame(plot_df_base, z = getValues(data_dems$elevation[[elevation_grid_id]]))
+  plot_df_base <- data.frame(coordinates(data_dems$elevation[[dem_grid_id]]))
+  elevation_df <- data.frame(plot_df_base, z = getValues(data_dems$elevation[[dem_grid_id]]))
   
   plots <- list()
   
@@ -58,7 +58,7 @@ func_plot_year_mb_maps <- function(run_params,
   mb_hydro_lab <- sprintf("%.3f",massbal_annual_values[["hydro"]] / 1000.)
   plot_df <- plot_df_base
   plot_df$massbal <- getValues(massbal_annual_maps$hydro)
-  plots[[1]] <- ggplot(plot_df[data_dems$glacier_cell_ids[[elevation_grid_id]],]) +
+  plots[[1]] <- ggplot(plot_df[data_dems$glacier_cell_ids[[dem_grid_id]],]) +
     geom_raster(aes(x = x, y = y, fill = massbal/1000)) +
     geom_sf(data = as(data_outlines$outlines[[outline_id]], "sf"), fill = NA, color = "#202020", size = outline_linesize) +
     coord_sf(clip = "off") +
@@ -84,7 +84,7 @@ func_plot_year_mb_maps <- function(run_params,
   mb_meas_annual_lab <- sprintf("%.3f",massbal_annual_values[["meas_period"]] / 1000.)
   plot_df <- plot_df_base
   plot_df$massbal <- getValues(massbal_annual_maps$meas_period)
-  plots[[2]] <- ggplot(plot_df[data_dems$glacier_cell_ids[[elevation_grid_id]],]) +
+  plots[[2]] <- ggplot(plot_df[data_dems$glacier_cell_ids[[dem_grid_id]],]) +
     geom_raster(aes(x = x, y = y, fill = massbal/1000)) +
     geom_sf(data = as(data_outlines$outlines[[outline_id]], "sf"), fill = NA, color = "#202020", size = outline_linesize) +
     coord_sf(clip = "off") +
@@ -107,7 +107,7 @@ func_plot_year_mb_maps <- function(run_params,
   
   #### MEASUREMENT PERIOD - ANNUAL, WITH STAKES ####
   # Also RMS.
-  plots[[3]] <- ggplot(plot_df[data_dems$glacier_cell_ids[[elevation_grid_id]],]) +
+  plots[[3]] <- ggplot(plot_df[data_dems$glacier_cell_ids[[dem_grid_id]],]) +
     geom_raster(aes(x = x, y = y, fill = massbal/1000)) +
     geom_sf(data = as(data_outlines$outlines[[outline_id]], "sf"), fill = NA, color = "#202020", size = outline_linesize) +
     coord_sf(clip = "off") +
@@ -137,7 +137,7 @@ func_plot_year_mb_maps <- function(run_params,
   mb_meas_corr_annual_lab <- sprintf("%.3f",massbal_annual_values[["meas_period_corr"]] / 1000.)
   plot_df <- plot_df_base
   plot_df$massbal <- getValues(massbal_annual_maps$meas_period_corr)
-  plots[[4]] <- ggplot(plot_df[data_dems$glacier_cell_ids[[elevation_grid_id]],]) +
+  plots[[4]] <- ggplot(plot_df[data_dems$glacier_cell_ids[[dem_grid_id]],]) +
     geom_raster(aes(x = x, y = y, fill = massbal/1000)) +
     geom_sf(data = as(data_outlines$outlines[[outline_id]], "sf"), fill = NA, color = "#202020", size = outline_linesize) +
     coord_sf(clip = "off") +
@@ -160,7 +160,7 @@ func_plot_year_mb_maps <- function(run_params,
   
   #### MEASUREMENT PERIOD - ANNUAL CORRECTED, WITH STAKES ####
   rmse_bandcorr <- sqrt(mean((massbal_annual_meas_cur$massbal_standardized - extract(massbal_annual_maps$meas_period_corr, cbind(massbal_annual_meas_cur$x, massbal_annual_meas_cur$y), method = "bilinear"))^2))
-  plots[[5]] <- ggplot(plot_df[data_dems$glacier_cell_ids[[elevation_grid_id]],]) +
+  plots[[5]] <- ggplot(plot_df[data_dems$glacier_cell_ids[[dem_grid_id]],]) +
     geom_raster(aes(x = x, y = y, fill = massbal/1000)) +
     geom_sf(data = as(data_outlines$outlines[[outline_id]], "sf"), fill = NA, color = "#202020", size = outline_linesize) +
     coord_sf(clip = "off") +
@@ -190,7 +190,7 @@ func_plot_year_mb_maps <- function(run_params,
   mb_fixed_annual_lab <- sprintf("%.3f",massbal_annual_values[["fixed"]] / 1000.)
   plot_df <- plot_df_base
   plot_df$massbal <- getValues(massbal_annual_maps$fixed)
-  plots[[6]] <- ggplot(plot_df[data_dems$glacier_cell_ids[[elevation_grid_id]],]) +
+  plots[[6]] <- ggplot(plot_df[data_dems$glacier_cell_ids[[dem_grid_id]],]) +
     geom_raster(aes(x = x, y = y, fill = massbal/1000)) +
     geom_sf(data = as(data_outlines$outlines[[outline_id]], "sf"), fill = NA, color = "#202020", size = outline_linesize) +
     coord_sf(clip = "off") +
@@ -216,7 +216,7 @@ func_plot_year_mb_maps <- function(run_params,
   mb_fixed_winter_lab <- sprintf("%.3f",massbal_winter_values[["fixed"]] / 1000.)
   plot_df <- plot_df_base
   plot_df$massbal <- getValues(massbal_winter_maps$fixed)
-  plots[[7]] <- ggplot(plot_df[data_dems$glacier_cell_ids[[elevation_grid_id]],]) +
+  plots[[7]] <- ggplot(plot_df[data_dems$glacier_cell_ids[[dem_grid_id]],]) +
     geom_raster(aes(x = x, y = y, fill = massbal/1000)) +
     geom_sf(data = as(data_outlines$outlines[[outline_id]], "sf"), fill = NA, color = "#202020", size = outline_linesize) +
     coord_sf(clip = "off") +
@@ -242,7 +242,7 @@ func_plot_year_mb_maps <- function(run_params,
     mb_meas_winter_lab <- sprintf("%.3f",massbal_winter_values[["meas_period"]] / 1000.)
     plot_df <- plot_df_base
     plot_df$massbal <- getValues(massbal_winter_maps$meas_period)
-    plots[[8]] <- ggplot(plot_df[data_dems$glacier_cell_ids[[elevation_grid_id]],]) +
+    plots[[8]] <- ggplot(plot_df[data_dems$glacier_cell_ids[[dem_grid_id]],]) +
       geom_raster(aes(x = x, y = y, fill = massbal/1000)) +
       geom_sf(data = as(data_outlines$outlines[[outline_id]], "sf"), fill = NA, color = "#202020", size = outline_linesize) +
       coord_sf(clip = "off") +

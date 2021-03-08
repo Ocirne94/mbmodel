@@ -19,7 +19,8 @@ massbal_annual_maps$meas_period_corr <- func_correct_massbal_elebands(year_cur_p
                                                                       data_dems,
                                                                       massbal_annual_meas_cur,
                                                                       mod_output_annual_cur,
-                                                                      massbal_annual_maps)
+                                                                      massbal_annual_maps,
+                                                                      dem_grid_id)
 
 massbal_annual_values <- sapply(massbal_annual_maps, cellStats, stat = "mean", na.rm = TRUE)
 massbal_winter_values <- sapply(massbal_winter_maps, cellStats, stat = "mean", na.rm = TRUE)
@@ -41,7 +42,10 @@ mod_output_annual_cur$gl_massbal_cumul_bandcorr <- mod_output_annual_cur$gl_accu
 
 
 #### Compute ELA and AAR ####
-ela_aar <- func_compute_ela_aar(run_params, mb_meas_period_corr_values, data_dems)
+ela_aar <- func_compute_ela_aar(run_params,
+                                mb_meas_period_corr_values,
+                                data_dems,
+                                dem_grid_id)
 
 
 #### Compute standardized stake measurements ####

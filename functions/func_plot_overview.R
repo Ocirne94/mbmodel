@@ -17,6 +17,9 @@ func_plot_overview <- function(df_overview) {
   
   plots <- list()
   
+  # Show 4-5 years on the x axis, using only integer values.
+  x_breaks <- seq(df_overview$year[1], df_overview$year[length(df_overview$year)], by = max(1, floor(length(df_overview$year) / 4)))
+  
   # Time series of annual mass balance over the measurement
   # period, corrected within elevation bands.
   # Also horizontal line with mean over the period.
@@ -25,6 +28,7 @@ func_plot_overview <- function(df_overview) {
     geom_segment(x = df_overview$year[1], xend = df_overview$year[length(df_overview$year)],
                  y = mean(df_overview$mb_annual_meas_corr), yend = mean(df_overview$mb_annual_meas_corr),
                  linetype = "dashed", size = 1) +
+    scale_x_continuous(breaks = x_breaks) +
     ylab("Mass balance [m w.e.]") +
     ggtitle("Final mass balance") +
     theme_overview_plots
@@ -40,6 +44,7 @@ func_plot_overview <- function(df_overview) {
     geom_line(aes(x = year, y = mb_annual_fixed), color = "#00FFFF", size = 1) +
     ylab("Mass balance [m w.e.]") +
     scale_y_continuous(expand = expansion(0.3, 0)) +
+    scale_x_continuous(breaks = x_breaks) +
     ggtitle("Annual mass balance") +
     annotation_custom(grobTree(textGrob("Measurement period", x=0.05, y = 0.19, hjust = 0,
                                         gp=gpar(col="#FF00FF", fontsize = base_size * 1., fontface="bold")))) +
@@ -58,6 +63,7 @@ func_plot_overview <- function(df_overview) {
     geom_line(aes(x = year, y = mb_winter_fixed), color = "#00FFFF", size = 1) +
     ylab("Mass balance [m w.e.]") +
     scale_y_continuous(expand = expansion(0.3, 0)) +
+    scale_x_continuous(breaks = x_breaks) +
     ggtitle("Winter mass balance") +
     {if(any(!is.na(df_overview$mb_winter_meas))) annotation_custom(grobTree(textGrob("Measurement period", x=0.05, y = 0.12, hjust = 0,
                                         gp=gpar(col="#FF00FF", fontsize = base_size * 1., fontface="bold"))))} +
@@ -71,6 +77,7 @@ func_plot_overview <- function(df_overview) {
     geom_line(aes(x = year, y = ela), size = 1) +
     ylab("Equilibrium Line Altitude [m a.s.l.]") +
     scale_y_continuous(expand = expansion(0.5, 0)) +
+    scale_x_continuous(breaks = x_breaks) +
     ggtitle("Equilibrium Line Altitude") +
     theme_overview_plots
   
@@ -80,6 +87,7 @@ func_plot_overview <- function(df_overview) {
     geom_line(aes(x = year, y = aar), size = 1) +
     ylab("Accumulation-Area Ratio [%]") +
     scale_y_continuous(expand = expansion(0.5, 0)) +
+    scale_x_continuous(breaks = x_breaks) +
     ggtitle("Accumulation-Area Ratio") +
     theme_overview_plots
   
@@ -89,6 +97,7 @@ func_plot_overview <- function(df_overview) {
     geom_line(aes(x = year, y = rmse), size = 1) +
     ylab("RMSE [m w.e.]") +
     scale_y_continuous(limits = c(0,NA), expand = expansion(mult = c(0, 0.2))) +
+    scale_x_continuous(breaks = x_breaks) +
     ggtitle("Root-Mean-Square Error") +
     theme_overview_plots
   
@@ -100,6 +109,7 @@ func_plot_overview <- function(df_overview) {
     geom_line(aes(x = year, y = rad_fact_ice), color = "#00FFFF", size = 0.5) +
     ylab("Parameter value [different units]") +
     scale_y_continuous(expand = expansion(0.5, 0)) +
+    scale_x_continuous(breaks = x_breaks) +
     ggtitle("Melt parameters") +
     annotation_custom(grobTree(textGrob("Degree-day melt factor", x=0.05, y = 0.19, hjust = 0,
                                         gp=gpar(col="#FF00FF", fontsize = base_size * 1., fontface="bold")))) +
@@ -118,6 +128,7 @@ func_plot_overview <- function(df_overview) {
     geom_line(aes(x = year, y = prec_corr), color = "#0000FF", size = 1) +
     ylab("Precipitation correction [%]") +
     scale_y_continuous(limits = c(min(min(df_overview$prec_corr), mean(df_overview$prec_corr) - 0.1 * mean(df_overview$prec_corr)), max(max(df_overview$prec_corr), mean(df_overview$prec_corr + 0.1 * df_overview$prec_corr)))) +
+    scale_x_continuous(breaks = x_breaks) +
     ggtitle("Precipitation correction factor") +
     theme_overview_plots
   
@@ -129,6 +140,7 @@ func_plot_overview <- function(df_overview) {
     geom_line(aes(x = year, y = mb_cumul), color = "#FF0000", size = 1) +
     geom_point(aes(x = year, y = mb_cumul), color = "#FF0000", shape = 2, size = 3, stroke = 1.2) +
     scale_y_continuous(breaks = pretty(c(0, df_overview$mb_cumul))) +
+    scale_x_continuous(breaks = x_breaks) +
     ylab("Cumulative mass balance [m w.e.]") +
     ggtitle("Cumulative mass balance") +
     theme_overview_plots

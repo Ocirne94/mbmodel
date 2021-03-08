@@ -42,7 +42,7 @@
 # corr_fact_winter is only used in the annual optimization,
 # to use the previously optimized (constant) winter correction.
 func_optim_worker <- function(optimization_period, corr_fact_cur, corr_fact_winter,
-                              run_params, year_cur_params, elevation_grid_id, surftype_grid_id,
+                              run_params, year_cur_params, dhm_grid_id, dem_grid_id, surftype_grid_id,
                               data_dhms, data_dems, data_surftype,
                               snowdist_init, data_radiation, weather_series_cur, dist_topographic_values_red,
                               dist_probes_norm_values_red, grids_avalanche_cur,
@@ -72,7 +72,8 @@ func_optim_worker <- function(optimization_period, corr_fact_cur, corr_fact_wint
   # the optimized parameters to get the actual
   # model output.
   mod_output_cur <- func_run_simulation_single(corrections_cur,
-                                               run_params, year_cur_params, elevation_grid_id, surftype_grid_id,
+                                               run_params, year_cur_params,
+                                               dhm_grid_id, dem_grid_id, surftype_grid_id,
                                                data_dhms, data_dems, data_surftype,
                                                snowdist_init, data_radiation, weather_series_cur, dist_topographic_values_red,
                                                dist_probes_norm_values_red, grids_avalanche_cur,
@@ -98,7 +99,8 @@ func_optim_worker <- function(optimization_period, corr_fact_cur, corr_fact_wint
 # corr_fact_winter is considered only during the annual optimization,
 # to use the correction previously determined for winter precipitation.
 func_optimize_mb <- function(optimization_period, corr_fact_winter,
-                             run_params, year_cur_params, elevation_grid_id, surftype_grid_id,
+                             run_params, year_cur_params,
+                             dhm_grid_id, dem_grid_id, surftype_grid_id,
                              data_dhms, data_dems, data_surftype,
                              snowdist_init, data_radiation, weather_series_cur, dist_topographic_values_red,
                              dist_probes_norm_values_red, grids_avalanche_cur,
@@ -109,7 +111,8 @@ func_optimize_mb <- function(optimization_period, corr_fact_winter,
   cat("\n* Optimization run # 1\n")
   corr_fact_prev <- 0
   bias_prev <- func_optim_worker(optimization_period, corr_fact_prev, corr_fact_winter,
-                                 run_params, year_cur_params, elevation_grid_id, surftype_grid_id,
+                                 run_params, year_cur_params,
+                                 dhm_grid_id, dem_grid_id, surftype_grid_id,
                                  data_dhms, data_dems, data_surftype,
                                  snowdist_init, data_radiation, weather_series_cur, dist_topographic_values_red,
                                  dist_probes_norm_values_red, grids_avalanche_cur,
@@ -126,7 +129,8 @@ func_optimize_mb <- function(optimization_period, corr_fact_winter,
   # (we don't want to go to the negatives!).
   corr_fact_cur <- 0.01
   bias_cur <- func_optim_worker(optimization_period, corr_fact_cur, corr_fact_winter,
-                                run_params, year_cur_params, elevation_grid_id, surftype_grid_id,
+                                run_params, year_cur_params,
+                                dhm_grid_id, dem_grid_id, surftype_grid_id,
                                 data_dhms, data_dems, data_surftype,
                                 snowdist_init, data_radiation, weather_series_cur, dist_topographic_values_red,
                                 dist_probes_norm_values_red, grids_avalanche_cur,
@@ -143,7 +147,8 @@ func_optimize_mb <- function(optimization_period, corr_fact_winter,
     niter <- niter + 1
     cat("\n* Optimization run #", niter, "\n")
     bias_cur <- func_optim_worker(optimization_period, corr_fact_cur, corr_fact_winter,
-                                  run_params, year_cur_params, elevation_grid_id, surftype_grid_id,
+                                  run_params, year_cur_params,
+                                  dhm_grid_id, dem_grid_id, surftype_grid_id,
                                   data_dhms, data_dems, data_surftype,
                                   snowdist_init, data_radiation, weather_series_cur, dist_topographic_values_red,
                                   dist_probes_norm_values_red, grids_avalanche_cur,

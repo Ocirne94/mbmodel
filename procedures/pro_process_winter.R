@@ -24,7 +24,7 @@ if (process_winter)  {
   # aligned with a cell center, unless we are at the lower raster border (which we should
   # always avoid!) the additional cells returned with duplicates = FALSE (cells which would
   # not be part of the actual adjacent cells) have higher index than the "true" adjacent cells.
-  winter_stakes_cells <- rowSort(fourCellsFromXY(data_dhms$elevation[[elevation_grid_id]], as.matrix(massbal_winter_meas_cur[,4:5]), duplicates = FALSE))
+  winter_stakes_cells <- rowSort(fourCellsFromXY(data_dhms$elevation[[dhm_grid_id]], as.matrix(massbal_winter_meas_cur[,4:5]), duplicates = FALSE))
   
   model_winter_bounds <- model_time_bounds[3:4]
   
@@ -37,7 +37,8 @@ if (process_winter)  {
   # The NA is for the optimized corr_fact_winter (which we are
   # determining here, so we don't use a previous value: it is ignored).
   optim_corr_winter <- func_optimize_mb("winter", NA,
-                                        run_params, year_cur_params, elevation_grid_id, surftype_grid_id,
+                                        run_params, year_cur_params,
+                                        dhm_grid_id, dem_grid_id, surftype_grid_id,
                                         data_dhms, data_dems, data_surftype, snowdist_init_winter, data_radiation,
                                         weather_series_winter_cur, dist_topographic_values_red,
                                         dist_probes_norm_values_red, grids_avalanche_cur,

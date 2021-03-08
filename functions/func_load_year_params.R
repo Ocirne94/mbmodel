@@ -14,11 +14,10 @@ func_load_year_params <- function(run_params, year_cur) {
   # Here goes the output.
   year_params <- list()
   
-  filepath_params <- paste(run_params$dir_annual_params,
-                           run_params$filename_params_prefix,
-                           year_cur,
-                           run_params$filename_params_suffix,
-                           sep = "")
+  filepath_params <- file.path(run_params$dir_annual_params,
+                               paste0(run_params$filename_params_prefix,
+                                      year_cur,
+                                      run_params$filename_params_suffix))
   
   # Try reading new format of the parameter file.
   # If the file uses the old format, the result

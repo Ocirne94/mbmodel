@@ -17,7 +17,9 @@ massbal_annual_maps_data <- func_extract_massbal_maps_annual(run_params,
                                                              year_cur_params,
                                                              weather_series_annual_cur,
                                                              mod_output_annual_cur,
-                                                             data_dhms)
+                                                             data_dhms,
+                                                             dhm_grid_id,
+                                                             dem_grid_id)
 massbal_annual_maps <- massbal_annual_maps_data$massbal_maps
 massbal_annual_meas_period <- massbal_annual_maps_data$meas_period
 
@@ -31,7 +33,9 @@ massbal_winter_maps_data <- func_extract_massbal_maps_winter(run_params,
                                                              mod_output_annual_cur,
                                                              process_winter,
                                                              mod_output_winter_cur,
-                                                             data_dhms)
+                                                             data_dhms,
+                                                             dhm_grid_id,
+                                                             dem_grid_id)
 massbal_winter_maps <- massbal_winter_maps_data$massbal_maps
 if (process_winter) {
   massbal_winter_meas_period <- massbal_winter_maps_data$meas_period
