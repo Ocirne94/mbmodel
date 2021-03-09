@@ -14,7 +14,7 @@ library(sp)           # SpatialPolygons(), for the outline.
 library(spatialEco)   # curvature()
 library(scales)       # rescale()
 library(topmodel)     # sinkfill()
-library(Rcpp)         # avalanche function implemented in C++ for performance
+if (run_params$avalanche_routine_cpp == TRUE) {library(Rcpp)}         # avalanche function implemented in C++ for performance
 library(gstat)        # IDW of snow probing data
 library(Rfast)        # rowSort() of the stake cells indices
 library(timeSeries)   # interpNA() of the band biases.

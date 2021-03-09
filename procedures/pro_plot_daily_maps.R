@@ -17,8 +17,8 @@ if (run_params$plot_daily_maps){
   surf_b    <- subs(data_surftype$grids[[surftype_grid_id]], data.frame(from = c(0, 1, 4, 5), to = c(200, 255, 0, 20)))
   surf_base <- ggRGB(stack(surf_r, surf_g, surf_b), r = 1, g = 2, b = 3, ggLayer = TRUE)
   
-  dir.create(file.path("output", run_params$name_glacier, "daily", year_cur, "massbal"), recursive = TRUE)
-  dir.create(file.path("output", run_params$name_glacier, "daily", year_cur, "swe_surftype"), recursive = TRUE)
+  dir.create(file.path(run_params$output_dirname, "daily", year_cur, "massbal"), recursive = TRUE)
+  dir.create(file.path(run_params$output_dirname, "daily", year_cur, "swe_surftype"), recursive = TRUE)
   
   # model_annual_days_n <- nrow(weather_series_annual_cur)
   
@@ -49,7 +49,7 @@ if (run_params$plot_daily_maps){
                            breaks = c(100,200,400,800,1400,2000,2800,3600)) +
       guides(alpha = "none") +
       theme_void()
-    ggsave(file.path("output", run_params$name_glacier, "daily", year_cur, "swe_surftype", paste0(sprintf("%03d", day_id), ".png")), width = 5, height = 3)
+    ggsave(file.path(run_params$output_dirname, "daily", year_cur, "swe_surftype", paste0(sprintf("%03d", day_id), ".png")), width = 5, height = 3)
   }
   
   cat("\n")
@@ -73,7 +73,7 @@ if (run_params$plot_daily_maps){
                            direction = 1, limits = c(-max_mb,max_mb),
                            breaks = c(-3000,-1600,-800,-300,0,300,800,1600,3000)) +
       theme_void()
-    ggsave(file.path("output", run_params$name_glacier, "daily", year_cur, "massbal", paste0(sprintf("%03d", day_id), ".png")), width = 5, height = 3)
+    ggsave(file.path(run_params$output_dirname, "daily", year_cur, "massbal", paste0(sprintf("%03d", day_id), ".png")), width = 5, height = 3)
   }
   
   cat("\n")

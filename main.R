@@ -13,17 +13,18 @@ Sys.setlocale(category = "LC_TIME", locale = "en_US.UTF-8")
 #### Load from input data files or reboot file ####
 boot_file_write   <- FALSE                # Save .RData file with the input data, for faster reload.
 boot_file_read    <- TRUE                 # Load .RData file with the input data, instead of loading input files.
-boot_file_name    <- "boot_file_zulmart.RData"    # Name of the .RData input data file.
+boot_file_name    <- "boot_file_barkrak.RData"    # Name of the .RData input data file.
 
 
 #### Load function definitions and R modules ####
 source(file.path("procedures", "pro_load_libraries.R"))
 invisible(sapply(file.path("functions", list.files("functions", pattern = "\\.R$")), source))
-sourceCpp(file.path("functions", "func_avalanche_gruber.cpp"), cacheDir = "functions")   # Remove cacheDir option to force recompilation of the C++ code (useful after changing computer or editing the source file).
 
 
 #### Setup simulation ####
 source(file.path("procedures", "pro_load_data_parameters.R"))    # Load data and parameters.
+# Below: remove cacheDir option to force recompilation of the C++ code (useful after changing computer or editing the source file).
+if (run_params$avalanche_routine_cpp == TRUE) {sourceCpp(file.path("functions", "func_avalanche_gruber.cpp"), cacheDir = "functions")}
 source(file.path("procedures", "pro_compute_grid_parameters.R")) # Set grid-dependent parameters.
 source(file.path("procedures", "pro_compute_all_fixed_grids.R")) # Compute static grids.
 source(file.path("procedures", "pro_save_boot_files.R"))         # Save boot files if needed.
@@ -76,7 +77,7 @@ for (year_id in 1:run_params$n_years) {
   source(file.path("procedures", "pro_plot_daily_maps.R"))
   
   if (max(abs((extract(massbal_annual_maps$meas_period, cbind(massbal_annual_meas_cur$x, massbal_annual_meas_cur$y), method = "bilinear") - massbal_annual_meas_cur$massbal_standardized) - (mod_output_annual_cur$stakes_mb_mod - mod_output_annual_cur$stakes_mb_meas))) > 1) {
-    stop("VERY BAD ERROR: the recomputed stake mass balance biases over the stake period and over the single \"measurement period\" do not match. Probably an issue with the manual bilinear filtering of the stakes series. Check if there are stakes coordinates exactly aligned with cell centers, they are likely the cause.")
+    stop("ERROR: the recomputed stake mass balance biases over the stake period and over the single \"measurement period\" do not match. This is likely an issue with the bilinear filtering of the stakes series. Check if there are stakes coordinates exactly aligned with cell centers or too close to the glacier edges, they are likely the cause.")
   }
   
 }

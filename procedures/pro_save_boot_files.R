@@ -3,7 +3,7 @@
 # Description:    this program models the distributed mass balance of a glacier at daily          #
 #                 resolution, optimizing model parameters towards the best fit with point         #
 #                 mass balance measurements.                                                      #
-#                 This file contains the code to save boot files for input data and parameters.   #
+#                 This file contains the code to save boot file for input data.                   #
 ###################################################################################################
 
 # NOTE: this code is source()'d as part of main.R.
@@ -13,7 +13,3 @@
 if (boot_file_write) {
   save(list = c(apropos("^data_"), apropos("^grids_")), file = boot_file_name)
 }
-# Save parameters file.
-if (params_file_write) {
-  save(list = "run_params", file = params_file_name)
-} 

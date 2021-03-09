@@ -30,17 +30,17 @@ func_avalanche <- function(run_params, grids_avalanche_cur, mass_initial_values,
   # The snow transport loop is implemented in C++
   # for performance (about 5000 times faster than pure R).
   # An R version is in file "func_avalanche_gruber.R",
-  # it can be used by changing "transport_deposit_mass"
-  # to "transport_deposit_mass_R" here below.
-  deposition <- setValues(deposition, transport_deposit_mass(grids_avalanche_cur$elevation_sorted_ids,
-                                                             run_params$grid_ncol,
-                                                             getValues(deposition),
-                                                             getValues(mass_movable),
-                                                             getValues(grids_avalanche_cur$deposition_max) * deposition_max_multiplier,
-                                                             getValues(grids_avalanche_cur$draining_fraction[[1]]),
-                                                             getValues(grids_avalanche_cur$draining_fraction[[2]]),
-                                                             getValues(grids_avalanche_cur$draining_fraction[[3]]),
-                                                             getValues(grids_avalanche_cur$draining_fraction[[4]])))
+  # to use it set run_params$avalanche_routine_cpp to FALSE.
+  transport_deposit_mass_chosen <- ifelse(run_params$avalanche_routine_cpp == TRUE, transport_deposit_mass, transport_deposit_mass_R)
+  deposition <- setValues(deposition, transport_deposit_mass_chosen(grids_avalanche_cur$elevation_sorted_ids,
+                                                                    run_params$grid_ncol,
+                                                                    getValues(deposition),
+                                                                    getValues(mass_movable),
+                                                                    getValues(grids_avalanche_cur$deposition_max) * deposition_max_multiplier,
+                                                                    getValues(grids_avalanche_cur$draining_fraction[[1]]),
+                                                                    getValues(grids_avalanche_cur$draining_fraction[[2]]),
+                                                                    getValues(grids_avalanche_cur$draining_fraction[[3]]),
+                                                                    getValues(grids_avalanche_cur$draining_fraction[[4]])))
   
   
   

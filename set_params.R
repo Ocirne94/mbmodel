@@ -67,6 +67,7 @@ run_params <- list(
   
   
   #### AVALANCHE model parameters ####
+  avalanche_routine_cpp        =   TRUE,                         # [TRUE/FALSE]: should we use the C++ (TRUE) or R (FALSE) version of the avalanche routine? C++ is much faster but it requires a code compiler.
   elevation_equal_threshold    =   1e-3,                         # [m]: threshold for considering two elevation values equal when we look for problematic flat patches
   deposition_slope_lim         =   40,                           # [°]: at or above this slope value snow will not be deposited during an avalanche. A lower value makes avalanches travel farther. Called beta_lim in Gruber (2007).
   deposition_mass_lim          =   500,                         # [kg m-2]: maximum deposition during an avalanche. A lower value makes avalanches travel farther. Called D_lim in Gruber (2007).
@@ -110,8 +111,6 @@ run_params <- list(
   
   
   #### MASS BALANCE PROCESSING parameters ####
-  mb_optimization_skip         =   TRUE,                         # [TRUE/FALSE]: CURRENTLY NOT IMPLEMENTED, SHOULD WE SKIP THE OPTIMIZATION OF THE MASS BALANCE MODEL?
-  mb_corr_bands_skip           =   FALSE,                        # [TRUE/FALSE]: CURRENTLY NOT IMPLEMENTED, SHOULD WE SKIP THE CORRECTION OF MASS BALANCE BASED ON ELEVATION BANDS?
   ele_bands_ela_size           =   10,                           # [m]: to compute the equilibrium line altitude, divide the glacier grid into elevation bands with this vertical extent.
   
   
@@ -150,6 +149,6 @@ run_params$massbal_fixed_annual_end <- format(as.Date(run_params$massbal_fixed_a
 run_params$massbal_fixed_winter_start <- format(as.Date(run_params$massbal_fixed_winter_start, format = "%m/%d"), format = "%m/%d")
 run_params$massbal_fixed_winter_end <- format(as.Date(run_params$massbal_fixed_winter_end, format = "%m/%d"), format = "%m/%d")
 
-run_params$output_dirname <- file.path("output", run_params$name_glacier, "massbal")
+run_params$output_dirname <- file.path("output", run_params$name_glacier)
 
 run_params$size_mult <- 1.183267/3 # To get A4 PDF pages.
