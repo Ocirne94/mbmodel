@@ -10,14 +10,10 @@
 Sys.setlocale(category = "LC_TIME", locale = "en_US.UTF-8")
 
 
-#### Load from files or reboot file ####
-params_file_write <- FALSE                # Save .RData file with run parameters, for faster reload. The file will be saved AFTER data loading since some parameters depend on the loaded grids (e.g. cell size).
-params_file_read  <- FALSE                # Load .RData file with run parameters, instead of setting new run parametrs.
-params_file_name  <- "params_file.RData"  # Name of the .RData run parameters file.
-
+#### Load from input data files or reboot file ####
 boot_file_write   <- FALSE                # Save .RData file with the input data, for faster reload.
 boot_file_read    <- TRUE                 # Load .RData file with the input data, instead of loading input files.
-boot_file_name    <- "boot_file_barkrak.RData"    # Name of the .RData input data file.
+boot_file_name    <- "boot_file_zulmart.RData"    # Name of the .RData input data file.
 
 
 #### Load function definitions and R modules ####
@@ -76,9 +72,11 @@ for (year_id in 1:run_params$n_years) {
   #### . Write annual model output to files ####
   source(file.path("procedures", "pro_write_year_output.R"))
 
-  if (max(abs((extract(massbal_annual_maps$meas_period, cbind(massbal_annual_meas_cur$x, massbal_annual_meas_cur$y), method = "bilinear") - massbal_annual_meas_cur$massbal_standardized) - (mod_output_annual_cur$stakes_mb_mod - mod_output_annual_cur$stakes_mb_meas))) > 1e-5) {
+  #### . Produce daily plots (only if asked to do so) ####
+  source(file.path("procedures", "pro_plot_daily_maps.R"))
+  
+  if (max(abs((extract(massbal_annual_maps$meas_period, cbind(massbal_annual_meas_cur$x, massbal_annual_meas_cur$y), method = "bilinear") - massbal_annual_meas_cur$massbal_standardized) - (mod_output_annual_cur$stakes_mb_mod - mod_output_annual_cur$stakes_mb_meas))) > 1) {
     stop("VERY BAD ERROR: the recomputed stake mass balance biases over the stake period and over the single \"measurement period\" do not match. Probably an issue with the manual bilinear filtering of the stakes series. Check if there are stakes coordinates exactly aligned with cell centers, they are likely the cause.")
-    Sys.sleep(1e9)
   }
   
 }

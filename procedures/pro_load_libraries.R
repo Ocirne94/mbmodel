@@ -29,4 +29,4 @@ library(ggpattern)    # Additional plotting functions (pattern as histogram fill
 library(shadowtext)   # Additional plotting functions (text with white outline)
 library(reshape2)     # melt() data frame.
 library(stringr)      # str_split() of the outline filename suffix, to get the extension.
-# library(RStoolbox)    # For the surface type basemap under the daily SWE plots (currently disabled).
+library(RStoolbox)    # For the surface type basemap under the daily SWE plots (currently disabled).

@@ -3,25 +3,24 @@
 # Description:    this program models the distributed mass balance of a glacier at daily          #
 #                 resolution, optimizing model parameters towards the best fit with point         #
 #                 mass balance measurements.                                                      #
-#                 This file contains the routine to produce daily plots of SWE and mass balance.  #
+#                 This file contains the code to produce daily plots of SWE and mass balance.     #
 #                 These can be directly turned into a nice animation.                             #
-#                 The routine has no return value, it is used as a procedure.                     #
 ###################################################################################################
 
-func_plot_daily_maps <- function(run_params,
-                                 year_cur,
-                                 weather_series_cur,
-                                 data_dems,
-                                 data_outlines,
-                                 mb_model_output,
-                                 surf_base,
-                                 dem_grid_id,
-                                 outline_id) {
+# NOTE: this code is source()'d as part of main.R.
+# We put code here just to make it more organized.
+
+if (run_params$plot_daily_maps){
+  
+  surf_r    <- subs(data_surftype$grids[[surftype_grid_id]], data.frame(from = c(0, 1, 4, 5), to = c(100, 170, 0, 70)))
+  surf_g    <- subs(data_surftype$grids[[surftype_grid_id]], data.frame(from = c(0, 1, 4, 5), to = c(150, 213, 0, 20)))
+  surf_b    <- subs(data_surftype$grids[[surftype_grid_id]], data.frame(from = c(0, 1, 4, 5), to = c(200, 255, 0, 20)))
+  surf_base <- ggRGB(stack(surf_r, surf_g, surf_b), r = 1, g = 2, b = 3, ggLayer = TRUE)
   
   dir.create(file.path("output", run_params$name_glacier, "daily", year_cur, "massbal"), recursive = TRUE)
   dir.create(file.path("output", run_params$name_glacier, "daily", year_cur, "swe_surftype"), recursive = TRUE)
   
-  n_days <- nrow(weather_series_cur)
+  # model_annual_days_n <- nrow(weather_series_annual_cur)
   
   plot_df <- data.frame(coordinates(data_dems$elevation[[dem_grid_id]]))
   
@@ -29,14 +28,14 @@ func_plot_daily_maps <- function(run_params,
   elevation_df <- data.frame(plot_df, z = getValues(data_dems$elevation[[dem_grid_id]]))
   
   # Plot of daily SWE evolution.
-  for (day_id in 1:(n_days + 1)) {
-    cat("\rGenerating daily SWE plots...", day_id, "/", n_days+1)
+  for (day_id in 1:(model_annual_days_n + 1)) {
+    cat("\r** Generating daily SWE plots...", day_id, "/", model_annual_days_n+1, "**")
     cells_cur <- (day_id-1) * run_params$grid_ncells + 1:(run_params$grid_ncells)
     max_swe <- 3500
-    plot_df$swe <- clamp(mb_model_output$vec_swe_all[cells_cur], -Inf, max_swe)
+    plot_df$swe <- clamp(mod_output_annual_cur$vec_swe_all[cells_cur], -Inf, max_swe)
     plot_df$snow <- as.integer(plot_df$swe > 0)
-    plot_df$surf <- mb_model_output$vec_surftype_all[cells_cur]
-    date_text <- format(c(weather_series_cur$timestamp, weather_series_cur$timestamp[n_days] + 1)[day_id], "%Y/%m/%d")
+    plot_df$surf <- mod_output_annual_cur$vec_surftype_all[cells_cur]
+    date_text <- format(c(weather_series_annual_cur$timestamp, weather_series_annual_cur$timestamp[model_annual_days_n] + 1)[day_id], "%Y/%m/%d")
     ggplot(plot_df) +
       surf_base +
       geom_raster(aes(x = x, y = y, fill = swe, alpha = as.character(snow))) +
@@ -57,12 +56,12 @@ func_plot_daily_maps <- function(run_params,
   
   
   # Plot of daily cumulative SMB.
-  for (day_id in 1:(n_days+1)) {
-    cat("\rGenerating daily SMB plots...", day_id, "/", n_days+1)
+  for (day_id in 1:(model_annual_days_n+1)) {
+    cat("\r** Generating daily SMB plots...", day_id, "/", model_annual_days_n+1, "**")
     cells_cur <- (day_id-1) * run_params$grid_ncells + 1:(run_params$grid_ncells)
     max_mb <- 3999
-    plot_df$massbal <- mb_model_output$vec_massbal_cumul[cells_cur]
-    date_text <- format(c(weather_series_cur$timestamp, weather_series_cur$timestamp[n_days] + 86400)[day_id], "%Y/%m/%d")
+    plot_df$massbal <- mod_output_annual_cur$vec_massbal_cumul[cells_cur]
+    date_text <- format(c(weather_series_annual_cur$timestamp, weather_series_annual_cur$timestamp[model_annual_days_n] + 86400)[day_id], "%Y/%m/%d")
     ggplot(plot_df) +
       surf_base +
       geom_raster(aes(x = x, y = y, fill = massbal)) +
