@@ -133,6 +133,8 @@ func_plot_overview <- function(df_overview) {
     theme_overview_plots
   
   
+
+  x_breaks_cumul <- seq(df_overview$year[1]-1, df_overview$year[length(df_overview$year)], by = max(1, floor((length(df_overview$year)+1) / 4)))
   # Time series of cumulative mass balance.
   plots[[9]] <- ggplot(data.frame(year = c(df_overview$year[1]-1, df_overview$year),
                           mb_cumul = c(0, df_overview$mb_cumul))) +
@@ -140,7 +142,7 @@ func_plot_overview <- function(df_overview) {
     geom_line(aes(x = year, y = mb_cumul), color = "#FF0000", size = 1) +
     geom_point(aes(x = year, y = mb_cumul), color = "#FF0000", shape = 2, size = 3, stroke = 1.2) +
     scale_y_continuous(breaks = pretty(c(0, df_overview$mb_cumul))) +
-    scale_x_continuous(breaks = x_breaks) +
+    scale_x_continuous(breaks = x_breaks_cumul) +
     ylab("Cumulative mass balance [m w.e.]") +
     ggtitle("Cumulative mass balance") +
     theme_overview_plots

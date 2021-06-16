@@ -25,7 +25,7 @@ if (process_winter) {
 
 # Write used DEM.
 if (run_params$dem_write) {
-  writeRaster(data_dems$elevation[[dem_grid_id]], file.path(run_params$output_dirname, "annual_results", paste0(filename_dem_prefix, year_cur, run_params$output_grid_ext)), overwrite = TRUE)
+  writeRaster(data_dems$elevation[[dem_grid_id]], file.path(run_params$output_dirname, "annual_results", paste0(run_params$filename_dem_prefix, year_cur, run_params$output_grid_ext)), overwrite = TRUE)
 }
 
 # Write modeled glacier-wide daily mass balance series.
