@@ -69,9 +69,9 @@ run_params <- list(
   #### AVALANCHE model parameters ####
   avalanche_routine_cpp        =   TRUE,                         # [TRUE/FALSE]: should we use the C++ (TRUE) or R (FALSE) version of the avalanche routine? C++ is much faster but it requires a code compiler.
   deposition_slope_lim         =   40,                           # [°]: at or above this slope value snow will not be deposited during an avalanche. A lower value makes avalanches travel farther. Called beta_lim in Gruber (2007).
-  deposition_mass_lim          =   2000,                         # [kg m-2]: maximum deposition during an avalanche. A lower value makes avalanches travel farther. Called D_lim in Gruber (2007).
+  deposition_mass_lim          =   1800,                         # [kg m-2]: maximum deposition during an avalanche. A lower value makes avalanches travel farther. Called D_lim in Gruber (2007).
   movable_slope_lim_lower      =   30,                           # [°]: above this slope value, there is a linearly increasing movable fraction in the initial mass distribution, for avalanches. A lower value makes avalanches start also on more gentle slopes.
-  movable_slope_lim_upper      =   60,                           # [°]: above this slope value, all input snow is movable in the avalanche routine.
+  movable_slope_lim_upper      =   70,                           # [°]: above this slope value, all input snow is movable in the avalanche routine.
   deposition_max_ratio_init    =   12,                           # [-]: ONLY for the initial snow distribution grid, how much accumulation can locally result from an avalanche relative to the mean snow distribution before the avalanche? This controls how far avalanches travel, it should be set to a value low enough that avalanches don't bring snow below the marked snow line elevation, and high enough that avalanche deposits look plausible. An exploratory value of 10 can make sense.
   model_avalanche_dates        =   c("3/31", "6/30", "7/31", "8/31"),  # [month/day]: dates at which an avalanche is simulated. Usually one at the end of winter (but before winter stakes are measured), and one or more in summer to avoid overloading the slopes with summer snowfall.
   
@@ -93,7 +93,7 @@ run_params <- list(
   
   #### STAKES parameters ####
   stakes_unknown_latest_start  =   "2/28",                       # [month/day]: in the automatic search of the start date for snow pits and depth probings without a measured start date, we search no later than this day of year. The starting date will be set to the day of the minimum cumulative mass balance between the start of the simulation and the date set here. Something like end of February should be safe for all stakes. 
-  stake_cluster_distance       =   80,                           # [m]: threshold distance for clustering stakes together. This is used to ensure a more uniform distribution of the stakes: if measurements are very dense in one place they can induce a bias in the optimization, so we average stakes in clusters. This can reduce the total number of stakes. Only stakes measured on the same days can be clustered. A value of 0 corresponds to no clustering.
+  stake_cluster_distance       =   200,                           # [m]: threshold distance for clustering stakes together. This is used to ensure a more uniform distribution of the stakes: if measurements are very dense in one place they can induce a bias in the optimization, so we average stakes in clusters. This can reduce the total number of stakes. Only stakes measured on the same days can be clustered. A value of 0 corresponds to no clustering.
   snow_probes_idw_exp          =   0.75,                         # [-]: exponent for the IDW interpolation of winter snow measurements
   
   

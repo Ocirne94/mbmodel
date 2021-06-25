@@ -13,7 +13,7 @@ Sys.setlocale(category = "LC_TIME", locale = "en_US.UTF-8")
 #### Load from input data files or reboot file ####
 boot_file_write   <- FALSE                # Save .RData file with the input data, for faster reload.
 boot_file_read    <- TRUE                 # Load .RData file with the input data, instead of loading input files.
-boot_file_name    <- "boot_file_yakarcha.RData"    # Name of the .RData input data file.
+boot_file_name    <- "boot_file_barkrak.RData"    # Name of the .RData input data file.
 
 
 #### Load function definitions and R modules, set params ####
