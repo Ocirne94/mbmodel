@@ -13,13 +13,32 @@ cat("** Drawing overview plots... **\n")
 
 df_overview$mb_cumul <- cumsum(df_overview$mb_annual_meas_corr)
 func_plot_overview(df_overview)
-df_overview_out <- data.frame(year = df_overview$year,
-                              apply(df_overview[,2:7], 2, sprintf, fmt="%.3f"),
-                              df_overview[,8],
-                              sprintf("%.1f", df_overview[,9]),
-                              apply(df_overview[,10:13], 2, sprintf, fmt="%.3f"),
-                              df_overview[,14],
-                              sprintf("%.1f", df_overview[,15]))
+# Different treatment if we have a single modeled year, else the data.frame is built wrong.
+if (nrow(df_overview) > 1) {
+  df_overview_out <- data.frame(year = df_overview$year,
+                                apply(df_overview[,2:7], 2, sprintf, fmt="%.3f"),
+                                df_overview[,8],
+                                sprintf("%.1f", df_overview[,9]),
+                                apply(df_overview[,10:13], 2, sprintf, fmt="%.3f"),
+                                df_overview[,14],
+                                sprintf("%.2f", df_overview[,15]))
+} else {
+  df_overview_out <- data.frame(year = df_overview$year,
+                                sprintf(df_overview[1,2], fmt="%.3f"),
+                                sprintf(df_overview[1,3], fmt="%.3f"),
+                                sprintf(df_overview[1,4], fmt="%.3f"),
+                                sprintf(df_overview[1,5], fmt="%.3f"),
+                                sprintf(df_overview[1,6], fmt="%.3f"),
+                                sprintf(df_overview[1,7], fmt="%.3f"),
+                                df_overview[,8],
+                                sprintf(df_overview[1,9], fmt="%.1f"),
+                                sprintf(df_overview[1,10], fmt="%.3f"),
+                                sprintf(df_overview[1,11], fmt="%.3f"),
+                                sprintf(df_overview[1,12], fmt="%.3f"),
+                                sprintf(df_overview[1,13], fmt="%.3f"),
+                                df_overview[,14],
+                                sprintf(df_overview[1,15], fmt="%.2f"))
+}
 names(df_overview_out) <- names(df_overview)
 write.csv(df_overview_out,
           file.path(run_params$output_dirname, "overview.csv"),

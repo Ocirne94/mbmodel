@@ -9,8 +9,6 @@
 # NOTE: this code is source()'d as part of main.R.
 # We put code here just to make it more organized.
 
-#### Set fixed run parameters ####
-source("set_params.R")
 
 #### Load input data from sources or reboot file ####
 if (boot_file_read) {

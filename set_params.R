@@ -6,11 +6,11 @@
 #                 This file contains the fixed parameter definitions for the model run.           #
 ###################################################################################################
 
-dir_data_base                <-   file.path("input", "zulmart")        # The base directory for all the data
+dir_data_base                <-   file.path("input", "barkrak")        # The base directory for all the data
 
 run_params <- list(
   
-  name_glacier                =    "zulmart",                    # Glacier name, used for output directory naming.
+  name_glacier                =    "barkrak",                    # Glacier name, used for output directory naming.
   
   #### INPUT-related parameters ####
   # Set input data paths.
@@ -20,31 +20,31 @@ run_params <- list(
   dir_data_outline             =   file.path(dir_data_base, "outline"),      # Path to the outlines
   dir_data_radiation           =   file.path(dir_data_base, "radiation"),    # Path to the grids of potential direct radiation (daily sums)
   dir_data_massbalance         =   file.path(dir_data_base, "massbalance"),  # The mass balance observations go here
-  dir_annual_params            =   file.path("input", "zulmart", "params"),     # The annual model parameter files go here
+  dir_annual_params            =   file.path("input", "barkrak", "params"),     # The annual model parameter files go here
   
   # Set filenames and input file properties.
-  filename_weather             =   "zulmart_zulmart_d.dat",      # File name of the weather series
+  filename_weather             =   "barkrak_barkrak_d.dat",      # File name of the weather series
   file_weather_nskip           =   4,                            # [-]: number of lines to skip in the weather file
   
-  grids_crs                    =   CRS(SRS_string  ="EPSG:32643"), # Reference system of the grids, used in slope/aspect computations. Overrides any CRS info reported from the grid files.
+  grids_crs                    =   CRS(SRS_string  ="EPSG:32642"), # Reference system of the grids, used in slope/aspect computations. Overrides any CRS info reported from the grid files.
   
-  filename_dhm_prefix          =   "dhm_zulmart",
-  filename_dhm_suffix          =   ".grid",                       # DHM name is <prefix><year><suffix>
-  dhm_years                    =   c(2019),                      # Years for which a DHM is available. These should be sorted in ascending order.
+  filename_dhm_prefix          =   "dhm_barkrak_",
+  filename_dhm_suffix          =   ".tif",                       # DHM name is <prefix><year><suffix>
+  dhm_years                    =   c(2015),                      # Years for which a DHM is available. These should be sorted in ascending order.
   dhm_interpolate              =   FALSE,                        # [TRUE/FALSE]: should we use linear interpolation to compute each year's DHM?
   
-  filename_surftype_prefix     =   "surf_type_zulmart",
+  filename_surftype_prefix     =   "surf_type_barkrak",
   filename_surftype_suffix     =   ".grid",                      # Surface type filename is <prefix><year><suffix>
-  surftype_years               =   c(2019),                      # Years for which a surface type file is available. These whould be sorted in ascending order.
+  surftype_years               =   c(2015),                      # Years for which a surface type file is available. These whould be sorted in ascending order.
   
-  filename_outline_prefix      =   "zulmart",
+  filename_outline_prefix      =   "barkrak",
   filename_outline_suffix      =   "_gltot.xyzn",                # Outline name is <prefix><year><suffix>
-  outline_years                =   c(2019),                      # Years for which an outline is available.
+  outline_years                =   c(2015),                      # Years for which an outline is available.
   
   filename_radiation_prefix    =   "dir",
   filename_radiation_suffix    =   "24.grid",                    # Radiation files are called <prefix><doy><suffix> where <doy> is the day of year, zero-padded to length 3 (e.g. 001).
   
-  filename_massbalance_annual  =   "peg_zulmart.dat",       # File name of the annual mass balance observations
+  filename_massbalance_annual  =   "peg_barkrak_orig.dat",       # File name of the annual mass balance observations
   filename_massbalance_winter  =   "",                           # File name of the winter mass balance observations
   
   filename_params_prefix       =   "param_",
@@ -52,9 +52,9 @@ run_params <- list(
   
   
   #### WEATHER INPUT parameters ####
-  weather_aws_elevation        =   4513.6,                         # [m a.s.l.]: AWS elevation
+  weather_aws_elevation        =   3463,                         # [m a.s.l.]: AWS elevation
   weather_snowfall_temp        =   1.5,                          # [°C]: at this temperature precipitation is half rain, half snow. One degree above it is all rain, one degree below it is all snow (snow fraction is linearly interpolated).
-  weather_max_precip_ele       =   5400,                         # [m a.s.l.]: above this altitude, precipitation does not increase any more but becomes constant (cutoff).
+  weather_max_precip_ele       =   4000,                         # [m a.s.l.]: above this altitude, precipitation does not increase any more but becomes constant (cutoff).
   
   
   #### TOPOGRAPHICAL SNOW DISTRIBUTION-related parameters ####
@@ -62,15 +62,14 @@ run_params <- list(
   curvature_cutoff_fact        =   1.2,                          # [-]: multiplier for the curvature cutoff threshold at which the snow distribution is not further changed. The threshold is given by the smaller of the two curvature extremes (positive and negative) divided by this factor. Only values >  = 1 make sense.
   curvature_effect_limit       =   0.5,                          # [-]: maximum effect of curvature, i.e. the curvature multiplier will be within [1 ± curvature_effect_limit]. Only values between 0 and 1 make sense.
   
-  elevation_effect_threshold   =   5400,                         # [m]: elevation above which snow accumulation decreases (wind effect)
+  elevation_effect_threshold   =   3950,                         # [m]: elevation above which snow accumulation decreases (wind effect)
   elevation_effect_fact        =   1.0,                          # [-]: strength of snow accumulation decrease at very high altitude. Only values between 0 and 1 make sense. At 0 accumulation does not decrease, at 1 accumulation decreases to 0 at the highest point in the DHM.
   
   
   #### AVALANCHE model parameters ####
   avalanche_routine_cpp        =   TRUE,                         # [TRUE/FALSE]: should we use the C++ (TRUE) or R (FALSE) version of the avalanche routine? C++ is much faster but it requires a code compiler.
-  elevation_equal_threshold    =   1e-3,                         # [m]: threshold for considering two elevation values equal when we look for problematic flat patches
   deposition_slope_lim         =   40,                           # [°]: at or above this slope value snow will not be deposited during an avalanche. A lower value makes avalanches travel farther. Called beta_lim in Gruber (2007).
-  deposition_mass_lim          =   500,                         # [kg m-2]: maximum deposition during an avalanche. A lower value makes avalanches travel farther. Called D_lim in Gruber (2007).
+  deposition_mass_lim          =   2000,                         # [kg m-2]: maximum deposition during an avalanche. A lower value makes avalanches travel farther. Called D_lim in Gruber (2007).
   movable_slope_lim_lower      =   30,                           # [°]: above this slope value, there is a linearly increasing movable fraction in the initial mass distribution, for avalanches. A lower value makes avalanches start also on more gentle slopes.
   movable_slope_lim_upper      =   60,                           # [°]: above this slope value, all input snow is movable in the avalanche routine.
   deposition_max_ratio_init    =   12,                           # [-]: ONLY for the initial snow distribution grid, how much accumulation can locally result from an avalanche relative to the mean snow distribution before the avalanche? This controls how far avalanches travel, it should be set to a value low enough that avalanches don't bring snow below the marked snow line elevation, and high enough that avalanche deposits look plausible. An exploratory value of 10 can make sense.
@@ -78,8 +77,8 @@ run_params <- list(
   
   
   #### INITIAL SNOW COVER parameters ####
-  initial_snowline_elevation   =   5100,                         # [m]: initial snow line elevation, at the beginning of each simulated year.
-  initial_snow_gradient        =   150,                           # [mm w.e. (100 m)-1]: increase of the initial snow amount for every 100 m elevation above the snow line.
+  initial_snowline_elevation   =   3750,                         # [m]: initial snow line elevation, at the beginning of each simulated year.
+  initial_snow_gradient        =   200,                           # [mm w.e. (100 m)-1]: increase of the initial snow amount for every 100 m elevation above the snow line.
   initial_snow_dist_red_fac    =   0.5,                          # [-]: reduction factor to decrease the importance of the snow distribution variability (all components except winter snow probes), for the computed initial snow cover (of each year). 0 means uniform snow distribution, 1 means no reduction.
   initial_snow_dist_from_model =   FALSE,                         # [TRUE/FALSE]: if TRUE, use the simulated SWE of the previous year as starting condition for the simulation. If FALSE, compute initial SWE from topography and given parameters. The first simulated year always uses a computed initial SWE since there is no previous modeled year.
   
@@ -101,7 +100,8 @@ run_params <- list(
   #### MODEL OPTIMIZATION parameters ####
   optim_max_corr_fact          =   1,                            # [-]: maximum allowable positive correction to the melt factor and the radiation factor during optimization, in units of the factors themselves (i.e. by how many times these can be increased). Only positive values make sense. A larger value is safer if a reasonable value for the melt factors is not known, but the optimization will be a bit slower. There is no parameter for the negative correction: it is automatically set to maximum 0.
   optim_bias_threshold         =   1,                            # [mm w.e.]: if abs(bias) is below this threshold then we stop the optimization. This saves us a couple iterations since the optim() function will stop when the value *change* is less than a threshold, not the value itself.
-  
+  optim_max_iter               =   20,                           # [-]: forcefully stop mass balance optimization after this number of iterations, even if bias is not within threshold. This is useful in case the optimization is not converging due to avalanches barely reaching a stake, thus a small change in the snow amounts changes a stake's simulated mass balance by a lot, thus bias keeps jumping around 0. In normal conditions, the model converges much faster than 20 iterations.
+
   
   #### FIXED MASS BALANCE PERIODS choice ####
   massbal_fixed_annual_start   =   "8/13",                       # [month/day]: start of the user-defined fixed period for annual mass balance evaluation. This is referred to (<year_cur> - 1).
@@ -123,11 +123,11 @@ run_params <- list(
   #### OUTPUT parameters ####
   output_grid_ext           =      ".tif",                       # extension of the output mass balance grids. Use ?writeFormats to check what is available. Common choices are ".tif" for GeoTiff, and ".asc" for ASCII grid.
   dem_write                    =   TRUE,                        # [TRUE/FALSE]: should we write the annual used DEM to the output directory?
-  filename_dem_prefix          =   "dem_zulmart_",               # output DEM name is <prefix><year><output_grid_exts>
+  filename_dem_prefix          =   "dem_barkrak_",               # output DEM name is <prefix><year><output_grid_exts>
   
   
   #### MODELED YEARS choice ####
-  first_year                   =   2019,                         # First modeled year (usually from October of the previous year to September of this year)
+  first_year                   =   2017,                         # First modeled year (usually from October of the previous year to September of this year)
   last_year                    =   2020                          # Last modeled year (same as previous comment)
   
 )
@@ -139,6 +139,8 @@ run_params$n_years                     <- length(run_params$years)
 
 run_params$curvature_dhm_smooth        <- max(1e-9,run_params$curvature_dhm_smooth) # The gaussian smoothing fails if sigma   = 0 (but 1e-9 still corresponds to no smoothing!)
 run_params$dhm_smooth_windowsize       <- max(5, 2 * run_params$curvature_dhm_smooth + 1)
+
+run_params$elevation_equal_threshold   <-   1e-3 # [m]: threshold for considering two elevation values equal when we look for problematic flat patches
 
 run_params$model_avalanche_dates       <- format(as.Date(run_params$model_avalanche_dates, format = "%m/%d"), format = "%m/%d") # Add leading zeroes to single-digit values if needed.
 

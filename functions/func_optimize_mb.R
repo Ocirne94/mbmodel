@@ -139,7 +139,7 @@ func_optimize_mb <- function(optimization_period, corr_fact_winter,
                                 nstakes, model_days_n, massbal_meas_cur, stakes_cells)
   
   niter <- 2
-  while (abs(bias_cur) > run_params$optim_bias_threshold) {
+  while ((abs(bias_cur) > run_params$optim_bias_threshold) && (niter < run_params$optim_max_iter)) {
     bias_slope <- (bias_cur - bias_prev) / (corr_fact_cur - corr_fact_prev)
     bias_prev <- bias_cur
     corr_fact_prev <- corr_fact_cur

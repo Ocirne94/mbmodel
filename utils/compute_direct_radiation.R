@@ -2,11 +2,11 @@ library(raster)
 library(tools) # file_path_sans_ext().
 
 # Latitude (degrees north), passed to SAGA to compute solar radiation.
-lat <- 38.983
+lat <- 42.125
 
 # Set paths.
-out_dirpath <- "../input/yakarcha/radiation"
-dhm_filepath <- "../input/yakarcha/dhm/dhm_yakarcha2019.tif"
+out_dirpath <- "../input/barkrak2/radiation"
+dhm_filepath <- "../input/barkrak2/dhm/dhm_barkrak2_2019.tif"
 
 
 # Name used during processing, don't change.
